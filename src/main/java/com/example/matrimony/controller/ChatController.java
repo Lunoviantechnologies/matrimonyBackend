@@ -52,7 +52,7 @@ public class ChatController {
             @PathVariable Long senderId,
             @PathVariable Long receiverId,
             @RequestParam(defaultValue = "0", required = false) int page,
-            @RequestParam(defaultValue = "200000", required = false) int size
+            @RequestParam(defaultValue = "10000", required = false) int size
     ) {
         return chatService.getConversation(senderId, receiverId, page, size);
     }

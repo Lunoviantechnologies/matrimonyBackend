@@ -23,6 +23,9 @@ public class AstroNumberService {
     public List<AstroNumber> getAll() {
         return repository.findAll();
     }
+    public List<AstroNumber> getadminAll() {
+        return repository.findAll();
+    }
 
     // PARTIAL UPDATE
     public AstroNumber update(Long id, AstroNumber astroNumber) {
