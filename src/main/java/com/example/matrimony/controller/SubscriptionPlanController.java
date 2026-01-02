@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.matrimony.dto.SubscriptionPlanResponse;
 import com.example.matrimony.dto.UpdateSubscriptionPlanFullRequest;
 import com.example.matrimony.entity.DiscountType;
 import com.example.matrimony.entity.SubscriptionPlan;
@@ -35,28 +34,67 @@ public class SubscriptionPlanController {
         this.pricingService = pricingService;
     }
 
+    
     /* ===================== USER ===================== */
-
     @GetMapping("/plans")
-    public List<SubscriptionPlanResponse> getActivePlans() {
+    public ResponseEntity<List<UpdateSubscriptionPlanFullRequest>> getAllPlansForUser() {
 
-        return repo.findByActiveTrue().stream()
-                .map(plan -> {
+        List<SubscriptionPlan> plans = repo.findAll();
 
-                    long finalPrice =
-                            pricingService.calculateFinalPrice(plan.getPlanCode());
+        if (plans.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
 
-                    SubscriptionPlanResponse dto =
-                            new SubscriptionPlanResponse();
+        List<UpdateSubscriptionPlanFullRequest> response =
+                plans.stream()
+                     .map(plan -> {
 
-                    dto.setPlanCode(plan.getPlanCode());
-                    dto.setPlanName(plan.getPlanName());
-                    dto.setDurationMonths(plan.getDurationMonths());
-                    dto.setPriceRupees(finalPrice);
+                         UpdateSubscriptionPlanFullRequest dto =
+                                 new UpdateSubscriptionPlanFullRequest();
 
-                    return dto;
-                })
-                .toList();
+                         // ===== Plan basic details =====
+                         dto.setPlanCode(plan.getPlanCode());
+                         dto.setPlanName(plan.getPlanName());
+                         dto.setDurationMonths(plan.getDurationMonths());
+                         dto.setPriceRupees(plan.getPriceRupees());
+
+                         // ===== Festival pricing =====
+                         dto.setFestivalPrice(plan.getFestivalPrice());
+                         dto.setFestivalStart(
+                                 plan.getFestivalStart() != null
+                                         ? plan.getFestivalStart().toLocalDate().toString()
+                                         : null
+                         );
+                         dto.setFestivalEnd(
+                                 plan.getFestivalEnd() != null
+                                         ? plan.getFestivalEnd().toLocalDate().toString()
+                                         : null
+                         );
+
+                         // ===== Discount =====
+                         dto.setDiscountType(plan.getDiscountType());
+                         dto.setDiscountValue(plan.getDiscountValue());
+                         dto.setDiscountStart(
+                                 plan.getDiscountStart() != null
+                                         ? plan.getDiscountStart().toLocalDate().toString()
+                                         : null
+                         );
+                         dto.setDiscountEnd(
+                                 plan.getDiscountEnd() != null
+                                         ? plan.getDiscountEnd().toLocalDate().toString()
+                                         : null
+                         );
+
+                         // ===== Status =====
+                         dto.setActive(Boolean.TRUE.equals(plan.getActive()));
+
+                         // ✅ REQUIRED
+                         return dto;
+
+                     })
+                     .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     /* ===================== ADMIN ===================== */

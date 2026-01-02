@@ -88,11 +88,13 @@ public class SecurityConfig1 {
                           "/api/notifications/mark-all-read",
                           "/api/friends/received/**"   ,
                           "/api/chat/send/**",
-                          "/profiles/record/**",
-                          "/profiles/views/**",
-                          "/profiles/total-views/**",
+                          "/api/profiles/record/**",
+                          "/api/profiles/views/**",
+                          "/api/profiles/total-views/**",
                           "/api/astro-number/All",
-                          "/api/plans"
+                          "/api/plans",
+                          "/api/profiles/myprofiles/**",
+                          "/api/admin/photo/**"
                    
                 ).hasRole("USER")
 
@@ -119,7 +121,8 @@ public class SecurityConfig1 {
                      "/api/astro-number/update/**",
                      "/api/admin/**",
                      "/api/admin/plan/**",
-                     "/api/admin/plans/all"
+                     "/api/admin/plans/all",
+                     "/api/astro-number/admin/All"
                    
                 ).hasRole("ADMIN")
 

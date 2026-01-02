@@ -46,6 +46,12 @@ public class AstroNumberController {
 	        AstroNumber updated = service.update(id, astroNumber);
 	        return ResponseEntity.ok(updated);
 	    }
+	 // GET – Show astro numbers
+	    @GetMapping("/admin/All")
+	    public List<AstroNumber> getAdminAll() {
+	        return service.getAll();
+	    }
+
 
 
 
