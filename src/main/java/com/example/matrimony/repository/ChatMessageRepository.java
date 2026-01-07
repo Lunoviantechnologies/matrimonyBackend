@@ -1,35 +1,88 @@
 package com.example.matrimony.repository;
-import java.util.List;
+
+import com.example.matrimony.entity.ChatMessage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.matrimony.entity.ChatMessage;
-import com.example.matrimony.entity.Profile;
+
+import java.util.List;
+
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
-    Page<ChatMessage> findBySender_IdAndReceiver_IdOrReceiver_IdAndSender_IdOrderByTimestampAsc(
-            Long senderId, Long receiverId, Long receiverId2, Long senderId2, Pageable pageable);
-
-
-
-    //  get full conversation without pagination
-    List<ChatMessage> findBySenderAndReceiverOrReceiverAndSenderOrderByTimestampAsc(
-            Profile sender1, Profile receiver1,
-            Profile sender2, Profile receiver2
+    // ===============================
+    // CHAT PAGINATION (MAIN METHOD)
+    // ===============================
+    @Query("""
+        SELECT m FROM ChatMessage m
+        WHERE
+          (m.sender.id = :senderId AND m.receiver.id = :receiverId AND m.clearedBySender = false)
+          OR
+          (m.sender.id = :receiverId AND m.receiver.id = :senderId AND m.clearedByReceiver = false)
+        ORDER BY m.timestamp DESC
+    """)
+    Page<ChatMessage> findConversationForUser(
+            @Param("senderId") Long senderId,
+            @Param("receiverId") Long receiverId,
+            Pageable pageable
     );
 
-    // Recent messages for global chat or preview
+    // ===============================
+    // RECENT MESSAGES (OPTIONAL)
+    // ===============================
     List<ChatMessage> findTop20ByOrderByTimestampDesc();
-    
+
+    // ===============================
+    // CLEAR CHAT (FOR ONE USER)
+    // ===============================
+    @Modifying
     @Transactional
-    void deleteBySenderIdOrReceiverId(Long senderId, Long receiverId);
+    @Query("""
+        UPDATE ChatMessage m
+        SET m.clearedBySender = true
+        WHERE m.sender.id = :senderId
+          AND m.receiver.id = :receiverId
+    """)
+    void clearChatAsSender(
+            @Param("senderId") Long senderId,
+            @Param("receiverId") Long receiverId
+    );
+
+    @Modifying
+    @Transactional
+    @Query("""
+        UPDATE ChatMessage m
+        SET m.clearedByReceiver = true
+        WHERE m.sender.id = :receiverId
+          AND m.receiver.id = :senderId
+    """)
+    void clearChatAsReceiver(
+            @Param("senderId") Long senderId,
+            @Param("receiverId") Long receiverId
+    );
+
+    // ===============================
+    // DELETE (OPTIONAL / ADMIN ONLY)
+    // ===============================
+    @Modifying
+    @Transactional
+    @Query("""
+        DELETE FROM ChatMessage m
+        WHERE m.sender.id = :profileId
+           OR m.receiver.id = :profileId
+    """)
+    void deleteByProfileId(@Param("profileId") Long profileId);
+    
     
     @Modifying
     @Transactional
-    @Query("DELETE FROM ChatMessage cm WHERE cm.sender.id = :profileId OR cm.receiver.id = :profileId")
-    void deleteByProfileId(Long profileId);
-
+    @Query("""
+    UPDATE ChatMessage cm
+    SET cm.seen = true, cm.seenAt = CURRENT_TIMESTAMP
+    WHERE cm.sender.id = :senderId
+      AND cm.receiver.id = :receiverId
+      AND cm.seen = false
+    """)
+    int markMessagesAsSeen(Long senderId, Long receiverId);
 }
