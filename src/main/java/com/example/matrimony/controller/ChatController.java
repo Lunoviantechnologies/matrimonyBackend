@@ -24,7 +24,7 @@ import com.example.matrimony.service.ChatService;
 
 @RestController
 @RequestMapping("/api/chat")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin("*")
 public class ChatController {
 
     private final ChatService chatService;
@@ -52,7 +52,7 @@ public class ChatController {
             @PathVariable Long senderId,
             @PathVariable Long receiverId,
             @RequestParam(defaultValue = "0", required = false) int page,
-            @RequestParam(defaultValue = "10000", required = false) int size
+            @RequestParam(defaultValue = "20", required = false) int size
     ) {
         return chatService.getConversation(senderId, receiverId, page, size);
     }
@@ -60,6 +60,11 @@ public class ChatController {
     @GetMapping("/online")  // ✅ already working
     public List<String> onlineUsers() {
         return chatService.onlineUsers();
+    }
+    @PostMapping("/seen/{senderId}/{receiverId}")
+    public void markSeen(@PathVariable Long senderId,
+                         @PathVariable Long receiverId) {
+        chatService.markSeen(senderId, receiverId);
     }
 
     // ✅ Also add this for REST send testing (optional)
@@ -100,6 +105,21 @@ public class ChatController {
                 saved
         );
     }
+    
+    
+    
+    
+    
+    //clear chat 
+    @PostMapping("/clear/{senderId}/{receiverId}")
+    public String clearChat(
+            @PathVariable Long senderId,
+            @PathVariable Long receiverId
+    ) {
+        chatService.clearChat(senderId, receiverId);
+        return "Chat cleared for user " + senderId;
+    }
+
 
     
 }

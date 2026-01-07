@@ -51,7 +51,8 @@ public class SecurityConfig1 {
                     "/api/contact/send",
                     "/api/profiles/count",
                    "/ws-chat/**" ,
-                   "/api/tickets"
+                   "/api/tickets",
+                   "/api/admin/create-admin"
                   
                 ).permitAll()
 
@@ -94,7 +95,12 @@ public class SecurityConfig1 {
                           "/api/astro-number/All",
                           "/api/plans",
                           "/api/profiles/myprofiles/**",
-                          "/api/admin/photo/**"
+                          "/api/admin/photo/**",
+                          "/api/chat/clear/**",
+                          "/api/chat/seen/**",                       
+                          "/api/block/user/**",
+                          "/api/block/status/**",
+                          "/api/block/unblock/**"
                    
                 ).hasRole("USER")
 
@@ -122,8 +128,9 @@ public class SecurityConfig1 {
                      "/api/admin/**",
                      "/api/admin/plan/**",
                      "/api/admin/plans/all",
-                     "/api/astro-number/admin/All"
-                   
+                     "/api/astro-number/admin/All",
+                     "/api/admin/bugs/report"                 
+                                        
                 ).hasRole("ADMIN")
 
                 // ✅ All others must be authenticated

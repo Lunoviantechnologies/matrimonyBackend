@@ -53,7 +53,7 @@ public class AuthController {
         Optional<Admin> adminOpt = adminRepository.findByEmailId(email);
         if (adminOpt.isPresent()) {
             Admin admin = adminOpt.get();
-            if (!password.equals(admin.getCreatePassword().trim())) {
+            if (!passwordEncoder.matches(password, admin.getCreatePassword())) {
                 return ResponseEntity.status(401).body("Invalid admin password");
             }
             String token = jwtUtil.generateToken(admin.getAdminId(), admin.getEmailId(), List.of("ADMIN"));
@@ -61,13 +61,21 @@ public class AuthController {
         }
 
         //user
+     // ===== USER LOGIN =====
         Optional<Profile> profileOpt =
                 profileRepository.findByEmailId(email.toLowerCase());
 
         if (profileOpt.isPresent()) {
             Profile profile = profileOpt.get();
 
-            // Correct BCrypt comparison
+            // 🔒 Block login until admin approval
+            if (Boolean.FALSE.equals(profile.getApproved())) {
+                return ResponseEntity
+                        .status(403)
+                        .body("Your account approval is in pending please wait ");
+            }
+
+            // 🔐 Correct BCrypt comparison
             if (!passwordEncoder.matches(password, profile.getCreatePassword())) {
                 return ResponseEntity.status(401).body("Invalid user password");
             }
@@ -84,7 +92,6 @@ public class AuthController {
         }
 
         return ResponseEntity.status(404).body("User not found");
-        
         
      // User login
 //        Optional<Profile> profileOpt = profileRepository.findByEmailId(email.toLowerCase());
