@@ -1,6 +1,8 @@
 package com.example.matrimony.dto;
 
 import com.example.matrimony.entity.IssueCategory;
+
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -25,6 +27,9 @@ public class TicketRequest {
     // optional
     @Size(max = 50, message = "MemberId cannot exceed 50 characters")
     private String memberId;
+    
+    @Column(name = "document",columnDefinition="LONGBLOB")
+    private byte[] document;
 
     @NotBlank(message = "Description is required")
     @Size(max = 5000, message = "Description cannot exceed 5000 characters")
@@ -49,4 +54,14 @@ public class TicketRequest {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+	public byte[] getDocument() {
+		return document;
+	}
+
+	public void setDocument(byte[] document) {
+		this.document = document;
+	}
+
+	
 }

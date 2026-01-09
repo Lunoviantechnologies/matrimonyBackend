@@ -11,9 +11,9 @@ import com.example.matrimony.dto.JwtResponse;
 import com.example.matrimony.dto.LoginRequest;
 import com.example.matrimony.entity.Admin;
 import com.example.matrimony.entity.Profile;
-import com.example.matrimony.hrms.JwtUtil1;
 import com.example.matrimony.repository.AdminRepository;
 import com.example.matrimony.repository.ProfileRepository;
+import com.example.matrimony.security.JwtUtil1;
 @Service
 @Transactional
 public class AuthService {

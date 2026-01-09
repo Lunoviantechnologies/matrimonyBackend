@@ -3,7 +3,6 @@ package com.example.matrimony.entity;
 
 
 
-import com.example.matrimony.entity.IssueCategory;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
@@ -35,6 +34,9 @@ public class Ticket {
     @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     private String description;
 
+    @Column(name = "document",columnDefinition="LONGBLOB")
+    private byte[] document;
+    
     @Column(name = "status", length = 50)
     private String status = "OPEN";
 
@@ -70,5 +72,15 @@ public class Ticket {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 
+	public byte[] getDocument() {
+		return document;
+	}
+
+	public void setDocument(byte[] document) {
+		this.document = document;
+	}
+
+	 
+    
 	
 }

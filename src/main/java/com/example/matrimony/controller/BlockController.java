@@ -74,9 +74,7 @@ public class BlockController {
         Map<String, Object> response = new HashMap<>();
         response.put("blocked", blocked);
         response.put("iBlocked", iBlocked);
-        //response.put("blockerId", blockerId);
-        //response.put("blockedId", blockedId);
-
+       
         return ResponseEntity.ok(response);
     }
 }

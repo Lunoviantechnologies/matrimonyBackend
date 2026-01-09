@@ -1,4 +1,4 @@
-package com.example.matrimony.hrms;
+package com.example.matrimony.security;
 
 import java.util.Collections;
 
