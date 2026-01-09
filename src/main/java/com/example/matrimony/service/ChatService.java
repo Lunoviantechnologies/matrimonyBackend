@@ -1,113 +1,3 @@
-//package com.example.matrimony.service;
-//
-//import com.example.matrimony.dto.ChatMessageDto;
-//import com.example.matrimony.entity.ChatMessage;
-//import com.example.matrimony.repository.ChatMessageRepository;
-//import com.example.matrimony.repository.ProfileRepository;
-//import com.example.matrimony.entity.Profile;
-//
-//import org.springframework.data.domain.Page;
-//import org.springframework.data.domain.PageRequest;
-//import org.springframework.data.domain.Pageable;
-//import org.springframework.stereotype.Service;
-//import org.springframework.transaction.annotation.Transactional;
-//
-//import java.time.LocalDateTime;
-//import java.util.*;
-//import java.util.concurrent.ConcurrentHashMap;
-//
-//@Service
-//@Transactional
-//public class ChatService {
-//
-//    private final ChatMessageRepository messageRepository;
-//    private final FriendRequestService friendService;
-//    private final ProfileRepository profileRepo;
-//
-//    // Track online users via mobileNumber
-//    private final Set<String> onlineUsers = ConcurrentHashMap.newKeySet();
-//
-//    public ChatService(ChatMessageRepository messageRepository,
-//                       FriendRequestService friendService,
-//                       ProfileRepository profileRepo) {
-//        this.messageRepository = messageRepository;
-//        this.friendService = friendService;
-//        this.profileRepo = profileRepo;
-//    }
-// 
-//
-//    public void userConnected(String mobileNumber) {
-//        onlineUsers.add(mobileNumber);
-//    }
-//
-//    public void userDisconnected(String mobileNumber) {
-//        onlineUsers.remove(mobileNumber);
-//    }
-//
-//    public List<String> onlineUsers() {
-//        return new ArrayList<>(onlineUsers);
-//    }
-//
-//    
-//    
-//    public ChatMessageDto sendMessage(Long senderId, Long receiverId, String msg) {
-//
-//    	Profile sender = profileRepo.findById(senderId).orElseThrow();
-//    	Profile receiver = profileRepo.findById(receiverId).orElseThrow();
-//
-//        // ✅ Convert to entity before saving
-//        ChatMessage chat = new ChatMessage();
-//        chat.setSender(sender);
-//        chat.setReceiver(receiver);
-//        chat.setMessage(msg);  // ✅ saving correct message taken from DTO
-//        chat.setTimestamp(LocalDateTime.now());
-//
-//        messageRepository.save(chat);
-//
-//        // ✅ Convert back to DTO response
-//        return new ChatMessageDto(
-//            chat.getId(),
-//            senderId,
-//            receiverId,
-//            chat.getMessage(),
-//            chat.getTimestamp()
-//        );
-//    }
-//
-//
-//    public Page<ChatMessageDto> getConversation(Long senderId, Long receiverId, int page, int size) {
-//        Pageable pageable = PageRequest.of(page, size);
-//
-//        Page<ChatMessage> conversation = messageRepository
-//        	    .findBySender_IdAndReceiver_IdOrReceiver_IdAndSender_IdOrderByTimestampAsc(
-//        	        senderId, receiverId, receiverId, senderId, pageable
-//        	    );
-//
-//
-//        // Convert Page<ChatMessage> → Page<ChatMessageDTO>
-//        return conversation.map(c -> new ChatMessageDto(
-//                c.getId(),
-//                c.getSender().getId(),
-//                c.getReceiver().getId(),
-//                c.getMessage(),
-//                c.getTimestamp()
-//        ));
-//    }
-//
-//
-//    
-//    public ChatMessage addMessage(ChatMessage message) {
-//        message.setTimestamp(LocalDateTime.now());
-//        return messageRepository.save(message);
-//    }
-//
-//    
-//   
-// 
-//    public List<ChatMessage> recentMessages() {
-//        return messageRepository.findTop20ByOrderByTimestampDesc();
-//    }
-//}
 
 package com.example.matrimony.service;
 
@@ -238,8 +128,6 @@ public class ChatService {
         }
     }
 
-
-
     // ✅ Fetch conversation (paginated)
     public Page<ChatMessageDto> getConversation(
             Long senderId,
@@ -268,7 +156,11 @@ public class ChatService {
             dto.setReceiverId(c.getReceiver().getId());
             dto.setMessage(c.getMessage());
             dto.setTimestamp(c.getTimestamp());
-         
+
+            // ✅ ADD THESE
+            dto.setSeen(c.isSeen());
+            dto.setSeenAt(c.getSeenAt());
+
             return dto;
         });
     }
@@ -300,6 +192,16 @@ public class ChatService {
     public List<ChatMessage> recentMessages() {
      return messageRepository.findTop20ByOrderByTimestampDesc();
   }
+    @Transactional(readOnly = true)
+    public List<ChatMessageDto> getSeenStatus(Long senderId, Long receiverId) {
+
+        return messageRepository
+                .getConversationWithSeenStatus(senderId, receiverId)
+                .stream()
+                .map(ChatMessageDto::fromEntity)
+                .toList();
+    }
+
     
     //clear chat
     @Transactional
