@@ -71,4 +71,5 @@ files/
 
 # Spring Boot production secrets
 src/main/resources/application-prod.properties
-
+.factorypath
+/.factorypath
