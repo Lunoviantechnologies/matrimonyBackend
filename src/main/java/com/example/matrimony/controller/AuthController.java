@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.matrimony.dto.LoginRequest;
 import com.example.matrimony.entity.Admin;
 import com.example.matrimony.entity.Profile;
-import com.example.matrimony.hrms.JwtResponse;
-import com.example.matrimony.hrms.JwtUtil1;
 import com.example.matrimony.repository.AdminRepository;
 import com.example.matrimony.repository.ProfileRepository;
+import com.example.matrimony.security.JwtResponse;
+import com.example.matrimony.security.JwtUtil1;
 
 @RestController
 @RequestMapping("/api/auth")

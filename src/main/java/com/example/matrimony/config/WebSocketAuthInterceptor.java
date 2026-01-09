@@ -8,7 +8,7 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.example.matrimony.hrms.JwtUtil1;
+import com.example.matrimony.security.JwtUtil1;
 
 import io.jsonwebtoken.Claims;
 

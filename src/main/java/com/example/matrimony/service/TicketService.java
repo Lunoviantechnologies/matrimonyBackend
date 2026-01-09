@@ -37,6 +37,7 @@ public class TicketService {
         t.setPhoneNumber(req.getPhoneNumber());
         t.setMemberId(req.getMemberId());
         t.setDescription(req.getDescription());
+        t.setDocument(req.getDocument());
 
         Ticket savedTicket = repo.save(t);
 

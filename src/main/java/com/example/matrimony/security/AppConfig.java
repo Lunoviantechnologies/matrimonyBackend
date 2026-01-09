@@ -1,4 +1,4 @@
-package com.example.matrimony.hrms;
+package com.example.matrimony.security;
 
 
 import org.springframework.context.annotation.Bean;
