@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.example.matrimony.entity.Admin;
 import com.example.matrimony.entity.Profile;
 
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
@@ -36,6 +38,15 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
     );
     
     List<Profile> findByPremiumTrueAndPremiumEndBefore(LocalDateTime time);
+    
+    @Modifying
+    @Transactional
+    @Query(value = """
+        DELETE FROM profile_friends
+        WHERE profile_id = :profileId
+           OR friend_id = :profileId
+    """, nativeQuery = true)
+    void deleteAllByProfileId(@Param("profileId") Long profileId);
 
      
 }

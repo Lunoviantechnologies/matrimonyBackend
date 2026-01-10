@@ -78,4 +78,13 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
 
     @Query("SELECT fr FROM FriendRequest fr WHERE fr.receiver.id = :userId AND fr.status = 'REJECTED'")
     List<FriendRequest> findRejectedReceived(@Param("userId") Long userId);
+    
+    @Modifying
+    @Transactional
+    @Query("""
+        DELETE FROM FriendRequest fr
+        WHERE fr.sender.id = :profileId
+           OR fr.receiver.id = :profileId
+    """)
+    void deleteAllByProfileId(@Param("profileId") Long profileId);
 }

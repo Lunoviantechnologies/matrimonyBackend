@@ -101,6 +101,11 @@ public class UserReport {
 		this.reportedAt = reportedAt;
 	}
 
+	public Long getReporterId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	
     
     
