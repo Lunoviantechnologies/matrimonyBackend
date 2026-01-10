@@ -85,4 +85,30 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
       AND cm.seen = false
     """)
     int markMessagesAsSeen(Long senderId, Long receiverId);
+    
+    @Query("""
+    		SELECT cm FROM ChatMessage cm
+    		WHERE
+    		(
+    		 (cm.sender.id = :senderId AND cm.receiver.id = :receiverId)
+    		 OR
+    		 (cm.sender.id = :receiverId AND cm.receiver.id = :senderId)
+    		)
+    		ORDER BY cm.timestamp ASC
+    		""")
+    		List<ChatMessage> getConversationWithSeenStatus(
+    		        Long senderId,
+    		        Long receiverId
+    		);
+    @Query("""
+            SELECT m FROM ChatMessage m
+            WHERE
+              (m.sender.id = :userA AND m.receiver.id = :userB)
+              OR
+              (m.sender.id = :userB AND m.receiver.id = :userA)
+        """)
+        List<ChatMessage> findChatBetweenUsers(Long userA, Long userB);
+
+        void deleteBySenderIdOrReceiverId(Long senderId, Long receiverId);
+    
 }

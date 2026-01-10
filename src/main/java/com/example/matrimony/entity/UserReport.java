@@ -100,6 +100,8 @@ public class UserReport {
 	public void setReportedAt(LocalDateTime reportedAt) {
 		this.reportedAt = reportedAt;
 	}
+
+	
     
     
 }

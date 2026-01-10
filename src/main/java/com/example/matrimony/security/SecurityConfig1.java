@@ -129,7 +129,8 @@ public class SecurityConfig1 {
                      "/api/admin/plan/**",
                      "/api/admin/plans/all",
                      "/api/astro-number/admin/All",
-                     "/api/admin/bugs/report"                 
+                     "/api/admin/bugs/report",
+                     "/api/admin/delete-profile/**"
                                         
                 ).hasRole("ADMIN")
 
