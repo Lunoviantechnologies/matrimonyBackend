@@ -267,11 +267,11 @@ public class Profile {
 	private List<FriendRequest> receivedRequests = new ArrayList<>();
 
 
-	@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "sender",  cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonIgnore // ignore during registration/fetch
 	private List<ChatMessage> sentMessages = new ArrayList<>();
 
-	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "receiver",  cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonIgnore
 	private List<ChatMessage> receivedMessages = new ArrayList<>();
 

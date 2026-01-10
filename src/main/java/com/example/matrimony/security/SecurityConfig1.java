@@ -100,7 +100,8 @@ public class SecurityConfig1 {
                           "/api/chat/seen/**",                       
                           "/api/block/user/**",
                           "/api/block/status/**",
-                          "/api/block/unblock/**"
+                          "/api/block/unblock/**",
+                          "/api/reports/user/**"
                    
                 ).hasRole("USER")
 
@@ -130,7 +131,8 @@ public class SecurityConfig1 {
                      "/api/admin/plans/all",
                      "/api/astro-number/admin/All",
                      "/api/admin/bugs/report",
-                     "/api/admin/delete-profile/**"
+                     "/api/admin/delete-profile/**",
+                     "/api/reports/GetAll"
                                         
                 ).hasRole("ADMIN")
 

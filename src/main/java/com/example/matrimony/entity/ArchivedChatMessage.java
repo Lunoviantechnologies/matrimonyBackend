@@ -1,6 +1,7 @@
 package com.example.matrimony.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -84,6 +85,11 @@ import jakarta.persistence.Table;
 
 		public void setArchivedAt(LocalDateTime archivedAt) {
 			this.archivedAt = archivedAt;
+		}
+
+		public void saveAll(List<ArchivedChatMessage> archived) {
+			// TODO Auto-generated method stub
+			
 		}
 	
 
