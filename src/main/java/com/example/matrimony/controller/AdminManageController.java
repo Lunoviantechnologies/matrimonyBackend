@@ -137,6 +137,7 @@ public class AdminManageController {
         dto.setMotherName(profile.getMotherName());
         dto.setSiblings(profile.getSiblings());
         dto.setRashi(profile.getRashi());
+        dto.setSpiritualPath(profile.getSpiritualPath());
         dto.setNakshatra(profile.getNakshatra());
         dto.setPartnerAgeRange(profile.getPartnerAgeRange());
         dto.setPartnerEducation(profile.getPartnerEducation());
@@ -155,6 +156,7 @@ public class AdminManageController {
         dto.setPartnerWork(profile.getPartnerWork());
         dto.setPartnerHobbies(profile.getPartnerHobbies());
         dto.setSports(profile.getSports());
+        dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());
        
@@ -285,6 +287,7 @@ public class AdminManageController {
         if (updatedDto.getAboutYourself() != null) existing.setAboutYourself(updatedDto.getAboutYourself());
         if (updatedDto.getAge() != null) existing.setAge(updatedDto.getAge());
         if (updatedDto.getRole() != null) existing.setRole(updatedDto.getRole());
+        if (updatedDto.getVegiterian() != null) existing.setVegiterian(updatedDto.getVegiterian());
         if (updatedDto.getCreatePassword() != null) existing.setCreatePassword(updatedDto.getCreatePassword());
         if (updatedDto.getSports() != null) existing.setSports(updatedDto.getSports());
 
@@ -327,6 +330,7 @@ public class AdminManageController {
         if (updatedDto.getChildrenDetails() != null) existing.setChildrenDetails(updatedDto.getChildrenDetails());
         if (updatedDto.getNoOfChildren() != null) existing.setNoOfChildren(updatedDto.getNoOfChildren());
         if (updatedDto.getIsChildrenLivingWithYou() != null) existing.setIsChildrenLivingWithYou(updatedDto.getIsChildrenLivingWithYou());
+        if (updatedDto.getSpiritualPath() !=null) existing.setSpiritualPath(updatedDto.getSpiritualPath());
 
         // --- EDUCATION & WORK ---
         if (updatedDto.getHighestEducation() != null) existing.setHighestEducation(updatedDto.getHighestEducation());
