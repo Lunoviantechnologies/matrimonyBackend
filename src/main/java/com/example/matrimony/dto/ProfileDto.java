@@ -55,6 +55,7 @@ public class ProfileDto {
     private Boolean isChildrenLivingWithYou;
     private String familyStatus;
     private String familyType;
+    private String spiritualPath;
 
     // Family details
     private String fatherName;
@@ -67,6 +68,8 @@ public class ProfileDto {
     private String ancestralOrigin;
     private String livingWith;
     private String childrenDetails;
+    private String vegiterian;
+
 
     // Education & career
     private String highestEducation;
@@ -426,6 +429,20 @@ public class ProfileDto {
 	public String getPartnerReligion() {
 		return partnerReligion;
 	}
+	
+	
+	public String getWeight() {
+		return weight;
+	}
+	public void setWeight(String weight) {
+		this.weight = weight;
+	}
+	public String getSpiritualPath() {
+		return spiritualPath;
+	}
+	public void setSpiritualPath(String spiritualPath) {
+		this.spiritualPath = spiritualPath;
+	}
 	public void setPartnerReligion(String partnerReligion) {
 		this.partnerReligion = partnerReligion;
 	}
@@ -576,6 +593,12 @@ public class ProfileDto {
 				+ partnerHobbies + ", updatePhoto=" + updatePhoto + ", documentFile=" + documentFile
 				+ ", documentFilePresent=" + documentFilePresent + ", payments=" + payments + ",  senderId=" + senderId
 				+ ", receiverId=" + receiverId + "]";
+	}
+	public String getVegiterian() {
+		return vegiterian;
+	}
+	public void setVegiterian(String vegiterian) {
+		this.vegiterian = vegiterian;
 	}
 	 
     

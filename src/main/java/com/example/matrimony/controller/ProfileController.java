@@ -109,6 +109,7 @@ public class ProfileController {
         dto.setCollegeName(profile.getCollegeName());
         dto.setEmployedIn(profile.getEmployedIn());
         dto.setSector(profile.getSector());
+        dto.setSpiritualPath(profile.getSpiritualPath());
         dto.setOccupation(profile.getOccupation());
         dto.setCompanyName(profile.getCompanyName());
         dto.setAnnualIncome(profile.getAnnualIncome());
@@ -141,6 +142,7 @@ public class ProfileController {
         dto.setPartnerWork(profile.getPartnerWork());
         dto.setPartnerHobbies(profile.getPartnerHobbies());
         dto.setSports(profile.getSports());
+        dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());
        

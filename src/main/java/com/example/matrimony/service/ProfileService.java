@@ -273,6 +273,7 @@ public class ProfileService {
         if (data.getAncestralOrigin() != null) existing.setAncestralOrigin(data.getAncestralOrigin());
         if (data.getLivingWith() != null) existing.setLivingWith(data.getLivingWith());
         if (data.getChildrenDetails() != null) existing.setChildrenDetails(data.getChildrenDetails());
+        if (data.getVegiterian() != null) existing.setVegiterian(data.getVegiterian());
 
         // Photo (byte[]) - overwrite only when provided (null-safe)
         if (data.getUpdatePhoto() != null) {
@@ -355,6 +356,7 @@ public class ProfileService {
         existingProfile.setSubCaste(updatedProfile.getSubCaste());
         existingProfile.setDosham(updatedProfile.getDosham());
         existingProfile.setMotherTongue(updatedProfile.getMotherTongue());
+        existingProfile.setSpiritualPath(updatedProfile.getSpiritualPath());
 
         // ---------- ACCOUNT ----------
         existingProfile.setMembershipType(updatedProfile.getMembershipType());
@@ -418,6 +420,7 @@ public class ProfileService {
         existingProfile.setManglik(updatedProfile.getManglik());
         existingProfile.setPartnerLocationPref(updatedProfile.getPartnerLocationPref());
         existingProfile.setPartnerWorkStatus(updatedProfile.getPartnerWorkStatus());
+        existingProfile.setVegiterian(updatedProfile.getVegiterian());
 
         // ---------- FILES ----------
 //        existingProfile.setUpdatePhoto(updatedProfile.getUpdatePhoto());

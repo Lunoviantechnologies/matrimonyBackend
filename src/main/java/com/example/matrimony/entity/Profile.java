@@ -147,6 +147,8 @@ public class Profile {
 	private String companyName;
 	private String annualIncome;
 	private String workLocation;
+	@Column(name="spiritualPath", length = 50, nullable = true )
+	private String spiritualPath;
 
 	private String state;
 	private String country;
@@ -167,6 +169,8 @@ public class Profile {
 	private String partnerEducation;
 	private String partnerWork;
 	private String partnerHobbies;
+	@Column(name="vegiterian", nullable = false)
+	private String vegiterian;
 
 	// Additional fields from your other file
 	private String hobbies;
@@ -352,6 +356,15 @@ public class Profile {
 
 	public String getMotherTongue() {
 		return motherTongue;
+	}
+	
+
+	public String getVegiterian() {
+		return vegiterian;
+	}
+
+	public void setVegiterian(String vegiterian) {
+		this.vegiterian = vegiterian;
 	}
 
 	public void setMotherTongue(String motherTongue) {
@@ -923,6 +936,23 @@ public class Profile {
 		this.premiumEnd = premiumEnd;
 	}
 	
+	
+
+	public String getSpiritualPath() {
+		return spiritualPath;
+	}
+
+	public void setSpiritualPath(String spiritualPath) {
+		this.spiritualPath = spiritualPath;
+	}
+
+	public List<ProfileView> getProfileViews() {
+		return profileViews;
+	}
+
+	public void setProfileViews(List<ProfileView> profileViews) {
+		this.profileViews = profileViews;
+	}
 
 	public synchronized Boolean getApproved() {
 		return approved;
