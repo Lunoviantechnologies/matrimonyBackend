@@ -106,7 +106,7 @@ public class AdminManageController {
         dto.setGender(profile.getGender());
         dto.setAboutYourself(profile.getAboutYourself());
         dto.setReligion(profile.getReligion());
-        dto.setCaste(profile.getCaste());
+        
         dto.setSubCaste(profile.getSubCaste());
         dto.setDosham(profile.getDosham());
         dto.setMotherTongue(profile.getMotherTongue());
@@ -156,6 +156,7 @@ public class AdminManageController {
         dto.setPartnerWork(profile.getPartnerWork());
         dto.setPartnerHobbies(profile.getPartnerHobbies());
         dto.setSports(profile.getSports());
+        dto.setHabbits(profile.getHabbits());
         dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());
@@ -309,7 +310,7 @@ public class AdminManageController {
 
         // --- RELIGION & PERSONAL ---
         if (updatedDto.getReligion() != null) existing.setReligion(updatedDto.getReligion());
-        if (updatedDto.getCaste() != null) existing.setCaste(updatedDto.getCaste());
+     
         if (updatedDto.getSubCaste() != null) existing.setSubCaste(updatedDto.getSubCaste());
         if (updatedDto.getDosham() != null) existing.setDosham(updatedDto.getDosham());
         if (updatedDto.getMotherTongue() != null) existing.setMotherTongue(updatedDto.getMotherTongue());
@@ -331,6 +332,7 @@ public class AdminManageController {
         if (updatedDto.getNoOfChildren() != null) existing.setNoOfChildren(updatedDto.getNoOfChildren());
         if (updatedDto.getIsChildrenLivingWithYou() != null) existing.setIsChildrenLivingWithYou(updatedDto.getIsChildrenLivingWithYou());
         if (updatedDto.getSpiritualPath() !=null) existing.setSpiritualPath(updatedDto.getSpiritualPath());
+        if (updatedDto.getHabbits() !=null) existing.setHabbits(updatedDto.getHabbits());
 
         // --- EDUCATION & WORK ---
         if (updatedDto.getHighestEducation() != null) existing.setHighestEducation(updatedDto.getHighestEducation());

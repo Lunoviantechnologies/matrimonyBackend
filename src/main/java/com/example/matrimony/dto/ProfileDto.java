@@ -69,7 +69,8 @@ public class ProfileDto {
     private String livingWith;
     private String childrenDetails;
     private String vegiterian;
-
+    private String gothram;
+	private String habbits;
 
     // Education & career
     private String highestEducation;
@@ -599,6 +600,18 @@ public class ProfileDto {
 	}
 	public void setVegiterian(String vegiterian) {
 		this.vegiterian = vegiterian;
+	}
+	public String getGothram() {
+		return gothram;
+	}
+	public void setGothram(String gothram) {
+		this.gothram = gothram;
+	}
+	public String getHabbits() {
+		return habbits;
+	}
+	public void setHabbits(String habbits) {
+		this.habbits = habbits;
 	}
 	 
     

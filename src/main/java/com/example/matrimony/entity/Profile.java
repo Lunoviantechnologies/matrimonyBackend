@@ -80,7 +80,11 @@ public class Profile {
 
 	// community
 	private String religion;
-	private String caste;
+	private String gothram;
+	
+	@Column(columnDefinition = "TEXT")
+	private String habbits;
+
 	private String subCaste;
 	private String dosham;
 	private String motherTongue;
@@ -330,13 +334,7 @@ public class Profile {
 		this.religion = religion;
 	}
 
-	public String getCaste() {
-		return caste;
-	}
-
-	public void setCaste(String caste) {
-		this.caste = caste;
-	}
+	
 
 	public String getSubCaste() {
 		return subCaste;
@@ -968,7 +966,7 @@ public class Profile {
 				+ lastName + ", mobileNumber=" + mobileNumber + ", createPassword=" + createPassword + ", role=" + role
 				+ ", createdAt=" + createdAt + ", active=" + active + ", age=" + age + ", dateOfBirth=" + dateOfBirth
 				+ ", emailId=" + emailId + ", gender=" + gender + ", aboutYourself=" + aboutYourself + ", religion="
-				+ religion + ", caste=" + caste + ", subCaste=" + subCaste + ", dosham=" + dosham + ", motherTongue="
+				+ religion + ", subCaste=" + subCaste + ", dosham=" + dosham + ", motherTongue="
 				+ motherTongue + ", membershipType=" + membershipType + ", accountStatus=" + accountStatus
 				+ ", lastActive=" + lastActive + ", maritalStatus=" + maritalStatus + ", noOfChildren=" + noOfChildren
 				+ ", isChildrenLivingWithYou=" + isChildrenLivingWithYou + ", height=" + height + ", familyStatus="
@@ -990,5 +988,21 @@ public class Profile {
 				+ ", premium=" + premium + ", sentRequests=" + sentRequests + ", receivedRequests=" + receivedRequests
 				+ ", sentMessages=" + sentMessages + ", receivedMessages=" + receivedMessages + ", payments=" + payments
 				+ ", friends=" + friends + "]";
+	}
+
+	public String getGothram() {
+		return gothram;
+	}
+
+	public void setGothram(String gothram) {
+		this.gothram = gothram;
+	}
+
+	public String getHabbits() {
+		return habbits;
+	}
+
+	public void setHabbits(String habbits) {
+		this.habbits = habbits;
 	}
 }

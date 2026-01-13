@@ -8,10 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.matrimony.entity.ArchivedChatMessage;
 import com.example.matrimony.entity.ChatMessage;
+import com.example.matrimony.entity.DeletedProfile;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.entity.UserReport;
 import com.example.matrimony.repository.ArchivedChatRepository;
 import com.example.matrimony.repository.ChatMessageRepository;
+import com.example.matrimony.repository.DeletedProfileRepository;
 import com.example.matrimony.repository.FriendRequestRepository;
 import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.repository.ProfileViewLogRepository;
@@ -26,6 +28,9 @@ public class AdminReportService {
     @Autowired private ArchivedChatRepository archivedChatRepo;
     @Autowired private ProfileViewLogRepository profileViewLogRepo;
     @Autowired private FriendRequestRepository friendRequestRepo;
+    @Autowired
+    private DeletedProfileRepository deletedProfileRepo;
+
     
     @Transactional
     public void deleteReportedProfileByReportId(Long reportId) {
@@ -56,6 +61,14 @@ public class AdminReportService {
         }).toList();
 
         archivedChatRepo.saveAll(archived);
+        
+        /* ==============================
+        2️⃣ STORE DELETED PROFILE
+        ============================== */
+     DeletedProfile deletedProfile =
+             mapToDeletedProfile(reported, report.getReason().name());
+
+     deletedProfileRepo.save(deletedProfile);
 
         /* ==============================
            2️⃣ DELETE LIVE CHAT
@@ -75,6 +88,12 @@ public class AdminReportService {
            ============================== */
         profileRepo.deleteById(reportedId);
     }
+
+
+	private DeletedProfile mapToDeletedProfile(Profile reported, String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
 
 
