@@ -88,6 +88,13 @@ public class AdminReportService {
            ============================== */
         profileRepo.deleteById(reportedId);
     }
+    public UserReport getReportById(Long reportId) {
+        return reportRepo.findById(reportId)
+                .orElseThrow(() ->
+                        new RuntimeException("Report not found with id: " + reportId)
+                );
+    }
+
 
 
 	private DeletedProfile mapToDeletedProfile(Profile reported, String name) {

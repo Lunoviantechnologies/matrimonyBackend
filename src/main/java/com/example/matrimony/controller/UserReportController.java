@@ -34,4 +34,9 @@ public class UserReportController {
     public ResponseEntity<?> getAllReports() {
         return ResponseEntity.ok(reportService.getAllReports());
     }
+    @GetMapping("/{reportId}")
+    public ResponseEntity<?> getReportById(@PathVariable Long reportId) {
+        return ResponseEntity.ok(reportService.getReportById(reportId));
+    }
+
 }

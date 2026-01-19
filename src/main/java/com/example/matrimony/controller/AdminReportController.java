@@ -3,6 +3,7 @@ package com.example.matrimony.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,4 +23,9 @@ public class AdminReportController {
 
         return ResponseEntity.ok("Profile deleted and chat archived successfully");
     }
+    @GetMapping("/{reportId}")
+    public ResponseEntity<?> getReportById(@PathVariable Long reportId) {
+        return ResponseEntity.ok(adminReportService.getReportById(reportId));
+    }
+
 }

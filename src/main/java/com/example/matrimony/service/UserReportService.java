@@ -43,4 +43,11 @@ public class UserReportService {
     public List<UserReport> getAllReports() {
         return reportRepo.findAll();
     }
+    public UserReport getReportById(Long reportId) {
+        return reportRepo.findById(reportId)
+                .orElseThrow(() ->
+                        new RuntimeException("Report not found with id: " + reportId)
+                );
+    }
+
 }
