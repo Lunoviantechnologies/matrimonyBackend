@@ -136,7 +136,8 @@ public class SecurityConfig1 {
                      "/api/reports/GetAll",
                      "/api/archived-chats/between",
                      "/api/archived-chats/Get/**",
-                     "/api/admin/**"
+                     "/api/admin/**",
+                     "/api/admin/conversation/**"
                      
                                         
                 ).hasRole("ADMIN")

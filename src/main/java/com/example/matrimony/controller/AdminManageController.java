@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.matrimony.dto.ChatMessageDto;
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.entity.Profile;
@@ -514,5 +516,14 @@ public class AdminManageController {
         profileService.rejectProfile(profileId, reason);
 
         return ResponseEntity.ok("Profile rejected and deleted successfully");
+    }
+    @GetMapping("/conversation/{senderId}/{receiverId}")
+    public Page<ChatMessageDto> getConversation(
+            @PathVariable Long senderId,
+            @PathVariable Long receiverId,
+            @RequestParam(defaultValue = "0", required = false) int page,
+            @RequestParam(defaultValue = "20", required = false) int size
+    ) {
+        return chatService.getConversation(senderId, receiverId, page, size);
     }
 }
