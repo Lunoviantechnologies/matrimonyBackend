@@ -173,7 +173,7 @@ public class Profile {
 	private String partnerEducation;
 	private String partnerWork;
 	private String partnerHobbies;
-	@Column(name="vegiterian", nullable = false)
+	@Column(name="vegiterian", nullable = true)
 	private String vegiterian;
 
 	// Additional fields from your other file

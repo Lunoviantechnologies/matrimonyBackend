@@ -95,7 +95,16 @@ public class AdminReportService {
                 );
     }
 
-
+    public void deleteReportById(Long reportId) {
+        if (!reportRepo.existsById(reportId)) {
+            throw new RuntimeException("User report not found with id: " + reportId);
+        }
+        reportRepo.deleteById(reportId);
+    }
+    
+    public List<UserReport> getAllReports() {
+        return reportRepo.findAll();
+    }
 
 	private DeletedProfile mapToDeletedProfile(Profile reported, String name) {
 		// TODO Auto-generated method stub

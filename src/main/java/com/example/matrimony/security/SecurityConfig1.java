@@ -133,12 +133,13 @@ public class SecurityConfig1 {
                      "/api/astro-number/admin/All",
                      "/api/admin/bugs/report",
                      "/api/admin/delete-profile/**",
-                     "/api/reports/GetAll",
+                    // "/api/reports/GetAll",
                      "/api/archived-chats/between",
                      "/api/archived-chats/Get/**",
                      "/api/admin/**",
-                     "/api/admin/conversation/**"
-                     
+                     "/api/admin/conversation/**",
+                     "/api/admin/GetAll",
+                     "/api/admin/delete/**"
                                         
                 ).hasRole("ADMIN")
 

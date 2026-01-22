@@ -12,12 +12,12 @@ public class UserReport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Who reported
+    
     @ManyToOne(optional = false)
     @JoinColumn(name = "reporter_id", nullable = false)
     private Profile reporter;
 
-    // Who is reported
+   
     @ManyToOne(optional = false)
     @JoinColumn(name = "reported_user_id", nullable = false)
     private Profile reportedUser;

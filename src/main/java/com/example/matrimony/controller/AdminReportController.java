@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,5 +28,15 @@ public class AdminReportController {
     public ResponseEntity<?> getReportById(@PathVariable Long reportId) {
         return ResponseEntity.ok(adminReportService.getReportById(reportId));
     }
+    
+    @PutMapping("/delete/{id}")
+    public ResponseEntity<String> deleteUserReport(@PathVariable Long id) {
+    	adminReportService.deleteReportById(id);
+        return ResponseEntity.ok("User report deleted successfully");
+    }
 
+    @GetMapping("/GetAll")
+    public ResponseEntity<?> getAllReports() {
+        return ResponseEntity.ok(adminReportService.getAllReports());
+    }
 }

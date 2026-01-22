@@ -40,9 +40,7 @@ public class UserReportService {
         return reportRepo.save(report);
     }
 
-    public List<UserReport> getAllReports() {
-        return reportRepo.findAll();
-    }
+  
     public UserReport getReportById(Long reportId) {
         return reportRepo.findById(reportId)
                 .orElseThrow(() ->

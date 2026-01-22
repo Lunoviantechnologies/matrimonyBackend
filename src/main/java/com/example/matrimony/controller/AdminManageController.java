@@ -157,6 +157,7 @@ public class AdminManageController {
         dto.setPartnerReligion(profile.getPartnerReligion());
         dto.setPartnerWork(profile.getPartnerWork());
         dto.setPartnerHobbies(profile.getPartnerHobbies());
+        dto.setGothram(profile.getGothram());
         dto.setSports(profile.getSports());
         dto.setHabbits(profile.getHabbits());
         dto.setVegiterian(profile.getVegiterian());
@@ -368,7 +369,7 @@ public class AdminManageController {
         if (updatedDto.getPartnerReligion() != null) existing.setPartnerReligion(updatedDto.getPartnerReligion());
         if (updatedDto.getPartnerWork() != null) existing.setPartnerWork(updatedDto.getPartnerWork());
         if (updatedDto.getPartnerHobbies() != null) existing.setPartnerHobbies(updatedDto.getPartnerHobbies());
-
+        if (updatedDto.getGothram() != null) existing.setGothram(updatedDto.getGothram());
         // --- MEMBERSHIP & SYSTEM ---
         if (updatedDto.getMembershipType() != null) existing.setMembershipType(updatedDto.getMembershipType());
         if (updatedDto.getAccountStatus() != null) existing.setAccountStatus(updatedDto.getAccountStatus());
