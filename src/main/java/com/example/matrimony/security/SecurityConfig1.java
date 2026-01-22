@@ -132,15 +132,14 @@ public class SecurityConfig1 {
                      "/api/admin/plans/all",
                      "/api/astro-number/admin/All",
                      "/api/admin/bugs/report",
-                     "/api/admin/delete-profile/**",
-                    // "/api/reports/GetAll",
+                     "/api/admin/delete-profile/**",                 
                      "/api/archived-chats/between",
                      "/api/archived-chats/Get/**",
                      "/api/admin/**",
                      "/api/admin/conversation/**",
                      "/api/admin/GetAll",
-                     "/api/admin/delete/**"
-                                        
+                     "/api/admin/delete/**",
+                     "/api/admin/deleted-profiles"                                        
                 ).hasRole("ADMIN")
 
                 // ✅ All others must be authenticated
