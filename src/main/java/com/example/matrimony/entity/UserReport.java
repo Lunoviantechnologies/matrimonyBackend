@@ -2,19 +2,20 @@ package com.example.matrimony.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name = "user_reports")
+@Table(
+    name = "user_reports",
+    indexes = {
+        @Index(name = "idx_report_status", columnList = "status"),
+        @Index(name = "idx_reported_user", columnList = "reported_user_id"),
+        @Index(name = "idx_reporter", columnList = "reporter_id")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"reporter_id", "reported_user_id"})
+    }
+)
 public class UserReport {
 
     @Id
@@ -22,91 +23,127 @@ public class UserReport {
     private Long id;
 
     // Who reported
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporter_id", nullable = false)
     private Profile reporter;
 
     // Who is reported
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reported_user_id", nullable = false)
     private Profile reportedUser;
 
     // Reason category
     @Enumerated(EnumType.STRING)
+    @Column(length = 50, nullable = false)
     private ReportReason reason;
+   
 
-    // Optional message
+    // Optional description from reporter
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // Status for admin
+    // Moderation status
     @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
     private ReportStatus status = ReportStatus.PENDING;
 
-    private LocalDateTime reportedAt = LocalDateTime.now();
+    // When report created
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime reportedAt;
 
-	public Long getId() {
-		return id;
-	}
+    // When admin reviewed
+    private LocalDateTime reviewedAt;
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    // Admin comment / decision reason
+    @Column(length = 500)
+    private String adminComment;
 
-	public Profile getReporter() {
-		return reporter;
-	}
+    // ================= AUTO TIMESTAMP ================= //
+    @PrePersist
+    public void onCreate() {
+        this.reportedAt = LocalDateTime.now();
+    }
 
-	public void setReporter(Profile reporter) {
-		this.reporter = reporter;
-	}
+    // ================= GETTERS & SETTERS ================= //
 
-	public Profile getReportedUser() {
-		return reportedUser;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setReportedUser(Profile reportedUser) {
-		this.reportedUser = reportedUser;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public ReportReason getReason() {
-		return reason;
-	}
+    public Profile getReporter() {
+        return reporter;
+    }
 
-	public void setReason(ReportReason reason) {
-		this.reason = reason;
-	}
+    public void setReporter(Profile reporter) {
+        this.reporter = reporter;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public Profile getReportedUser() {
+        return reportedUser;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public void setReportedUser(Profile reportedUser) {
+        this.reportedUser = reportedUser;
+    }
 
-	public ReportStatus getStatus() {
-		return status;
-	}
+    public ReportReason getReason() {
+        return reason;
+    }
 
-	public void setStatus(ReportStatus status) {
-		this.status = status;
-	}
+    public void setReason(ReportReason reason) {
+        this.reason = reason;
+    }
 
-	public LocalDateTime getReportedAt() {
-		return reportedAt;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setReportedAt(LocalDateTime reportedAt) {
-		this.reportedAt = reportedAt;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public Long getReporterId() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    public ReportStatus getStatus() {
+        return status;
+    }
 
-	
-    
-    
+    public void setStatus(ReportStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getReportedAt() {
+        return reportedAt;
+    }
+
+    public void setReportedAt(LocalDateTime reportedAt) {
+        this.reportedAt = reportedAt;
+    }
+
+    public LocalDateTime getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public void setReviewedAt(LocalDateTime reviewedAt) {
+        this.reviewedAt = reviewedAt;
+    }
+
+    public String getAdminComment() {
+        return adminComment;
+    }
+
+    public void setAdminComment(String adminComment) {
+        this.adminComment = adminComment;
+    }
+
+    // Utility helper methods
+    public Long getReporterId() {
+        return reporter != null ? reporter.getId() : null;
+    }
+
+    public Long getReportedUserId() {
+        return reportedUser != null ? reportedUser.getId() : null;
+    }
 }

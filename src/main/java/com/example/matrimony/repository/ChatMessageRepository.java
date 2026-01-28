@@ -121,4 +121,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
                OR m.receiver.id = :userId
         """)
         void deleteAllByProfileId(@Param("userId") Long userId);
+
+//		List<ChatMessage> findAllBySender_IdOrReceiver_Id(Long userId, Long userId2);
+//
+//		void deleteAllBySender_IdOrReceiver_Id(Long userId, Long userId2);
+        List<ChatMessage> findAllBySender_IdOrReceiver_Id(Long senderId, Long receiverId);
+
+        void deleteAllBySender_IdOrReceiver_Id(Long senderId, Long receiverId);
 }

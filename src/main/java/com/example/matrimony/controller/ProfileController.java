@@ -142,6 +142,7 @@ public class ProfileController {
         dto.setPartnerWork(profile.getPartnerWork());
         dto.setPartnerHobbies(profile.getPartnerHobbies());
         dto.setSports(profile.getSports());
+        dto.setHabbits(profile.getHabbits());
         dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());

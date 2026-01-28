@@ -99,6 +99,7 @@ public class ProfileDto {
     private String partnerWork;
     private String partnerWorkStatus;
     private String partnerHobbies;
+    private String habbits;
     
     // getters & setters
 
@@ -170,6 +171,13 @@ public class ProfileDto {
 	}
 	public String getExperience() {
 		return experience;
+	}
+	
+	public String getHabbits() {
+		return habbits;
+	}
+	public void setHabbits(String habbits) {
+		this.habbits = habbits;
 	}
 	public void setExperience(String experience) {
 		this.experience = experience;
@@ -431,12 +439,7 @@ public class ProfileDto {
 	}
 	
 	
-	public String getWeight() {
-		return weight;
-	}
-	public void setWeight(String weight) {
-		this.weight = weight;
-	}
+
 	public String getSpiritualPath() {
 		return spiritualPath;
 	}

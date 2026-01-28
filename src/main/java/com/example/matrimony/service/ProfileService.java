@@ -411,6 +411,7 @@ public class ProfileService {
         existingProfile.setPartnerEducation(updatedProfile.getPartnerEducation());
         existingProfile.setPartnerWork(updatedProfile.getPartnerWork());
         existingProfile.setPartnerHobbies(updatedProfile.getPartnerHobbies());
+        existingProfile.setHabbits(updatedProfile.getHabbits());
 
         existingProfile.setHobbies(updatedProfile.getHobbies());
         existingProfile.setWeight(updatedProfile.getWeight());

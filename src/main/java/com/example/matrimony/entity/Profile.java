@@ -29,11 +29,16 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "profiles")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+
+
 public class Profile {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
+
+
 
 	private String profileFor;
 
@@ -169,7 +174,7 @@ public class Profile {
 	private String partnerEducation;
 	private String partnerWork;
 	private String partnerHobbies;
-	@Column(name="vegiterian", nullable = false)
+	@Column(name="vegiterian")
 	private String vegiterian;
 
 	// Additional fields from your other file
@@ -182,6 +187,7 @@ public class Profile {
 	private String partnerLocationPref;
 	private String partnerWorkStatus;
 	private boolean premium;
+	private String habbits;
 
 	// for payment experiration
 	@Column(name = "premium_start")
@@ -204,6 +210,15 @@ public class Profile {
 	private LocalDateTime deleteRequestedAt;
 
 	private String sports;
+	
+		@Column(  nullable = true)	
+		private boolean banned;
+
+		@Column(nullable = true)
+		private LocalDateTime bannedAt;
+
+		@Column( name = "ban_reason", columnDefinition = "TEXT", nullable = true)
+		private String banReason;
 	
 	@Column(nullable = false)
     private Boolean approved = Boolean.FALSE;   // admin approval
@@ -961,6 +976,41 @@ public class Profile {
 	public synchronized void setApproved(Boolean approved) {
 		this.approved = approved;
 	}
+	
+	
+
+	public boolean isBanned() {
+		return banned;
+	}
+
+	public void setBanned(boolean banned) {
+		this.banned = banned;
+	}
+
+	public LocalDateTime getBannedAt() {
+		return bannedAt;
+	}
+
+	public void setBannedAt(LocalDateTime bannedAt) {
+		this.bannedAt = bannedAt;
+	}
+
+	public String getBanReason() {
+		return banReason;
+	}
+
+	public void setBanReason(String banReason) {
+		this.banReason = banReason;
+	}
+	
+
+	public String getHabbits() {
+		return habbits;
+	}
+
+	public void setHabbits(String habbits) {
+		this.habbits = habbits;
+	}
 
 	@Override
 	public String toString() {
@@ -991,4 +1041,6 @@ public class Profile {
 				+ ", sentMessages=" + sentMessages + ", receivedMessages=" + receivedMessages + ", payments=" + payments
 				+ ", friends=" + friends + "]";
 	}
+
+	
 }

@@ -12,13 +12,11 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, Long> {
 
     /* =====================================================
        DID A BLOCK B? (Directional)
-       Used to decide who can UNBLOCK
        ===================================================== */
     boolean existsByBlocker_IdAndBlocked_Id(Long blockerId, Long blockedId);
 
     /* =====================================================
        IS THERE ANY BLOCK BETWEEN TWO USERS? (Bidirectional)
-       Used for chat/message restriction
        ===================================================== */
     @Query("""
         SELECT COUNT(ub) > 0
@@ -34,27 +32,43 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, Long> {
     );
 
     /* =====================================================
-       UNBLOCK (ONLY removes one direction)
-       Used ONLY after permission check in service
+       UNBLOCK (single direction)
        ===================================================== */
-    @Transactional
-    @Modifying
-    void deleteByBlocker_IdAndBlocked_Id(Long blockerId, Long blockedId);
+//    @Transactional
+//    @Modifying
+//    @Query("""
+//        DELETE FROM UserBlock ub
+//        WHERE ub.blocker.id = :blockerId
+//          AND ub.blocked.id = :blockedId
+//    """)
+//    void deleteByBlockerAndBlocked(
+//            @Param("blockerId") Long blockerId,
+//            @Param("blockedId") Long blockedId
+//    );
 
     /* =====================================================
-       OPTIONAL – FORCE DELETE BOTH DIRECTIONS (ADMIN / SAFETY)
+       ADMIN DELETE – ALL BLOCK REFERENCES FOR USER
        ===================================================== */
     @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM UserBlock b WHERE b.blocked.id = :userId")
+    void deleteAllByBlockedId(@Param("userId") Long userId);
+
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM UserBlock b WHERE b.blocker.id = :userId")
+    void deleteAllByBlockerId(@Param("userId") Long userId);
+    
     @Modifying
+    @Transactional
     @Query("""
         DELETE FROM UserBlock ub
-        WHERE
-          (ub.blocker.id = :userA AND ub.blocked.id = :userB)
-          OR
-          (ub.blocker.id = :userB AND ub.blocked.id = :userA)
+        WHERE ub.blocker.id = :blockerId
+          AND ub.blocked.id = :blockedId
     """)
-    void deleteBlockBetween(
-            @Param("userA") Long userA,
-            @Param("userB") Long userB
+    void deleteByBlockerAndBlocked(
+            @Param("blockerId") Long blockerId,
+            @Param("blockedId") Long blockedId
     );
+
 }

@@ -62,8 +62,10 @@ public class BlockService {
             throw new RuntimeException("You are not allowed to unblock this user");
         }
 
-        blockRepository.deleteByBlocker_IdAndBlocked_Id(blockerId, blockedId);
+        // ✅ correct method
+        blockRepository.deleteByBlockerAndBlocked(blockerId, blockedId);
     }
+
 
     /* =====================================================
        IS THERE ANY BLOCK BETWEEN TWO USERS (Bidirectional)
