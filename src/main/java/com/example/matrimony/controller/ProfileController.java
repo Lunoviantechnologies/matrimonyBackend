@@ -92,7 +92,7 @@ public class ProfileController {
         dto.setGender(profile.getGender());
         dto.setAboutYourself(profile.getAboutYourself());
         dto.setReligion(profile.getReligion());
-        dto.setCaste(profile.getCaste());
+        dto.setHabbits(profile.getHabbits());
         dto.setSubCaste(profile.getSubCaste());
         dto.setDosham(profile.getDosham());
         dto.setMotherTongue(profile.getMotherTongue());

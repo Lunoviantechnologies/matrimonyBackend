@@ -69,8 +69,8 @@ public class ProfileDto {
     private String livingWith;
     private String childrenDetails;
     private String vegiterian;
-
-
+    private String gothram;
+	
     // Education & career
     private String highestEducation;
     private String collegeName;
@@ -173,12 +173,7 @@ public class ProfileDto {
 		return experience;
 	}
 	
-	public String getHabbits() {
-		return habbits;
-	}
-	public void setHabbits(String habbits) {
-		this.habbits = habbits;
-	}
+	
 	public void setExperience(String experience) {
 		this.experience = experience;
 	}
@@ -437,8 +432,6 @@ public class ProfileDto {
 	public String getPartnerReligion() {
 		return partnerReligion;
 	}
-	
-	
 
 	public String getSpiritualPath() {
 		return spiritualPath;
@@ -602,6 +595,18 @@ public class ProfileDto {
 	}
 	public void setVegiterian(String vegiterian) {
 		this.vegiterian = vegiterian;
+	}
+	public String getGothram() {
+		return gothram;
+	}
+	public void setGothram(String gothram) {
+		this.gothram = gothram;
+	}
+	public String getHabbits() {
+		return habbits;
+	}
+	public void setHabbits(String habbits) {
+		this.habbits = habbits;
 	}
 	 
     
