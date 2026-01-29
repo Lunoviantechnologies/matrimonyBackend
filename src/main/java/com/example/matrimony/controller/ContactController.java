@@ -1,11 +1,22 @@
 package com.example.matrimony.controller;
 
-import com.example.matrimony.dto.ContactRequest;
-import com.example.matrimony.service.EmailService;
-import jakarta.validation.Valid;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.matrimony.dto.ContactRequest;
+import com.example.matrimony.service.EmailService;
+import com.example.matrimony.service.Notificationadminservice;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/contact")
@@ -13,6 +24,9 @@ import org.springframework.web.bind.annotation.*;
 public class ContactController {
 
     private final EmailService emailService;
+    @Autowired
+    private Notificationadminservice adminNotificationService;
+
 
     public ContactController(EmailService emailService) {
         this.emailService = emailService;
@@ -24,11 +38,31 @@ public class ContactController {
         return ResponseEntity.ok("Contact API is working successfully!");
     }
 
-    // POST API
     @PostMapping("/send")
-    public ResponseEntity<String> sendContact(@Valid @RequestBody ContactRequest contactRequest) {
+    public ResponseEntity<String> sendContact(
+            @Valid @RequestBody ContactRequest contactRequest) {
+
+        // ================== SEND EMAIL ==================
         emailService.sendContactMessage(contactRequest);
+
+        // ================== 🔔 ADMIN NOTIFICATION ==================
+        String adminMessage =
+                "New contact message received from " +
+                contactRequest.getName() +
+                " (" + contactRequest.getEmail() + ")";
+
+        adminNotificationService.notifyAdmin(
+                "CONTACT_MESSAGE",
+                adminMessage,
+                Map.of(
+                        "name", contactRequest.getName(),
+                        "email", contactRequest.getEmail(),
+                        "message", contactRequest.getMessage()
+                )
+        );
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body("Message sent successfully!");
     }
+
 }

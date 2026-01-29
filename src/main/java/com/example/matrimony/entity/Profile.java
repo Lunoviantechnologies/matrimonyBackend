@@ -37,9 +37,6 @@ public class Profile {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-
-
-
 	private String profileFor;
 
 	@NotBlank
@@ -72,6 +69,7 @@ public class Profile {
 	@Min(18)
 	private int age;
 
+	@JsonFormat(pattern = "yyyy-MM-dd")
 	private LocalDate dateOfBirth;
 
 	@Email
@@ -216,10 +214,12 @@ public class Profile {
 
 	private String sports;
 	
+
 		@Column(  nullable = false)	
 		private boolean banned;
 		private LocalDateTime bannedAt;
 		@Column(length = 255)
+
 		private String banReason;
 	
 	@Column(nullable = false)

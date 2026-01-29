@@ -1,12 +1,14 @@
 package com.example.matrimony.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.matrimony.dto.NotificationDto;
 import com.example.matrimony.dto.TicketRequest;
 import com.example.matrimony.entity.Ticket;
 import com.example.matrimony.repository.TicketRepository;
@@ -16,8 +18,11 @@ import jakarta.validation.Valid;
 @Service
 public class TicketService {
 	
-	 @Autowired
-	    private NotificationService notificationService; 
+	@Autowired
+	private Notificationadminservice adminNotificationService;
+	
+	@Autowired
+	private NotificationService notiservice;
 
     private final TicketRepository repo;
     private final EmailService emailService;
@@ -42,7 +47,7 @@ public class TicketService {
         Ticket savedTicket = repo.save(t);
 
         // 🔔 SEND NOTIFICATION (LIKE CHAT)
-        Notificationadminservice.sendTicketNotification(
+        adminNotificationService.sendTicketNotification(
                 savedTicket.getMemberId(),   
                 "New Support Ticket",
                 "Ticket raised by " + savedTicket.getName()
@@ -66,6 +71,7 @@ public class TicketService {
     /**
      * Resolve ticket → send email → delete from DB
      */
+    
     @Transactional
     public void resolveAndDelete(Long ticketId) {
 
@@ -81,7 +87,42 @@ public class TicketService {
                 ticket.getId()
         );
 
-        // 2️⃣ Delete ticket
+        // 2️⃣ 🔔 Send Notification (same pattern as friend request)
+        NotificationDto notif = new NotificationDto();     
+        notif.setType("TICKET_RESOLVED");
+        notif.setMessage(
+                "Your ticket #" + ticket.getId() + " has been resolved successfully."
+        );
+        notif.setData(
+                Map.of(
+                        "ticketId", ticket.getId(),
+                        "status", "RESOLVED"
+                )
+        );
+
+        notiservice.sendToUserAndSave(notif);
+
+        // 3️⃣ Delete ticket
         repo.delete(ticket);
     }
+
+    
+//    @Transactional
+//    public void resolveAndDelete(Long ticketId) {
+//
+//        Ticket ticket = repo.findById(ticketId)
+//                .orElseThrow(() ->
+//                        new RuntimeException("Ticket not found with id: " + ticketId)
+//                );
+//
+//        // 1️⃣ Send email BEFORE delete
+//        emailService.sendTicketResolvedEmail(
+//                ticket.getEmail(),
+//                ticket.getName(),
+//                ticket.getId()
+//        );
+//
+//        // 2️⃣ Delete ticket
+//        repo.delete(ticket);
+//    }
 }
