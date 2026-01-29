@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.matrimony.dto.BanRequest;
 import com.example.matrimony.entity.UserReport;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -78,6 +79,13 @@ public class AdminReportController {
 
         adminReportService.permanentDeleteUser(userId);
         return ResponseEntity.ok("User permanently deleted.");
+    }
+    
+    @PutMapping("/banuser/{userId}")
+    public ResponseEntity<String> banUser(@PathVariable Long userId,
+                                          @RequestBody BanRequest request) {
+        adminReportService.banUser(userId, request.getReason());
+        return ResponseEntity.ok("User banned successfully");
     }
     
     //Get All Api

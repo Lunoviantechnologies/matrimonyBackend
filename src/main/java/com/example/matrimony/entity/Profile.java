@@ -215,9 +215,11 @@ public class Profile {
 	private LocalDateTime deleteRequestedAt;
 
 	private String sports;
-		
-		private Boolean banned;
+	
+		@Column(  nullable = false)	
+		private boolean banned;
 		private LocalDateTime bannedAt;
+		@Column(length = 255)
 		private String banReason;
 	
 	@Column(nullable = false)
@@ -973,11 +975,11 @@ public class Profile {
 	
 	
 
-	public Boolean isBanned() {
+	public boolean isBanned() {
 		return banned;
 	}
 
-	public void setBanned(Boolean banned) {
+	public void setBanned(boolean banned) {
 		this.banned = banned;
 	}
 

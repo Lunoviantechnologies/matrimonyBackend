@@ -180,5 +180,23 @@ public class AdminReportService {
         // 7️⃣ FINAL DELETE (NOW FK SAFE)
         profileRepo.delete(profile);
     }
+    
+    @Transactional
+    public void banUser(Long userId, String reason) {
+
+        Profile profile = profileRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (profile.isBanned()) {
+            throw new RuntimeException("User already banned");
+        }
+
+        profile.setBanned(true);
+        profile.setActive(false); // disable login
+        profile.setBannedAt(LocalDateTime.now());
+        profile.setBanReason(reason);
+
+        profileRepo.save(profile);
+    }
 
 }
