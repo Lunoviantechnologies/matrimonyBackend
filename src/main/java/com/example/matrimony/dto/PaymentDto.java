@@ -9,7 +9,7 @@ public class PaymentDto {
     private String name;
 
     private String planCode;
-    private Integer amount;       // RUPEES
+    private Long amount; // RUPEES ✅ only once
     private String currency;
     private String status;
 
@@ -23,21 +23,8 @@ public class PaymentDto {
     private LocalDateTime premiumEnd;
     private String expiryMessage;
 
-   
+    // ================= GETTERS & SETTERS =================
 
-    public synchronized LocalDateTime getPremiumEnd() {
-		return premiumEnd;
-	}
-	public synchronized void setPremiumEnd(LocalDateTime premiumEnd) {
-		this.premiumEnd = premiumEnd;
-	}
-	public synchronized String getExpiryMessage() {
-		return expiryMessage;
-	}
-	public synchronized void setExpiryMessage(String expiryMessage) {
-		this.expiryMessage = expiryMessage;
-	}
-	// getters & setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -50,8 +37,8 @@ public class PaymentDto {
     public String getPlanCode() { return planCode; }
     public void setPlanCode(String planCode) { this.planCode = planCode; }
 
-    public Integer getAmount() { return amount; }
-    public void setAmount(Integer amount) { this.amount = amount; }
+    public Long getAmount() { return amount; }
+    public void setAmount(Long amount) { this.amount = amount; }
 
     public String getCurrency() { return currency; }
     public void setCurrency(String currency) { this.currency = currency; }
@@ -73,4 +60,10 @@ public class PaymentDto {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getPremiumEnd() { return premiumEnd; }
+    public void setPremiumEnd(LocalDateTime premiumEnd) { this.premiumEnd = premiumEnd; }
+
+    public String getExpiryMessage() { return expiryMessage; }
+    public void setExpiryMessage(String expiryMessage) { this.expiryMessage = expiryMessage; }
 }
