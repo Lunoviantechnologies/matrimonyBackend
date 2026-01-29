@@ -16,12 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.matrimony.dto.CreateOrderRequest;
 import com.example.matrimony.dto.PaymentDto;
@@ -43,17 +38,14 @@ import com.razorpay.Payment;
 public class PaymentController {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
-   
-    private final EmailService emailService;
-    
-    private final PricingService pricingService;
-    
-    private final SubscriptionPlanRepository subscriptionPlanRepository;
 
     private final RazorpayService razorpayService;
     private final PaymentRecordRepository paymentRepo;
     private final ProfileRepository profileRepo;
     private final PaymentNotificationService notificationService;
+    private final EmailService emailService;
+    private final SubscriptionPlanRepository subscriptionPlanRepo;
+    private final PricingService pricingService;
 
     @Value("${razorpay.key_id}")
     private String razorpayKeyId;
@@ -61,80 +53,54 @@ public class PaymentController {
     @Value("${razorpay.key_secret}")
     private String razorpayKeySecret;
 
-    public PaymentController(
-            RazorpayService razorpayService,
-            PaymentRecordRepository paymentRepo,
-            ProfileRepository profileRepo,
-            PaymentNotificationService notificationService,
-            EmailService emailService,
-            SubscriptionPlanRepository subscriptionPlanRepository,
-            PricingService pricingService) {
+    public PaymentController(RazorpayService razorpayService,
+                             PaymentRecordRepository paymentRepo,
+                             ProfileRepository profileRepo,
+                             PaymentNotificationService notificationService,
+                             EmailService emailService,
+                             SubscriptionPlanRepository subscriptionPlanRepo,
+                             PricingService pricingService) {
+
         this.razorpayService = razorpayService;
         this.paymentRepo = paymentRepo;
         this.profileRepo = profileRepo;
         this.notificationService = notificationService;
-        this.emailService=emailService;
-        this.pricingService=pricingService;
-        this.subscriptionPlanRepository = subscriptionPlanRepository;
+        this.emailService = emailService;
+        this.subscriptionPlanRepo = subscriptionPlanRepo;
+        this.pricingService = pricingService;
     }
 
     // ============================================================
     // CREATE ORDER
     // ============================================================
     @PostMapping("/create-order")
-    
     public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest req) {
 
-        // ================== VALIDATION ==================
-        if (req == null || req.getProfileId() == null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "missing_profileId"));
+        if (req == null || req.getProfileId() == null || req.getPlanCode() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "invalid_request"));
         }
 
-        if (req.getPlanCode() == null || req.getPlanCode().isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "invalid_planCode"));
-        }
-
-        // ================== PROFILE ==================
         Profile profile = profileRepo.findById(req.getProfileId())
                 .orElseThrow(() -> new RuntimeException("profile_not_found"));
 
-        // ================== PRICE RESOLUTION (IMPORTANT) ==================
-        // ✅ THIS REPLACES PLAN_PRICES_RUPEES COMPLETELY
-       
+        // ✅ Enterprise price source
+        long rupees = pricingService.calculateFinalPrice(req.getPlanCode());
+        long paise = rupees * 100;
 
-     // ================== PRICE RESOLUTION (IMPORTANT) ==================
-     // ✅ SINGLE SOURCE OF TRUTH FOR MONEY
-     long rupees = pricingService.calculateFinalPrice(req.getPlanCode());
-     long paise = rupees * 100;
+        PaymentRecord rec = new PaymentRecord();
+        rec.setProfile(profile);
+        rec.setUserId(profile.getId());
+        rec.setName(getDisplayName(profile));
+        rec.setPlanCode(req.getPlanCode());
+        rec.setAmount(rupees); // ✅ LONG NOT INT
+        rec.setCurrency("INR");
+        rec.setStatus("PENDING");
+        rec.setCreatedAt(LocalDateTime.now());
 
+        paymentRepo.save(rec);
 
-  // ================== CREATE PAYMENT RECORD ==================
-     PaymentRecord rec = new PaymentRecord();
-     rec.setProfile(profile);
-     rec.setUserId(profile.getId());
-     rec.setName(getDisplayName(profile));
-
-     // ✅ Plan code comes from request (single source)
-     rec.setPlanCode(req.getPlanCode());
-
-     // ✅ Amount from pricing service
-     rec.setAmount((int) rupees);   // or change column to Long (recommended)
-     rec.setCurrency("INR");
-     rec.setStatus("PENDING");
-     rec.setCreatedAt(LocalDateTime.now());
-
-     paymentRepo.save(rec);
-
-
-        // ================== RAZORPAY ORDER ==================
         try {
-            Order order = razorpayService.createOrder(
-                    paise,
-                    "receipt_" + rec.getId()
-            );
-
+            Order order = razorpayService.createOrder(paise, "receipt_" + rec.getId());
             rec.setRazorpayOrderId(order.get("id"));
             paymentRepo.save(rec);
 
@@ -146,127 +112,46 @@ public class PaymentController {
                     "paymentRecordId", rec.getId()
             ));
 
-        } catch (Exception ex) {
-
+        } catch (Exception e) {
             rec.setStatus("FAILED");
             paymentRepo.save(rec);
-
-            log.error("Error creating Razorpay order", ex);
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "payment_order_failed"));
+            log.error("Razorpay order failed", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "order_failed"));
         }
     }
-
 
     // ============================================================
     // VERIFY PAYMENT
     // ============================================================
-//    @PostMapping("/verify")
-//    @Transactional
-//    public ResponseEntity<?> verify(@RequestBody Map<String, String> body) throws Exception {
-//
-//        String paymentId = body.get("razorpay_payment_id");
-//        String orderId = body.get("razorpay_order_id");
-//        String signature = body.get("razorpay_signature");
-//
-//        if (paymentId == null || orderId == null || signature == null) {
-//            return ResponseEntity.badRequest().body(Map.of("error", "missing_parameters"));
-//        }
-//
-//        PaymentRecord rec = paymentRepo.findByRazorpayOrderId(orderId)
-//                .orElseThrow(() -> new RuntimeException("order_not_found"));
-//
-//        // ✅ IDEMPOTENCY CHECK
-//        if ("PAID".equals(rec.getStatus())) {
-//            return ResponseEntity.ok(Map.of("status", "already_verified"));
-//        }
-//
-//        String generated = hmac(orderId + "|" + paymentId, razorpayKeySecret);
-//
-//        if (!generated.equals(signature)) {
-//            rec.setStatus("FAILED");
-//            paymentRepo.save(rec);
-//            // ❌ payment failed → premium false
-//            Profile profile = rec.getProfile();
-//            if (profile != null) {
-//                profile.setPremium(false);
-//            }
-//            return ResponseEntity.badRequest().body(Map.of("error", "signature_mismatch"));
-//        }
-//
-//        // 🔍 Fetch payment details from Razorpay (INTERNAL ONLY)
-//        Payment payment = razorpayService.fetchPayment(paymentId);
-//
-//        rec.setTransactionId(paymentId);
-//        rec.setRazorpayPaymentId(paymentId);
-//        rec.setRazorpaySignature(signature);
-//        rec.setPaymentMode(payment.get("method")); // CARD / UPI / NETBANKING
-//        rec.setStatus("PAID");
-//        
-//     // ✅ payment success → premium true
-//        Profile profile1 = rec.getProfile();
-//        if (profile1 != null) {
-//            profile1.setPremium(true);
-//            profile1.setPremiumStart(LocalDateTime.now());
-//            profile1.setPremiumEnd(LocalDateTime.now().plusMonths(1)); // example
-//        }
-//        paymentRepo.save(rec);
-//
-//        TransactionSynchronizationManager.registerSynchronization(
-//                new TransactionSynchronization() {
-//                    @Override
-//                    public void afterCommit() {
-//                        safeNotify(rec);
-//                    }
-//                }
-//        );
-//
-//        return ResponseEntity.ok(Map.of("status", "success"));
-//    }
-    
     @PostMapping("/verify")
     @Transactional
     public ResponseEntity<?> verify(@RequestBody Map<String, String> body) throws Exception {
 
-        // ================== VALIDATION ==================
         String paymentId = body.get("razorpay_payment_id");
-        String orderId   = body.get("razorpay_order_id");
+        String orderId = body.get("razorpay_order_id");
         String signature = body.get("razorpay_signature");
 
         if (paymentId == null || orderId == null || signature == null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "missing_parameters"));
+            return ResponseEntity.badRequest().body(Map.of("error", "missing_parameters"));
         }
 
-        // ================== FETCH PAYMENT RECORD ==================
         PaymentRecord rec = paymentRepo.findByRazorpayOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("order_not_found"));
 
-        // ================== IDEMPOTENCY ==================
+        // ✅ Idempotency
         if ("PAID".equals(rec.getStatus())) {
             return ResponseEntity.ok(Map.of("status", "already_verified"));
         }
 
-        // ================== SIGNATURE VERIFICATION ==================
+        // ✅ Verify signature
         String generated = hmac(orderId + "|" + paymentId, razorpayKeySecret);
-
         if (!generated.equals(signature)) {
-
             rec.setStatus("FAILED");
             paymentRepo.save(rec);
-
-            Profile profile = rec.getProfile();
-            if (profile != null) {
-                profile.setPremium(false);
-                profile.setPremiumEnd(LocalDateTime.now());
-                profileRepo.save(profile);
-            }
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "signature_mismatch"));
+            return ResponseEntity.badRequest().body(Map.of("error", "signature_invalid"));
         }
 
-        // ================== FETCH PAYMENT DETAILS ==================
+        // Fetch payment details
         Payment payment = razorpayService.fetchPayment(paymentId);
 
         rec.setTransactionId(paymentId);
@@ -274,52 +159,50 @@ public class PaymentController {
         rec.setRazorpaySignature(signature);
         rec.setPaymentMode(payment.get("method"));
         rec.setStatus("PAID");
-
         paymentRepo.save(rec);
 
-     // ================== APPLY PREMIUM USING DB PLAN ==================
+        // ================= APPLY PREMIUM =================
         Profile profile = rec.getProfile();
         if (profile != null) {
 
-            // ✅ FETCH PLAN DIRECTLY (NO PRICING LOGIC HERE)
-            SubscriptionPlan plan = subscriptionPlanRepository
+            SubscriptionPlan plan = subscriptionPlanRepo
                     .findByPlanCodeAndActiveTrue(rec.getPlanCode())
-                    .orElseThrow(() -> new RuntimeException("Invalid subscription plan"));
+                    .orElseThrow(() -> new RuntimeException("plan_not_found"));
 
             long months = plan.getDurationMonths();
             LocalDateTime now = LocalDateTime.now();
 
-            // ✅ EXTEND IF ACTIVE ELSE START NEW
-            LocalDateTime baseTime =
-                    profile.getPremiumEnd() != null &&
+            LocalDateTime baseTime = profile.getPremiumEnd() != null &&
                     profile.getPremiumEnd().isAfter(now)
-                            ? profile.getPremiumEnd()
-                            : now;
+                    ? profile.getPremiumEnd()
+                    : now;
 
             profile.setPremium(true);
-            profile.setPremiumStart(now);
-            profile.setPremiumEnd(baseTime.plusMonths(months));
 
+            // ✅ DO NOT OVERRIDE START DATE IF RENEWAL
+            if (profile.getPremiumStart() == null) {
+                profile.setPremiumStart(now);
+            }
+
+            profile.setPremiumEnd(baseTime.plusMonths(months));
             profileRepo.save(profile);
         }
 
-        // ================== POST-COMMIT NOTIFICATIONS ==================
+        // ================= SEND EMAIL AFTER COMMIT =================
         TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    safeNotify(rec);
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        safeNotify(rec);
+                    }
                 }
-            }
         );
 
         return ResponseEntity.ok(Map.of("status", "success"));
     }
 
-
-
     // ============================================================
-    // USER READ APIs
+    // USER PAYMENT HISTORY
     // ============================================================
     @GetMapping("/successful/{profileId}")
     public List<PaymentDto> getPayments(@PathVariable Long profileId) {
@@ -335,32 +218,6 @@ public class PaymentController {
     }
 
     // ============================================================
-    // ADMIN APIs
-    // ============================================================
-//    @GetMapping("/successful")
-//    public List<PaymentDto> getAllSuccessfulPayments() {
-//        return paymentRepo.findByStatusOrderByCreatedAtDesc("PAID")
-//                .stream().map(this::toDto).toList();
-//    }
-    @GetMapping("/successful")
-    public List<PaymentDto> getAllPaymentsByStatuses() {
-        List<String> statuses = List.of("PAID", "CREATED", "FAILED");
-        return paymentRepo.findByStatusInOrderByCreatedAtDesc(statuses)
-                          .stream()
-                          .map(this::toDto)
-                          .toList();
-    }
-
-
-    // admin: payment by paymentId
-    @GetMapping("/admin/successful/{paymentId}")
-    public ResponseEntity<?> getSuccessfulPaymentById(@PathVariable Long paymentId) {
-        return paymentRepo.findByIdAndStatus(paymentId, "PAID")
-                .map(rec -> ResponseEntity.ok(toDto(rec)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // ============================================================
     // HELPERS
     // ============================================================
     private PaymentDto toDto(PaymentRecord rec) {
@@ -369,22 +226,24 @@ public class PaymentController {
         dto.setUserId(rec.getUserId());
         dto.setName(rec.getName());
         dto.setPlanCode(rec.getPlanCode());
-        dto.setAmount(Math.toIntExact(rec.getAmount() / 100));
+        dto.setAmount(rec.getAmount()); // ✅ LONG
         dto.setCurrency(rec.getCurrency());
         dto.setStatus(rec.getStatus());
         dto.setRazorpayOrderId(rec.getRazorpayOrderId());
         dto.setRazorpayPaymentId(rec.getRazorpayPaymentId());
         dto.setCreatedAt(rec.getCreatedAt());
+
         if (rec.getProfile() != null) {
-            LocalDateTime premiumEnd = rec.getProfile().getPremiumEnd();
-            dto.setPremiumEnd(premiumEnd);
-            dto.setExpiryMessage(buildExpiryMessage(premiumEnd));
+            LocalDateTime end = rec.getProfile().getPremiumEnd();
+            dto.setPremiumEnd(end);
+            dto.setExpiryMessage(buildExpiryMessage(end));
         }
+
         return dto;
     }
 
+    // ================= SAFE EMAIL + SMS =================
     private void safeNotify(PaymentRecord rec) {
-
         try {
             Profile profile = rec.getProfile();
 
@@ -393,17 +252,18 @@ public class PaymentController {
                     profile.getMobileNumber(),
                     rec.getName(),
                     rec.getPlanCode(),
-                    Long.valueOf(rec.getAmount()),
+                    rec.getAmount(),
                     rec.getRazorpayOrderId(),
-                    rec.getRazorpayPaymentId()
+                    rec.getRazorpayPaymentId(),
+                    profile.getPremiumEnd() 
             );
 
-            // ✅ USE EXISTING EmailService
             emailService.sendPaymentSuccessEmail(
                     profile.getEmailId(),
                     rec.getName(),
                     rec.getPlanCode(),
-                    Math.toIntExact(rec.getAmount() / 100), 
+                    rec.getAmount(),
+                    rec.getRazorpayOrderId(),
                     rec.getRazorpayPaymentId(),
                     profile.getPremiumEnd()
             );
@@ -412,8 +272,6 @@ public class PaymentController {
             log.error("Notification failed", e);
         }
     }
-
-
 
     private String getDisplayName(Profile p) {
         return (p.getFirstName() + " " +
@@ -428,23 +286,10 @@ public class PaymentController {
         for (byte b : raw) sb.append(String.format("%02x", b));
         return sb.toString();
     }
-    
-    // Expiry logic for sending the messages
-    private String buildExpiryMessage(LocalDateTime premiumEnd) {
 
-        if (premiumEnd == null) {
-            return "No active plan";
-        }
-
-        if (premiumEnd.isBefore(LocalDateTime.now())) {
-            return "Your plan has expired";
-        }
-
-        return "Your plan will expire on " +
-                premiumEnd.toLocalDate() +
-                " at " +
-                premiumEnd.toLocalTime().withSecond(0).withNano(0);
+    private String buildExpiryMessage(LocalDateTime end) {
+        if (end == null) return "No active plan";
+        if (end.isBefore(LocalDateTime.now())) return "Your plan has expired";
+        return "Your plan will expire on " + end.toLocalDate() + " at " + end.toLocalTime().withSecond(0).withNano(0);
     }
-    
-
 }

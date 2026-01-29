@@ -90,7 +90,7 @@ public class ProfileService {
 
         profile.setGender(req.getGender());
         profile.setReligion(req.getReligion());
-        profile.setCaste(req.getCaste());
+   
         profile.setSubCaste(req.getSubCaste());
         profile.setDosham(req.getDosham());
         profile.setMaritalStatus(req.getMaritalStatus());
@@ -273,6 +273,7 @@ public class ProfileService {
         if (data.getAncestralOrigin() != null) existing.setAncestralOrigin(data.getAncestralOrigin());
         if (data.getLivingWith() != null) existing.setLivingWith(data.getLivingWith());
         if (data.getChildrenDetails() != null) existing.setChildrenDetails(data.getChildrenDetails());
+        if (data.getVegiterian() != null) existing.setVegiterian(data.getVegiterian());
 
         // Photo (byte[]) - overwrite only when provided (null-safe)
         if (data.getUpdatePhoto() != null) {
@@ -351,10 +352,11 @@ public class ProfileService {
 
         // ---------- COMMUNITY ----------
         existingProfile.setReligion(updatedProfile.getReligion());
-        existingProfile.setCaste(updatedProfile.getCaste());
+       
         existingProfile.setSubCaste(updatedProfile.getSubCaste());
         existingProfile.setDosham(updatedProfile.getDosham());
         existingProfile.setMotherTongue(updatedProfile.getMotherTongue());
+        existingProfile.setSpiritualPath(updatedProfile.getSpiritualPath());
 
         // ---------- ACCOUNT ----------
         existingProfile.setMembershipType(updatedProfile.getMembershipType());
@@ -381,7 +383,7 @@ public class ProfileService {
         existingProfile.setAncestralOrigin(updatedProfile.getAncestralOrigin());
         existingProfile.setLivingWith(updatedProfile.getLivingWith());
         existingProfile.setChildrenDetails(updatedProfile.getChildrenDetails());
-
+        existingProfile.setHabbits(updatedProfile.getHabbits());
         // ---------- EDUCATION & CAREER ----------
         existingProfile.setHighestEducation(updatedProfile.getHighestEducation());
         existingProfile.setCollegeName(updatedProfile.getCollegeName());
@@ -409,6 +411,7 @@ public class ProfileService {
         existingProfile.setPartnerEducation(updatedProfile.getPartnerEducation());
         existingProfile.setPartnerWork(updatedProfile.getPartnerWork());
         existingProfile.setPartnerHobbies(updatedProfile.getPartnerHobbies());
+        existingProfile.setHabbits(updatedProfile.getHabbits());
 
         existingProfile.setHobbies(updatedProfile.getHobbies());
         existingProfile.setWeight(updatedProfile.getWeight());
@@ -418,6 +421,7 @@ public class ProfileService {
         existingProfile.setManglik(updatedProfile.getManglik());
         existingProfile.setPartnerLocationPref(updatedProfile.getPartnerLocationPref());
         existingProfile.setPartnerWorkStatus(updatedProfile.getPartnerWorkStatus());
+        existingProfile.setVegiterian(updatedProfile.getVegiterian());
 
         // ---------- FILES ----------
 //        existingProfile.setUpdatePhoto(updatedProfile.getUpdatePhoto());

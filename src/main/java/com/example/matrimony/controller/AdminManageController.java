@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.matrimony.dto.ChatMessageDto;
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.entity.Profile;
@@ -40,7 +42,7 @@ import com.example.matrimony.service.ProfileService;
 @RestController
 @RequestMapping("/api/admin")
 public class AdminManageController {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(AdminManageController.class);
 
     private final ProfileRepository profileRepository;
@@ -53,7 +55,7 @@ public class AdminManageController {
         this.chatService = chatService;
     }
 
-   
+
     @GetMapping("/profiles")
     public ResponseEntity<List<Profile>> listProfiles() {
 
@@ -83,12 +85,14 @@ public class AdminManageController {
         return ResponseEntity.ok(profiles);
     }
 
-    
-    
+
+
     @GetMapping("/profiles/{id}")
     public ResponseEntity<ProfileDto> getProfile(@PathVariable Long id) {
         Optional<Profile> p = profileRepository.findById(id);
-        if (p.isEmpty()) return ResponseEntity.notFound().build();
+        if (p.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
 
         Profile profile = p.get();
         ProfileDto dto = new ProfileDto();
@@ -106,7 +110,7 @@ public class AdminManageController {
         dto.setGender(profile.getGender());
         dto.setAboutYourself(profile.getAboutYourself());
         dto.setReligion(profile.getReligion());
-        dto.setCaste(profile.getCaste());
+
         dto.setSubCaste(profile.getSubCaste());
         dto.setDosham(profile.getDosham());
         dto.setMotherTongue(profile.getMotherTongue());
@@ -116,7 +120,7 @@ public class AdminManageController {
         dto.setweight(profile.getWeight());
         dto.setHobbies(profile.getHobbies());
         dto.setAscendant(profile.getAscendant());
-        dto.setBasicPlanetaryPosition(profile.getBasicPlanetaryPosition());       
+        dto.setBasicPlanetaryPosition(profile.getBasicPlanetaryPosition());
         dto.setFamilyStatus(profile.getFamilyStatus());
         dto.setFamilyType(profile.getFamilyType());
         dto.setHighestEducation(profile.getHighestEducation());
@@ -137,6 +141,7 @@ public class AdminManageController {
         dto.setMotherName(profile.getMotherName());
         dto.setSiblings(profile.getSiblings());
         dto.setRashi(profile.getRashi());
+        dto.setSpiritualPath(profile.getSpiritualPath());
         dto.setNakshatra(profile.getNakshatra());
         dto.setPartnerAgeRange(profile.getPartnerAgeRange());
         dto.setPartnerEducation(profile.getPartnerEducation());
@@ -154,10 +159,13 @@ public class AdminManageController {
         dto.setPartnerReligion(profile.getPartnerReligion());
         dto.setPartnerWork(profile.getPartnerWork());
         dto.setPartnerHobbies(profile.getPartnerHobbies());
+        dto.setGothram(profile.getGothram());
         dto.setSports(profile.getSports());
+        dto.setHabbits(profile.getHabbits());
+        dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());
-       
+
         if (profile.getPayments() != null && !profile.getPayments().isEmpty()) {
 
             List<PaymentDto> paymentDtos = profile.getPayments()
@@ -170,7 +178,7 @@ public class AdminManageController {
                         paymentDto.setName(payment.getName());
 
                         paymentDto.setPlanCode(payment.getPlanCode());
-                        paymentDto.setAmount((int) (payment.getAmount() / 100));
+                        paymentDto.setAmount(payment.getAmount() / 100);
                         paymentDto.setCurrency(payment.getCurrency());
                         paymentDto.setStatus(payment.getStatus());
 
@@ -217,10 +225,10 @@ public class AdminManageController {
         }
 
 
-       
+
         return ResponseEntity.ok(dto);
     }
- 
+
    // @PreAuthorize("hasAnyAuthority('ADMIN','ROLE_ADMIN')")
   //  @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/delete/{id}")
@@ -276,17 +284,42 @@ public class AdminManageController {
 
 
         // --- BASIC DETAILS ---
-        if (updatedDto.getProfileFor() != null) existing.setProfileFor(updatedDto.getProfileFor());
-        if (updatedDto.getFirstName() != null) existing.setFirstName(updatedDto.getFirstName());
-        if (updatedDto.getLastName() != null) existing.setLastName(updatedDto.getLastName());
-        if (updatedDto.getMobileNumber() != null) existing.setMobileNumber(updatedDto.getMobileNumber());
-        if (updatedDto.getDateOfBirth() != null) existing.setDateOfBirth(updatedDto.getDateOfBirth());
-        if (updatedDto.getGender() != null) existing.setGender(updatedDto.getGender());
-        if (updatedDto.getAboutYourself() != null) existing.setAboutYourself(updatedDto.getAboutYourself());
-        if (updatedDto.getAge() != null) existing.setAge(updatedDto.getAge());
-        if (updatedDto.getRole() != null) existing.setRole(updatedDto.getRole());
-        if (updatedDto.getCreatePassword() != null) existing.setCreatePassword(updatedDto.getCreatePassword());
-        if (updatedDto.getSports() != null) existing.setSports(updatedDto.getSports());
+        if (updatedDto.getProfileFor() != null) {
+			existing.setProfileFor(updatedDto.getProfileFor());
+		}
+        if (updatedDto.getFirstName() != null) {
+			existing.setFirstName(updatedDto.getFirstName());
+		}
+        if (updatedDto.getLastName() != null) {
+			existing.setLastName(updatedDto.getLastName());
+		}
+        if (updatedDto.getMobileNumber() != null) {
+			existing.setMobileNumber(updatedDto.getMobileNumber());
+		}
+        if (updatedDto.getDateOfBirth() != null) {
+			existing.setDateOfBirth(updatedDto.getDateOfBirth());
+		}
+        if (updatedDto.getGender() != null) {
+			existing.setGender(updatedDto.getGender());
+		}
+        if (updatedDto.getAboutYourself() != null) {
+			existing.setAboutYourself(updatedDto.getAboutYourself());
+		}
+        if (updatedDto.getAge() != null) {
+			existing.setAge(updatedDto.getAge());
+		}
+        if (updatedDto.getRole() != null) {
+			existing.setRole(updatedDto.getRole());
+		}
+        if (updatedDto.getVegiterian() != null) {
+			existing.setVegiterian(updatedDto.getVegiterian());
+		}
+        if (updatedDto.getCreatePassword() != null) {
+			existing.setCreatePassword(updatedDto.getCreatePassword());
+		}
+        if (updatedDto.getSports() != null) {
+			existing.setSports(updatedDto.getSports());
+		}
 
         // --- EMAIL ---
         if (updatedDto.getEmailId() != null && !updatedDto.getEmailId().equals(existing.getEmailId())) {
@@ -298,82 +331,194 @@ public class AdminManageController {
      //   if (updatedDto.getEmailVerified() != null) existing.setEmailVerified(updatedDto.getEmailVerified());
 
         // --- IDENTITY / PHYSICAL ---
-        if (updatedDto.getHeight() != null) existing.setHeight(updatedDto.getHeight());
-        if (updatedDto.getweight() != null) existing.setWeight(updatedDto.getweight());
-        if (updatedDto.getBodyType() != null) existing.setBodyType(updatedDto.getBodyType());
-        if (updatedDto.getComplexion() != null) existing.setComplexion(updatedDto.getComplexion());
-        if (updatedDto.getExperience() != null) existing.setExperience(updatedDto.getExperience());
+        if (updatedDto.getHeight() != null) {
+			existing.setHeight(updatedDto.getHeight());
+		}
+        if (updatedDto.getweight() != null) {
+			existing.setWeight(updatedDto.getweight());
+		}
+        if (updatedDto.getBodyType() != null) {
+			existing.setBodyType(updatedDto.getBodyType());
+		}
+        if (updatedDto.getComplexion() != null) {
+			existing.setComplexion(updatedDto.getComplexion());
+		}
+        if (updatedDto.getExperience() != null) {
+			existing.setExperience(updatedDto.getExperience());
+		}
 
         // --- RELIGION & PERSONAL ---
-        if (updatedDto.getReligion() != null) existing.setReligion(updatedDto.getReligion());
-        if (updatedDto.getCaste() != null) existing.setCaste(updatedDto.getCaste());
-        if (updatedDto.getSubCaste() != null) existing.setSubCaste(updatedDto.getSubCaste());
-        if (updatedDto.getDosham() != null) existing.setDosham(updatedDto.getDosham());
-        if (updatedDto.getMotherTongue() != null) existing.setMotherTongue(updatedDto.getMotherTongue());
-        if (updatedDto.getManglik() != null) existing.setManglik(updatedDto.getManglik());
+        if (updatedDto.getReligion() != null) {
+			existing.setReligion(updatedDto.getReligion());
+		}
+
+        if (updatedDto.getSubCaste() != null) {
+			existing.setSubCaste(updatedDto.getSubCaste());
+		}
+        if (updatedDto.getDosham() != null) {
+			existing.setDosham(updatedDto.getDosham());
+		}
+        if (updatedDto.getMotherTongue() != null) {
+			existing.setMotherTongue(updatedDto.getMotherTongue());
+		}
+        if (updatedDto.getManglik() != null) {
+			existing.setManglik(updatedDto.getManglik());
+		}
 
         // --- FAMILY ---
-        if (updatedDto.getFatherName() != null) existing.setFatherName(updatedDto.getFatherName());
-        if (updatedDto.getMotherName() != null) existing.setMotherName(updatedDto.getMotherName());
-        if (updatedDto.getSiblings() != null) existing.setSiblings(updatedDto.getSiblings());
-        if (updatedDto.getFamilyStatus() != null) existing.setFamilyStatus(updatedDto.getFamilyStatus());
-        if (updatedDto.getFamilyType() != null) existing.setFamilyType(updatedDto.getFamilyType());
-        if (updatedDto.getFatherStatus() != null) existing.setFatherStatus(updatedDto.getFatherStatus());
-        if (updatedDto.getMotherStatus() != null) existing.setMotherStatus(updatedDto.getMotherStatus());
-        if (updatedDto.getNumberOfBrothers() != null) existing.setNumberOfBrothers(updatedDto.getNumberOfBrothers());
-        if (updatedDto.getNumberOfSisters() != null) existing.setNumberOfSisters(updatedDto.getNumberOfSisters());
-        if (updatedDto.getAncestralOrigin() != null) existing.setAncestralOrigin(updatedDto.getAncestralOrigin());
-        if (updatedDto.getLivingWith() != null) existing.setLivingWith(updatedDto.getLivingWith());
-        if (updatedDto.getChildrenDetails() != null) existing.setChildrenDetails(updatedDto.getChildrenDetails());
-        if (updatedDto.getNoOfChildren() != null) existing.setNoOfChildren(updatedDto.getNoOfChildren());
-        if (updatedDto.getIsChildrenLivingWithYou() != null) existing.setIsChildrenLivingWithYou(updatedDto.getIsChildrenLivingWithYou());
+        if (updatedDto.getFatherName() != null) {
+			existing.setFatherName(updatedDto.getFatherName());
+		}
+        if (updatedDto.getMotherName() != null) {
+			existing.setMotherName(updatedDto.getMotherName());
+		}
+        if (updatedDto.getSiblings() != null) {
+			existing.setSiblings(updatedDto.getSiblings());
+		}
+        if (updatedDto.getFamilyStatus() != null) {
+			existing.setFamilyStatus(updatedDto.getFamilyStatus());
+		}
+        if (updatedDto.getFamilyType() != null) {
+			existing.setFamilyType(updatedDto.getFamilyType());
+		}
+        if (updatedDto.getFatherStatus() != null) {
+			existing.setFatherStatus(updatedDto.getFatherStatus());
+		}
+        if (updatedDto.getMotherStatus() != null) {
+			existing.setMotherStatus(updatedDto.getMotherStatus());
+		}
+        if (updatedDto.getNumberOfBrothers() != null) {
+			existing.setNumberOfBrothers(updatedDto.getNumberOfBrothers());
+		}
+        if (updatedDto.getNumberOfSisters() != null) {
+			existing.setNumberOfSisters(updatedDto.getNumberOfSisters());
+		}
+        if (updatedDto.getAncestralOrigin() != null) {
+			existing.setAncestralOrigin(updatedDto.getAncestralOrigin());
+		}
+        if (updatedDto.getLivingWith() != null) {
+			existing.setLivingWith(updatedDto.getLivingWith());
+		}
+        if (updatedDto.getChildrenDetails() != null) {
+			existing.setChildrenDetails(updatedDto.getChildrenDetails());
+		}
+        if (updatedDto.getNoOfChildren() != null) {
+			existing.setNoOfChildren(updatedDto.getNoOfChildren());
+		}
+        if (updatedDto.getIsChildrenLivingWithYou() != null) {
+			existing.setIsChildrenLivingWithYou(updatedDto.getIsChildrenLivingWithYou());
+		}
+        if (updatedDto.getSpiritualPath() !=null) {
+			existing.setSpiritualPath(updatedDto.getSpiritualPath());
+		}
+        if (updatedDto.getHabbits() !=null) {
+			existing.setHabbits(updatedDto.getHabbits());
+		}
 
         // --- EDUCATION & WORK ---
-        if (updatedDto.getHighestEducation() != null) existing.setHighestEducation(updatedDto.getHighestEducation());
-        if (updatedDto.getCollegeName() != null) existing.setCollegeName(updatedDto.getCollegeName());
-        if (updatedDto.getEmployedIn() != null) existing.setEmployedIn(updatedDto.getEmployedIn());
-        if (updatedDto.getSector() != null) existing.setSector(updatedDto.getSector());
-        if (updatedDto.getOccupation() != null) existing.setOccupation(updatedDto.getOccupation());
-        if (updatedDto.getCompanyName() != null) existing.setCompanyName(updatedDto.getCompanyName());
-        if (updatedDto.getAnnualIncome() != null) existing.setAnnualIncome(updatedDto.getAnnualIncome());
-        if (updatedDto.getWorkLocation() != null) existing.setWorkLocation(updatedDto.getWorkLocation());
+        if (updatedDto.getHighestEducation() != null) {
+			existing.setHighestEducation(updatedDto.getHighestEducation());
+		}
+        if (updatedDto.getCollegeName() != null) {
+			existing.setCollegeName(updatedDto.getCollegeName());
+		}
+        if (updatedDto.getEmployedIn() != null) {
+			existing.setEmployedIn(updatedDto.getEmployedIn());
+		}
+        if (updatedDto.getSector() != null) {
+			existing.setSector(updatedDto.getSector());
+		}
+        if (updatedDto.getOccupation() != null) {
+			existing.setOccupation(updatedDto.getOccupation());
+		}
+        if (updatedDto.getCompanyName() != null) {
+			existing.setCompanyName(updatedDto.getCompanyName());
+		}
+        if (updatedDto.getAnnualIncome() != null) {
+			existing.setAnnualIncome(updatedDto.getAnnualIncome());
+		}
+        if (updatedDto.getWorkLocation() != null) {
+			existing.setWorkLocation(updatedDto.getWorkLocation());
+		}
 
         // --- LOCATION ---
-        if (updatedDto.getCity() != null) existing.setCity(updatedDto.getCity());
-        if (updatedDto.getState() != null) existing.setState(updatedDto.getState());
-        if (updatedDto.getCountry() != null) existing.setCountry(updatedDto.getCountry());
+        if (updatedDto.getCity() != null) {
+			existing.setCity(updatedDto.getCity());
+		}
+        if (updatedDto.getState() != null) {
+			existing.setState(updatedDto.getState());
+		}
+        if (updatedDto.getCountry() != null) {
+			existing.setCountry(updatedDto.getCountry());
+		}
 
         // --- HOBBIES ---
-        if (updatedDto.getHobbies() != null) existing.setHobbies(updatedDto.getHobbies());
+        if (updatedDto.getHobbies() != null) {
+			existing.setHobbies(updatedDto.getHobbies());
+		}
 
         // --- HOROSCOPE ---
-        if (updatedDto.getRashi() != null) existing.setRashi(updatedDto.getRashi());
-        if (updatedDto.getNakshatra() != null) existing.setNakshatra(updatedDto.getNakshatra());
-        if (updatedDto.getAscendant() != null) existing.setAscendant(updatedDto.getAscendant());
-        if (updatedDto.getBasicPlanetaryPosition() != null) existing.setBasicPlanetaryPosition(updatedDto.getBasicPlanetaryPosition());
+        if (updatedDto.getRashi() != null) {
+			existing.setRashi(updatedDto.getRashi());
+		}
+        if (updatedDto.getNakshatra() != null) {
+			existing.setNakshatra(updatedDto.getNakshatra());
+		}
+        if (updatedDto.getAscendant() != null) {
+			existing.setAscendant(updatedDto.getAscendant());
+		}
+        if (updatedDto.getBasicPlanetaryPosition() != null) {
+			existing.setBasicPlanetaryPosition(updatedDto.getBasicPlanetaryPosition());
+		}
 
         // --- PARTNER PREFERENCES ---
-        if (updatedDto.getPartnerAgeRange() != null) existing.setPartnerAgeRange(updatedDto.getPartnerAgeRange());
-        if (updatedDto.getPartnerEducation() != null) existing.setPartnerEducation(updatedDto.getPartnerEducation());
-        if (updatedDto.getPartnerLocationPref() != null) existing.setPartnerLocationPref(updatedDto.getPartnerLocationPref());
-        if (updatedDto.getPartnerWorkStatus() != null) existing.setPartnerWorkStatus(updatedDto.getPartnerWorkStatus());
-        if (updatedDto.getPartnerReligion() != null) existing.setPartnerReligion(updatedDto.getPartnerReligion());
-        if (updatedDto.getPartnerWork() != null) existing.setPartnerWork(updatedDto.getPartnerWork());
-        if (updatedDto.getPartnerHobbies() != null) existing.setPartnerHobbies(updatedDto.getPartnerHobbies());
-
+        if (updatedDto.getPartnerAgeRange() != null) {
+			existing.setPartnerAgeRange(updatedDto.getPartnerAgeRange());
+		}
+        if (updatedDto.getPartnerEducation() != null) {
+			existing.setPartnerEducation(updatedDto.getPartnerEducation());
+		}
+        if (updatedDto.getPartnerLocationPref() != null) {
+			existing.setPartnerLocationPref(updatedDto.getPartnerLocationPref());
+		}
+        if (updatedDto.getPartnerWorkStatus() != null) {
+			existing.setPartnerWorkStatus(updatedDto.getPartnerWorkStatus());
+		}
+        if (updatedDto.getPartnerReligion() != null) {
+			existing.setPartnerReligion(updatedDto.getPartnerReligion());
+		}
+        if (updatedDto.getPartnerWork() != null) {
+			existing.setPartnerWork(updatedDto.getPartnerWork());
+		}
+        if (updatedDto.getPartnerHobbies() != null) {
+			existing.setPartnerHobbies(updatedDto.getPartnerHobbies());
+		}
+        if (updatedDto.getGothram() != null) {
+			existing.setGothram(updatedDto.getGothram());
+		}
         // --- MEMBERSHIP & SYSTEM ---
-        if (updatedDto.getMembershipType() != null) existing.setMembershipType(updatedDto.getMembershipType());
-        if (updatedDto.getAccountStatus() != null) existing.setAccountStatus(updatedDto.getAccountStatus());
-        if (updatedDto.getActive() != null) existing.setActive(updatedDto.getActive());
-        if (updatedDto.getPremium() != null) existing.setPremium(updatedDto.getPremium());
-        
+        if (updatedDto.getMembershipType() != null) {
+			existing.setMembershipType(updatedDto.getMembershipType());
+		}
+        if (updatedDto.getAccountStatus() != null) {
+			existing.setAccountStatus(updatedDto.getAccountStatus());
+		}
+        if (updatedDto.getActive() != null) {
+			existing.setActive(updatedDto.getActive());
+		}
+        if (updatedDto.getPremium() != null) {
+			existing.setPremium(updatedDto.getPremium());
+		}
+
 
         // --- FILES / PHOTOS ---
        // if (updatedDto.getUpdatePhoto() != null) existing.setUpdatePhoto(updatedDto.getUpdatePhoto());
-        if (updatedDto.getDocumentFile() != null) existing.setDocumentFile(updatedDto.getDocumentFile());
-       // if (updatedDto.getDocumentFilePresent() != null) existing.setDocumentFilePresent(updatedDto.getDocumentFilePresent());
+        if (updatedDto.getDocumentFile() != null) {
+			existing.setDocumentFile(updatedDto.getDocumentFile());
+      // if (updatedDto.getDocumentFilePresent() != null) existing.setDocumentFilePresent(updatedDto.getDocumentFilePresent());
+		}
 
-      
+
         // --- SYSTEM TIMESTAMP ---
         existing.setLastActive(LocalDateTime.now());
 
@@ -382,13 +527,13 @@ public class AdminManageController {
         return ResponseEntity.ok(saved);
     }
 
-    
+
     //Update Account Status (Verify / Suspend / Activate)
-  
-    
+
+
     //Update Membership Type (Free / Premium / Gold)
   //======
-   
+
     //Update Account Status (Verify / Suspend / Activate)
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/profiles/{id}/status")
@@ -407,7 +552,7 @@ public class AdminManageController {
 
         return ResponseEntity.ok(Map.of("message", "Status updated", "status", status));
     }
-    
+
     //Update Membership Type (Free / Premium / Gold)
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/profiles/{id}/membership")
@@ -423,7 +568,7 @@ public class AdminManageController {
 
         return ResponseEntity.ok(Map.of("message", "Membership updated", "type", type));
     }
-    
+
     //. Update Last Active Manually (if needed)
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/profiles/{id}/last-active")
@@ -438,14 +583,14 @@ public class AdminManageController {
         return ResponseEntity.ok(Map.of("message", "Last active updated"));
     }
 
-   
+
 
 //    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/chat-messages")
     public ResponseEntity<List<com.example.matrimony.entity.ChatMessage>> getChatMessages() {
         return ResponseEntity.ok(chatService.recentMessages());
     }
-    
+
     @PutMapping("/photo/{id}")
     public ResponseEntity<?> updatePhoto(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
 
@@ -467,7 +612,7 @@ public class AdminManageController {
                 profile.setUpdatePhoto(fileName);
                 profile.setLastActive(LocalDateTime.now());
                 profileRepository.save(profile);
-                
+
                 return ResponseEntity.ok(Map.of(
                 	    "message", "Photo uploaded successfully",
                 	    "fileName", fileName,
@@ -508,5 +653,14 @@ public class AdminManageController {
         profileService.rejectProfile(profileId, reason);
 
         return ResponseEntity.ok("Profile rejected and deleted successfully");
+    }
+    @GetMapping("/conversation/{senderId}/{receiverId}")
+    public Page<ChatMessageDto> getConversation(
+            @PathVariable Long senderId,
+            @PathVariable Long receiverId,
+            @RequestParam(defaultValue = "0", required = false) int page,
+            @RequestParam(defaultValue = "20", required = false) int size
+    ) {
+        return chatService.getConversation(senderId, receiverId, page, size);
     }
 }

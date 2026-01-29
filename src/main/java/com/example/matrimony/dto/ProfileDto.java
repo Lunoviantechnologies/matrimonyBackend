@@ -55,6 +55,7 @@ public class ProfileDto {
     private Boolean isChildrenLivingWithYou;
     private String familyStatus;
     private String familyType;
+    private String spiritualPath;
 
     // Family details
     private String fatherName;
@@ -67,7 +68,9 @@ public class ProfileDto {
     private String ancestralOrigin;
     private String livingWith;
     private String childrenDetails;
-
+    private String vegiterian;
+    private String gothram;
+	
     // Education & career
     private String highestEducation;
     private String collegeName;
@@ -96,6 +99,7 @@ public class ProfileDto {
     private String partnerWork;
     private String partnerWorkStatus;
     private String partnerHobbies;
+    private String habbits;
     
     // getters & setters
 
@@ -168,6 +172,8 @@ public class ProfileDto {
 	public String getExperience() {
 		return experience;
 	}
+	
+	
 	public void setExperience(String experience) {
 		this.experience = experience;
 	}
@@ -426,6 +432,13 @@ public class ProfileDto {
 	public String getPartnerReligion() {
 		return partnerReligion;
 	}
+
+	public String getSpiritualPath() {
+		return spiritualPath;
+	}
+	public void setSpiritualPath(String spiritualPath) {
+		this.spiritualPath = spiritualPath;
+	}
 	public void setPartnerReligion(String partnerReligion) {
 		this.partnerReligion = partnerReligion;
 	}
@@ -576,6 +589,24 @@ public class ProfileDto {
 				+ partnerHobbies + ", updatePhoto=" + updatePhoto + ", documentFile=" + documentFile
 				+ ", documentFilePresent=" + documentFilePresent + ", payments=" + payments + ",  senderId=" + senderId
 				+ ", receiverId=" + receiverId + "]";
+	}
+	public String getVegiterian() {
+		return vegiterian;
+	}
+	public void setVegiterian(String vegiterian) {
+		this.vegiterian = vegiterian;
+	}
+	public String getGothram() {
+		return gothram;
+	}
+	public void setGothram(String gothram) {
+		this.gothram = gothram;
+	}
+	public String getHabbits() {
+		return habbits;
+	}
+	public void setHabbits(String habbits) {
+		this.habbits = habbits;
 	}
 	 
     

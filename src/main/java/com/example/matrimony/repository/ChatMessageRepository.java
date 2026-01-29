@@ -100,15 +100,32 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     		        Long senderId,
     		        Long receiverId
     		);
-    @Query("""
-            SELECT m FROM ChatMessage m
-            WHERE
-              (m.sender.id = :userA AND m.receiver.id = :userB)
-              OR
-              (m.sender.id = :userB AND m.receiver.id = :userA)
-        """)
-        List<ChatMessage> findChatBetweenUsers(Long userA, Long userB);
 
+
+        @Query("""
+            SELECT m FROM ChatMessage m
+            WHERE (m.sender.id = :a AND m.receiver.id = :b)
+               OR (m.sender.id = :b AND m.receiver.id = :a)
+        """)
+        List<ChatMessage> findChatBetweenUsers(Long a, Long b);
+
+        @Modifying
+        @Transactional
         void deleteBySenderIdOrReceiverId(Long senderId, Long receiverId);
-    
+        
+        @Modifying
+        @Transactional
+        @Query("""
+            DELETE FROM ChatMessage m
+            WHERE m.sender.id = :userId
+               OR m.receiver.id = :userId
+        """)
+        void deleteAllByProfileId(@Param("userId") Long userId);
+
+//		List<ChatMessage> findAllBySender_IdOrReceiver_Id(Long userId, Long userId2);
+//
+//		void deleteAllBySender_IdOrReceiver_Id(Long userId, Long userId2);
+        List<ChatMessage> findAllBySender_IdOrReceiver_Id(Long senderId, Long receiverId);
+
+        void deleteAllBySender_IdOrReceiver_Id(Long senderId, Long receiverId);
 }

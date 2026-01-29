@@ -1,13 +1,12 @@
 package com.example.matrimony.service;
 
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.example.matrimony.entity.Profile;
-import com.example.matrimony.entity.ReportReason;
-import com.example.matrimony.entity.UserReport;
-import com.example.matrimony.repository.ProfileRepository;
-import com.example.matrimony.repository.UserReportRepository;
+import com.example.matrimony.entity.*;
+import com.example.matrimony.repository.*;
 
 @Service
 public class UserReportService {
@@ -18,15 +17,8 @@ public class UserReportService {
     @Autowired
     private ProfileRepository profileRepo;
 
-    public UserReport reportUser(
-            Long reporterId,
-            Long reportedUserId,
-            ReportReason reason,
-            String description) {
-
-        if (reporterId.equals(reportedUserId)) {
-            throw new RuntimeException("You cannot report yourself");
-        }
+    @Transactional
+    public UserReport reportUser(Long reporterId, Long reportedUserId, ReportReason reason, String description) {
 
         Profile reporter = profileRepo.findById(reporterId)
                 .orElseThrow(() -> new RuntimeException("Reporter not found"));
@@ -39,7 +31,12 @@ public class UserReportService {
         report.setReportedUser(reportedUser);
         report.setReason(reason);
         report.setDescription(description);
+        report.setStatus(ReportStatus.PENDING);
 
-        return reportRepo.save(report);
+        return reportRepo.save(report); // 🔥 THIS SAVES DATA
+    }
+
+    public List<UserReport> getAllReports() {
+        return reportRepo.findAll();
     }
 }

@@ -3,55 +3,62 @@ package com.example.matrimony.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity   // 🔴 MUST EXIST
-@Table(name = "user_block")
+@Entity
+@Table(name = "chat_block") // ✅ MUST MATCH DB TABLE
 public class UserBlock {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blocker_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "blocker_id", nullable = false)
     private Profile blocker;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blocked_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "blocked_id", nullable = false)
     private Profile blocked;
 
+    @Column(name = "blocked_at", nullable = false)
     private LocalDateTime blockedAt = LocalDateTime.now();
 
-	public synchronized Long getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public synchronized void setId(Long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 
-	public synchronized Profile getBlocker() {
+	public Profile getBlocker() {
 		return blocker;
 	}
 
-	public synchronized void setBlocker(Profile blocker) {
+	public void setBlocker(Profile blocker) {
 		this.blocker = blocker;
 	}
 
-	public synchronized Profile getBlocked() {
+	public Profile getBlocked() {
 		return blocked;
 	}
 
-	public synchronized void setBlocked(Profile blocked) {
+	public void setBlocked(Profile blocked) {
 		this.blocked = blocked;
 	}
 
-	public synchronized LocalDateTime getBlockedAt() {
+	public LocalDateTime getBlockedAt() {
 		return blockedAt;
 	}
 
-	public synchronized void setBlockedAt(LocalDateTime blockedAt) {
+	public void setBlockedAt(LocalDateTime blockedAt) {
 		this.blockedAt = blockedAt;
 	}
 
-	
+	@Override
+	public String toString() {
+		return "UserBlock [id=" + id + ", blocker=" + blocker + ", blocked=" + blocked + ", blockedAt=" + blockedAt
+				+ "]";
+	}
+
+   
 }

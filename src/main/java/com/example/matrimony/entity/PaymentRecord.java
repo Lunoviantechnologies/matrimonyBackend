@@ -1,8 +1,19 @@
 package com.example.matrimony.entity;
 
 import java.time.LocalDateTime;
-import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "payments")
@@ -29,7 +40,7 @@ public class PaymentRecord {
     private String paymentMode;
 
     // store amount in paise
-    private int amount;
+    private long amount;
 
     private String currency;
 
@@ -45,10 +56,14 @@ public class PaymentRecord {
 
     @PrePersist
     public void onCreate() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
-        if (status == null) status = "PENDING";
+        if (createdAt == null) {
+			createdAt = LocalDateTime.now();
+		}
+        if (status == null) {
+			status = "PENDING";
+		}
     }
-    
+
 
 
 	public Long getId() {
@@ -74,7 +89,7 @@ public class PaymentRecord {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	 // getters / setters
 	public String getRazorpayOrderId() {
 		return razorpayOrderId;
@@ -124,11 +139,11 @@ public class PaymentRecord {
 		this.paymentMode = paymentMode;
 	}
 
-	public int getAmount() {
+	public long getAmount() {
 		return amount;
 	}
 
-	public void setAmount(int amount) {
+	public void setAmount(long amount) {
 		this.amount = amount;
 	}
 
@@ -164,6 +179,6 @@ public class PaymentRecord {
 		this.createdAt = createdAt;
 	}
 
-    
-    
+
+
 }

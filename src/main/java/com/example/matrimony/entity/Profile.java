@@ -29,11 +29,16 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "profiles")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+
+
 public class Profile {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
+
+
 
 	private String profileFor;
 
@@ -80,7 +85,11 @@ public class Profile {
 
 	// community
 	private String religion;
-	private String caste;
+	private String gothram;
+	
+	@Column(columnDefinition = "TEXT")
+	private String habbits;
+
 	private String subCaste;
 	private String dosham;
 	private String motherTongue;
@@ -147,6 +156,8 @@ public class Profile {
 	private String companyName;
 	private String annualIncome;
 	private String workLocation;
+	@Column(name="spiritualPath", length = 50, nullable = true )
+	private String spiritualPath;
 
 	private String state;
 	private String country;
@@ -168,6 +179,10 @@ public class Profile {
 	private String partnerWork;
 	private String partnerHobbies;
 
+	@Column(name="vegiterian")
+
+	private String vegiterian;
+
 	// Additional fields from your other file
 	private String hobbies;
 	private String weight;
@@ -178,7 +193,7 @@ public class Profile {
 	private String partnerLocationPref;
 	private String partnerWorkStatus;
 	private boolean premium;
-
+	
 	// for payment experiration
 	@Column(name = "premium_start")
 	private LocalDateTime premiumStart;
@@ -200,6 +215,10 @@ public class Profile {
 	private LocalDateTime deleteRequestedAt;
 
 	private String sports;
+		
+		private Boolean banned;
+		private LocalDateTime bannedAt;
+		private String banReason;
 	
 	@Column(nullable = false)
     private Boolean approved = Boolean.FALSE;   // admin approval
@@ -267,11 +286,11 @@ public class Profile {
 	private List<FriendRequest> receivedRequests = new ArrayList<>();
 
 
-	@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "sender",  cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonIgnore // ignore during registration/fetch
 	private List<ChatMessage> sentMessages = new ArrayList<>();
 
-	@OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "receiver",  cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonIgnore
 	private List<ChatMessage> receivedMessages = new ArrayList<>();
 
@@ -326,13 +345,7 @@ public class Profile {
 		this.religion = religion;
 	}
 
-	public String getCaste() {
-		return caste;
-	}
-
-	public void setCaste(String caste) {
-		this.caste = caste;
-	}
+	
 
 	public String getSubCaste() {
 		return subCaste;
@@ -352,6 +365,15 @@ public class Profile {
 
 	public String getMotherTongue() {
 		return motherTongue;
+	}
+	
+
+	public String getVegiterian() {
+		return vegiterian;
+	}
+
+	public void setVegiterian(String vegiterian) {
+		this.vegiterian = vegiterian;
 	}
 
 	public void setMotherTongue(String motherTongue) {
@@ -923,6 +945,23 @@ public class Profile {
 		this.premiumEnd = premiumEnd;
 	}
 	
+	
+
+	public String getSpiritualPath() {
+		return spiritualPath;
+	}
+
+	public void setSpiritualPath(String spiritualPath) {
+		this.spiritualPath = spiritualPath;
+	}
+
+	public List<ProfileView> getProfileViews() {
+		return profileViews;
+	}
+
+	public void setProfileViews(List<ProfileView> profileViews) {
+		this.profileViews = profileViews;
+	}
 
 	public synchronized Boolean getApproved() {
 		return approved;
@@ -931,6 +970,41 @@ public class Profile {
 	public synchronized void setApproved(Boolean approved) {
 		this.approved = approved;
 	}
+	
+	
+
+	public Boolean isBanned() {
+		return banned;
+	}
+
+	public void setBanned(Boolean banned) {
+		this.banned = banned;
+	}
+
+	public LocalDateTime getBannedAt() {
+		return bannedAt;
+	}
+
+	public void setBannedAt(LocalDateTime bannedAt) {
+		this.bannedAt = bannedAt;
+	}
+
+	public String getBanReason() {
+		return banReason;
+	}
+
+	public void setBanReason(String banReason) {
+		this.banReason = banReason;
+	}
+	
+
+	public String getHabbits() {
+		return habbits;
+	}
+
+	public void setHabbits(String habbits) {
+		this.habbits = habbits;
+	}
 
 	@Override
 	public String toString() {
@@ -938,7 +1012,7 @@ public class Profile {
 				+ lastName + ", mobileNumber=" + mobileNumber + ", createPassword=" + createPassword + ", role=" + role
 				+ ", createdAt=" + createdAt + ", active=" + active + ", age=" + age + ", dateOfBirth=" + dateOfBirth
 				+ ", emailId=" + emailId + ", gender=" + gender + ", aboutYourself=" + aboutYourself + ", religion="
-				+ religion + ", caste=" + caste + ", subCaste=" + subCaste + ", dosham=" + dosham + ", motherTongue="
+				+ religion + ", subCaste=" + subCaste + ", dosham=" + dosham + ", motherTongue="
 				+ motherTongue + ", membershipType=" + membershipType + ", accountStatus=" + accountStatus
 				+ ", lastActive=" + lastActive + ", maritalStatus=" + maritalStatus + ", noOfChildren=" + noOfChildren
 				+ ", isChildrenLivingWithYou=" + isChildrenLivingWithYou + ", height=" + height + ", familyStatus="
@@ -961,4 +1035,14 @@ public class Profile {
 				+ ", sentMessages=" + sentMessages + ", receivedMessages=" + receivedMessages + ", payments=" + payments
 				+ ", friends=" + friends + "]";
 	}
+
+
+	public String getGothram() {
+		return gothram;
+	}
+
+	public void setGothram(String gothram) {
+		this.gothram = gothram;
+	}
+
 }

@@ -1,515 +1,393 @@
 package com.example.matrimony.service;
 
-import java.io.UnsupportedEncodingException;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.example.matrimony.dto.ContactRequest;
 
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class EmailService {
-	
+
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+
     private final JavaMailSender mailSender;
     private final String adminEmail;
     private final String defaultFrom;
-    private final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     public EmailService(JavaMailSender mailSender,
                         @Value("${app.admin.email:}") String adminEmail,
-                        @Value("${app.mail.default-from:no-reply@example.com}") String defaultFrom) {
+                        @Value("${app.mail.default-from:no-reply@vivahjeevan.com}") String defaultFrom) {
         this.mailSender = mailSender;
         this.adminEmail = adminEmail;
         this.defaultFrom = defaultFrom;
     }
 
-    /** SEND CONTACT FORM EMAIL - WORKING VERSION */
-    public void sendContactMessage(ContactRequest req) {
-        if (adminEmail == null || adminEmail.isBlank()) {
-            log.warn("app.admin.email not configured — skipping contact mail. From: {} <{}>", req.getName(), req.getEmail());
-            return;
-        }
-
+    // =====================================================
+    // COMMON EMAIL SENDER (REUSABLE)
+    // =====================================================
+    private void sendEmail(String to, String subject, String body, boolean html) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            // --- FROM ---
-            String safeFrom = "no-reply@matrimony.com";
-            try {
-                if (defaultFrom != null && !defaultFrom.isBlank()) {
-                    InternetAddress address = new InternetAddress(defaultFrom, "Matrimony App");
-                    address.validate(); // validate format
-                    safeFrom = defaultFrom;
-                }
-            } catch (Exception e) {
-                log.warn("Invalid defaultFrom email '{}', using {}", defaultFrom, safeFrom);
-            }
-            helper.setFrom(new InternetAddress(safeFrom, "Matrimony App"));
-
-            // --- TO ---
-            String safeTo = adminEmail;
-            try {
-                InternetAddress[] to = InternetAddress.parse(adminEmail, false);
-                for (InternetAddress addr : to) addr.validate();
-            } catch (Exception e) {
-                log.warn("Invalid adminEmail '{}', using safe fallback '{}'", adminEmail, safeTo);
-            }
-            helper.setTo(InternetAddress.parse(safeTo, false));
-
-            // --- REPLY-TO ---
-            if (req.getEmail() != null && !req.getEmail().isBlank()) {
-                try {
-                    InternetAddress replyTo = new InternetAddress(req.getEmail());
-                    replyTo.validate();
-                    helper.setReplyTo(replyTo);
-                } catch (Exception e) {
-                    log.warn("Invalid reply-to email '{}', skipping", req.getEmail());
-                }
-            }
-
-            // Subject and body
-            helper.setSubject("New Contact Message from " + req.getName());
-            StringBuilder sb = new StringBuilder();
-            sb.append("<p>You have received a new message from the contact form.</p>");
-            sb.append("<p><b>Name:</b> ").append(req.getName()).append("</p>");
-            sb.append("<p><b>Email:</b> ").append(req.getEmail()).append("</p>");
-            if (req.getPhoneNumber() != null) {
-                sb.append("<p><b>Phone:</b> ").append(req.getPhoneNumber()).append("</p>");
-            }
-            sb.append("<p><b>Message:</b><br>").append(req.getMessage()).append("</p>");
-            sb.append("<hr><p>-- End --</p>");
-            helper.setText(sb.toString(), true);
+            helper.setTo(to);
+            helper.setFrom(new InternetAddress(defaultFrom, "VivahJeevan Team"));
+            helper.setSubject(subject);
+            helper.setText(body, html);
 
             mailSender.send(message);
-            log.info("Contact mail sent to {}", adminEmail);
+            log.info("Email sent to {} | Subject={}", to, subject);
 
-        } catch (MessagingException | UnsupportedEncodingException e) {
-            log.error("Failed to send contact mail", e);
+        } catch (Exception e) {
+            log.error("Email failed to send to {}", to, e);
         }
     }
+    private String footer() {
+        int year = java.time.Year.now().getValue();
+        return """
+            <hr>
+            <p style="font-size:12px;color:#777;">
+            © %d VivahJeevan Pvt Ltd. All rights reserved.<br>
+            This is an automated email. Please do not reply.<br>
+            If you did not request this, please ignore.
+            </p>
+            """.formatted(year);
+    }
 
+    // =====================================================
+    // CONTACT FORM EMAIL
+    // =====================================================
+    public void sendContactMessage(ContactRequest req) {
 
-
-//    public void sendContactMessage(ContactRequest req) {
-//        if (adminEmail == null || adminEmail.isBlank()) {
-//            log.error("Admin email is not set. Cannot send contact message.");
-//            return;
-//        }
-//
-//        // Validate or fallback 'From' address
-//        String fromAddress = (defaultFrom != null && !defaultFrom.isBlank()) 
-//                ? defaultFrom 
-//                : "no-reply@saathjaanam.com";
-//
-//        try {
-//            // Validate email formats
-//            InternetAddress from = new InternetAddress(fromAddress, "SaathJaanam Team>");
-//            from.validate();  // Will throw AddressException if invalid
-//
-//            InternetAddress to = new InternetAddress(adminEmail);
-//            to.validate();  // Will throw AddressException if invalid
-//
-//            MimeMessage message = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-//
-//            helper.setTo(to);
-//            helper.setFrom(from);
-//            helper.setSubject("New Contact Message from " + req.getName());
-//
-//            StringBuilder sb = new StringBuilder();
-//            sb.append("You have received a new message from the contact form.\n\n");
-//            sb.append("Name: ").append(req.getName()).append("\n");
-//            sb.append("Email: ").append(req.getEmail()).append("\n");
-//            sb.append("Phone: ").append(req.getPhoneNumber()).append("\n\n");
-//            sb.append("Message:\n").append(req.getMessage()).append("\n\n");
-//            sb.append("---- End ----");
-//
-//            helper.setText(sb.toString(), false);  // plain text
-//            mailSender.send(message);
-//
-//            log.info("Contact mail sent to {}", adminEmail);
-//
-//        } catch (Exception e) {
-//            log.error("Failed to send contact mail", e);
-//        }
-//    }
-
-
-    
-//    public void sendContactMessage(ContactRequest req) {
-//        if (adminEmail == null || adminEmail.isBlank()) {
-//            log.warn("app.admin.email not configured — skipping contact mail. From: {} <{}>", req.getName(), req.getEmail());
-//            return;
-//        }
-//
-//        SimpleMailMessage msg = new SimpleMailMessage();
-//        msg.setTo(adminEmail);
-//        msg.setFrom("SaathJaanam Team " + defaultFrom );
-//        msg.setSubject("New Contact Message from " + req.getName());
-//        msg.setFrom(defaultFrom); // just the email
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("You have received a new message from the contact form.\n\n");
-//        sb.append("Name: ").append(req.getName()).append("\n");
-//        sb.append("Email: ").append(req.getEmail()).append("\n");
-//        sb.append("Phone: ").append(req.getPhoneNumber()).append("\n\n");
-//        sb.append("Message:\n").append(req.getMessage()).append("\n\n");
-//        sb.append("---- End ----");
-//
-//        msg.setText(sb.toString());
-//
-//        try {
-//            mailSender.send(msg);
-//            log.info("Contact mail sent to {}", adminEmail);
-//        } catch (MailException ex) {
-//            log.error("Failed to send contact mail", ex);
-//        }
-//    }
-
-    /** PAYMENT SUCCESS EMAIL (existing) */
-    public void sendPaymentSuccessEmail(String toEmail,
-                                        String name,
-                                        String planCode,
-                                        Long amountPaise,
-                                        String razorpayOrderId,
-                                        String razorpayPaymentId) {
-
-        if (toEmail == null || toEmail.isBlank()) {
-            log.warn("Payment email skipped — no recipient email for user {}", name);
+        if (adminEmail == null || adminEmail.isBlank()) {
+            log.warn("Admin email not configured");
             return;
         }
 
-        double rupees = Objects.requireNonNullElse(amountPaise, 0L);
-        String amountStr = NumberFormat.getCurrencyInstance(new Locale("en", "IN")).format(rupees);
+        String subject = "New Contact Message - VivahJeevan";
 
-        String subject = "Payment Successful - " + planCode;
+        String body = """
+            <h2>📩 New Contact Form Submission</h2>
+            <p>You have received a new message from the VivahJeevan website.</p>
 
-        String body = String.format(
-                "Hi %s,\n\nYour payment was successful!\n\n" +
-                "Plan: %s\nAmount: %s\nOrder ID: %s\nPayment ID: %s\n\n" +
-                "Thank you for choosing our service.\n",
-                name,
-                planCode,
-                amountStr,
-                razorpayOrderId,
-                razorpayPaymentId
-        );
+            <table border="1" cellpadding="10" style="border-collapse:collapse;">
+                <tr><td><b>Name</b></td><td>%s</td></tr>
+                <tr><td><b>Email</b></td><td>%s</td></tr>
+                <tr><td><b>Phone</b></td><td>%s</td></tr>
+                <tr><td><b>Message</b></td><td>%s</td></tr>
+            </table>
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setFrom("SaathJaanam Team <" + defaultFrom + ">" );
-        msg.setSubject(subject);
-        msg.setText(body);
+            <br><hr>
+            <p>This message was sent from VivahJeevan Contact Form.</p>
+            """.formatted(req.getName(), req.getEmail(), req.getPhoneNumber(), req.getMessage());
 
-        try {
-            mailSender.send(msg);
-            log.info("Payment success email sent to {}", toEmail);
-        } catch (Exception e) {
-            log.error("Failed to send payment email to {} : {}", toEmail, e.getMessage(), e);
-        }
+        sendEmail(adminEmail, subject, body, true);
     }
-    
-    
-    /** *********************************************
-     *  NEW — send password reset OTP email
-     * ********************************************* */
+
+ // =====================================================
+ // PAYMENT SUCCESS EMAIL (PRODUCTION READY)
+ // =====================================================
+    public void sendPaymentSuccessEmail(
+            String email,
+            String name,
+            String plan,
+            Long amountRupees,
+            String orderId,
+            String paymentId,
+            LocalDateTime premiumEnd
+    ) {
+
+        if (email == null || email.isBlank()) {
+            return;
+        }
+
+        // Amount is already in RUPEES (NO /100 conversion)
+        String amountStr = NumberFormat.getCurrencyInstance(new Locale("en", "IN"))
+                .format(amountRupees == null ? 0 : amountRupees);
+
+        String expiryText = premiumEnd != null
+                ? premiumEnd.format(DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a"))
+                : "N/A";
+
+        String subject = "🎉 Payment Successful - VivahJeevan Premium Activated";
+
+        String body = """
+            <h2>Dear %s,</h2>
+
+            <p>We are happy to inform you that your payment was <b>successfully completed</b>.</p>
+
+            <h3>💳 Payment Details</h3>
+            <ul>
+                <li><b>Plan:</b> %s</li>
+                <li><b>Amount Paid:</b> %s</li>
+                <li><b>Order ID:</b> %s</li>
+                <li><b>Payment ID:</b> %s</li>
+                <li><b>Premium Valid Till:</b> %s</li>
+            </ul>
+
+            <p>You can now enjoy all premium features including:</p>
+            <ul>
+                <li>Unlimited chat</li>
+                <li>View contact details</li>
+                <li>Priority matchmaking</li>
+            </ul>
+
+            <p>If you have any questions, contact our support team.</p>
+
+            <br>
+            <p>Warm Regards,<br>
+            <b>VivahJeevan Team</b></p>
+
+            <hr>
+            <small>This is an automated email. Please do not reply.</small>
+            """.formatted(name, plan, amountStr, orderId, paymentId, expiryText);
+
+        sendEmail(email, subject, body, true);
+    }
+    // =====================================================
+    // OTP EMAIL
+    // =====================================================
     public void sendOtp(String toEmail, String otp) {
 
         if (toEmail == null || toEmail.isBlank()) {
-            log.warn("OTP email skipped — recipient email is empty");
-            return;
-        }
+			return;
+		}
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setFrom("SaathJaanam Team <" + defaultFrom + ">");
-        msg.setSubject("SaathJaanam OTP Services");
-        msg.setText(
-                "Your OTP is: " + otp + "\n\n" +
-                "This OTP is valid for 10 minutes.\n\n" +
-                "If you did not request a password reset, please ignore this email.\n\n" +
-                "Regards,\nSaathJaanam Team"
-        );
+        String subject = "🔐 VivahJeevan OTP Verification";
 
-        try {
-            mailSender.send(msg);
-            log.info("Password reset OTP sent to {}", toEmail);
-        } catch (MailException ex) {
-            log.error("Failed to send OTP email to {}", toEmail, ex);
-        }
+        String body = """
+            <h2>OTP Verification</h2>
+            <p>Hello,</p>
+
+            <p>Your One-Time Password (OTP) is:</p>
+            <h1 style="color:blue;">%s</h1>
+
+            <p>This OTP is valid for <b>10 minutes</b>. Do not share it with anyone.</p>
+
+            <p>If you did not request this, please ignore this email.</p>
+
+            <br>Regards,<br>
+            <b>VivahJeevan Security Team</b>
+            """.formatted(otp);
+
+        sendEmail(toEmail, subject, body, true);
     }
 
-
-    /** *********************************************
-     *  NEW — send profile approval email
-     * ********************************************* */
+    // =====================================================
+    // PROFILE APPROVAL EMAIL
+    // =====================================================
     public void sendApprovalEmail(String toEmail, String name) {
+
         if (toEmail == null || toEmail.isBlank()) {
-            log.warn("Approval email skipped — no recipient email for user {}", name);
-            return;
-        }
+			return;
+		}
 
-        String subject = "Your profile has been approved";
-        String displayName = (name == null || name.isBlank()) ? "User" : name;
-        String body = String.format(
-                "Dear %s,\n\n" +
-                "Congratulations — your profile on Matrimony has been approved by our admin team. You can now access all member features.\n\n" +
-                "If you have any questions, reply to this email.\n\n" +
-                "Regards,\nSaathJaanam Team",
-                displayName
-        );
+        String subject = "✅ Your VivahJeevan Profile is Approved";
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setFrom("SaathJaanam Team <" + defaultFrom + ">");
-        msg.setSubject(subject);
-        msg.setText(body);
-        // optional: setFrom if your JavaMailSender supports it
-        try {
-            mailSender.send(msg);
-            log.info("Approval email sent to {}", toEmail);
-        } catch (Exception e) {
-            log.error("Failed to send approval email to {} : {}", toEmail, e.getMessage(), e);
-        }
+        String body = """
+            <h2>Dear %s,</h2>
+            <p>Congratulations! 🎉 Your profile has been reviewed and approved by our admin team.</p>
+
+            <p>You can now:</p>
+            <ul>
+                <li>Send and receive messages</li>
+                <li>View contact details</li>
+                <li>Access premium matchmaking features</li>
+            </ul>
+
+            <p>We wish you success in finding your perfect match.</p>
+
+            <br>Best Wishes,<br>
+            <b>VivahJeevan Team</b>
+            """.formatted(name);
+
+        sendEmail(toEmail, subject, body, true);
     }
-    /** *********************************************
-     *  NEW — send ticket resolved email
-     * ********************************************* */
+
+    // =====================================================
+    // TICKET RESOLVED EMAIL
+    // =====================================================
     public void sendTicketResolvedEmail(String toEmail, String name, Long ticketId) {
-
         if (toEmail == null || toEmail.isBlank()) {
-            log.warn("Ticket resolved email skipped — no recipient email for ticket {}", ticketId);
-            return;
-        }
+			return;
+		}
 
-        String displayName = (name == null || name.isBlank()) ? "User" : name;
+        String subject = "✅ Your Support Ticket Has Been Resolved - VivahJeevan";
 
-        String subject = "Your Support Ticket Has Been Resolved";
+        String body = """
+            <h2>Dear %s,</h2>
 
-        String body = String.format(
-                "Dear %s,\n\n" +
-                "Your support ticket (Ticket ID: %d) has been successfully resolved by our support team.\n\n" +
-                "If you face any further issues, please feel free to raise a new support ticket.\n\n" +
-                "Regards,\nSaathJaanam  Support Team",
-                displayName,
-                ticketId
-        );
+            <p>We are happy to inform you that your support ticket has been successfully resolved by our support team.</p>
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setFrom("SaathJaanam Team <" + defaultFrom + ">");
-        msg.setSubject(subject);
-        msg.setText(body);
+            <h3>📄 Ticket Details</h3>
+            <table border="1" cellpadding="8" style="border-collapse:collapse;">
+                <tr>
+                    <td><b>Ticket ID</b></td>
+                    <td>#%d</td>
+                </tr>
+                <tr>
+                    <td><b>Status</b></td>
+                    <td><span style="color:green;"><b>Resolved</b></span></td>
+                </tr>
+            </table>
 
-        try {
-            mailSender.send(msg);
-            log.info("Ticket resolved email sent to {} for ticket {}", toEmail, ticketId);
-        } catch (Exception e) {
-            log.error("Failed to send ticket resolved email to {} : {}", toEmail, e.getMessage(), e);
-        }
+            <p>If you are satisfied with our resolution, no further action is required from your side.</p>
+
+            <p>If you still face any issues or have additional questions, you can reply to this email or raise a new support ticket from your account dashboard.</p>
+
+            <p>Thank you for choosing VivahJeevan. We are always here to help you find your perfect match.</p>
+
+            <br>
+            <p>Warm Regards,<br>
+            <b>VivahJeevan Support Team</b></p>
+
+            <hr>
+            <p style="font-size:12px;color:gray;">
+            This is an automated message. Please do not share sensitive information in reply.
+            </p>
+            """.formatted(name, ticketId);
+
+        sendEmail(toEmail, subject, body, true);
     }
- 
 
-    /** *********************************************
-     *  NEW — send profile rejection email
-     * ********************************************* */
+    // =====================================================
+    // PROFILE REJECTION EMAIL
+    // =====================================================
     public void sendRejectionEmail(String toEmail, String name, String reason) {
+
         if (toEmail == null || toEmail.isBlank()) {
-            log.warn("Rejection email skipped — no recipient email for user {}", name);
-            return;
-        }
+			return;
+		}
 
-        String subject = "Your profile has been rejected";
-        String displayName = (name == null || name.isBlank()) ? "User" : name;
-        String reasonText = (reason == null || reason.isBlank()) ? "insufficient or incomplete profile data" : reason;
+        String subject = "❌ Profile Review Update - VivahJeevan";
 
-        String body = String.format(
-                "Dear %s,\n\n" +
-                "We regret to inform you that your profile has been rejected by our admin team for the following reason:\n\n" +
-                "%s\n\n" +
-                "Please update your profile with the required information and re-submit. If you believe this is a mistake, please contact support.\n\n" +
-                "Regards,\nSaathJaanam Team",
-                displayName,
-                reasonText
-        );
+        String body = """
+            <h2>Dear %s,</h2>
+            <p>Thank you for registering with VivahJeevan.</p>
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setFrom("SaathJaanam Team <" + defaultFrom + ">");
-        msg.setSubject(subject);
-        msg.setText(body);
+            <p>Your profile was rejected due to the following reason:</p>
+            <blockquote>%s</blockquote>
 
-        try {
-            mailSender.send(msg);
-            log.info("Rejection email sent to {} (reason: {})", toEmail, reasonText);
-        } catch (Exception e) {
-            log.error("Failed to send rejection email to {} : {}", toEmail, e.getMessage(), e);
-        }
+            <p>Please update your profile and resubmit for approval.</p>
+
+            <br>Regards,<br>
+            <b>VivahJeevan Team</b>
+            """.formatted(name, reason);
+
+        sendEmail(toEmail, subject, body, true);
     }
-    
-    /** *********************************************
-     *  NEW — send account deletion email (30-day window)
-     * ********************************************* */
+    // =====================================================
+    // ACCOUNT DELETION EMAIL
+    // =====================================================
     public void sendAccountDeletionEmail(String toEmail, String name) {
 
         if (toEmail == null || toEmail.isBlank()) {
-            log.warn("Account deletion email skipped — no recipient email for user {}", name);
-            return;
-        }
+			return;
+		}
 
-        String subject = "Account Deletion Requested";
-        String displayName = (name == null || name.isBlank()) ? "User" : name;
+        String subject = "⚠️ Account Deletion Requested - VivahJeevan";
 
-        String body = String.format(
-                "Dear %s,\n\n" +
-                "We received a request to delete your account.\n\n" +
-                "Your account has been disabled immediately and is scheduled for permanent deletion after 30 days.\n\n" +
-                "If this request was made by mistake, you can recover your account within 30 days by logging in or contacting support.\n\n" +
-                "After 30 days, all your data will be permanently removed from our system.\n\n" +
-                "Regards,\nSaathJaanam Team",
-                displayName
-        );
+        String body = """
+            <h2>Dear %s,</h2>
+            <p>Your account deletion request has been received.</p>
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setFrom("SaathJaanam Team <" + defaultFrom + ">");
-        msg.setSubject(subject);
-        msg.setText(body);
+            <p>Your account will be permanently deleted after <b>30 days</b>.</p>
+            <p>You can recover your account by logging in within 30 days.</p>
 
-        try {
-            mailSender.send(msg);
-            log.info("Account deletion email sent to {}", toEmail);
-        } catch (Exception e) {
-            log.error("Failed to send account deletion email to {} : {}", toEmail, e.getMessage(), e);
-        }
-    }
-  //payment Expiry Logic 
-    public void sendPlanExpiredEmail(
-            String toEmail,
-            String name,
-            LocalDateTime expiredAt) {
+            <p>After deletion, all your data will be permanently removed.</p>
 
-        DateTimeFormatter fmt =
-                DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+            <br>Regards,<br>
+            <b>VivahJeevan Team</b>
+            """.formatted(name);
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setSubject("Your Premium Plan Has Expired");
-
-        msg.setText("""
-                Hi %s,
-
-                Your premium plan expired on %s.
-
-                You can renew anytime to continue enjoying premium features.
-
-                Regards,
-                Matrimony Team
-                """.formatted(
-                name,
-                expiredAt != null ? expiredAt.format(fmt) : "N/A"
-        ));
-
-        mailSender.send(msg);
+        sendEmail(toEmail, subject, body, true);
     }
 
-    // Expiry before 3 days email services
-    public void sendPlanExpiryReminderEmail(
-            String toEmail,
-            String name,
-            LocalDateTime expiryDate) {
+    // =====================================================
+    // PLAN EXPIRED EMAIL
+    // =====================================================
+    public void sendPlanExpiredEmail(String toEmail, String name, LocalDateTime expiredAt) {
 
-        DateTimeFormatter fmt =
-                DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a");
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setSubject("Your Premium Plan Expires Soon");
+        String subject = "⏳ Your Premium Plan Has Expired";
 
-        msg.setText("""
-                Hi %s,
+        String body = """
+            <h2>Hi %s,</h2>
+            <p>Your premium plan expired on <b>%s</b>.</p>
 
-                Your premium plan will expire on %s.
+            <p>Renew now to continue enjoying premium matchmaking benefits.</p>
 
-                Renew now to continue enjoying premium features without interruption.
+            <br>Regards,<br>
+            <b>VivahJeevan Team</b>
+            """.formatted(name, expiredAt != null ? expiredAt.format(fmt) : "N/A");
 
-                Regards,
-                Matrimony Team
-                """.formatted(
-                name,
-                expiryDate.format(fmt)
-        ));
-
-        mailSender.send(msg);
+        sendEmail(toEmail, subject, body, true);
     }
-    
-    //payment success email 
-    public void sendPaymentSuccessEmail(
-            String toEmail,
-            String name,
-            String planCode,
-            Integer amountRupees,
-            String paymentId,
-            LocalDateTime premiumEnd) {
 
-        if (toEmail == null || toEmail.isBlank()) {
-            log.warn("Payment email skipped — no recipient email for user {}", name);
-            return;
-        }
+    // =====================================================
+    // PLAN EXPIRY REMINDER EMAIL
+    // =====================================================
+    public void sendPlanExpiryReminderEmail(String toEmail, String name, LocalDateTime expiryDate) {
 
-        DateTimeFormatter fmt =
-                DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a");
 
-        String expiryText =
-                premiumEnd != null
-                        ? "Your plan will expire on " + premiumEnd.format(fmt)
-                        : "No expiry information available.";
+        String subject = "⏰ Premium Plan Expiring Soon";
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(toEmail);
-        msg.setFrom("SaathJaanam Team <" + defaultFrom + ">");
-        msg.setSubject("Payment Successful – Plan Activated");
+        String body = """
+            <h2>Hi %s,</h2>
+            <p>Your premium plan will expire on <b>%s</b>.</p>
 
-        msg.setText("""
-                Hi %s,
+            <p>Renew today to avoid interruption in services.</p>
 
-                Your payment was successful.
+            <br>Regards,<br>
+            <b>VivahJeevan Team</b>
+            """.formatted(name, expiryDate.format(fmt));
 
-                Plan        : %s
-                Amount Paid : ₹%d
-                Payment ID  : %s
-
-                %s
-
-                Thank you for choosing us.
-                """.formatted(
-                name,
-                planCode,
-                amountRupees,
-                paymentId,
-                expiryText
-        ));
-
-        try {
-            mailSender.send(msg);
-            log.info("Payment success email sent to {}", toEmail);
-        } catch (Exception e) {
-            log.error("Failed to send payment email", e);
-        }
+        sendEmail(toEmail, subject, body, true);
     }
+
+    // =====================================================
+    // MANUAL PAYMENT SUCCESS (ADMIN ACTIVATION)
+    // =====================================================
+    public void sendManualPaymentSuccessEmail(String toEmail, String name,
+            String planCode, Integer amountRupees,
+            String paymentId, LocalDateTime premiumEnd) {
+
+DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a");
+
+String subject = "💎 Premium Plan Activated - VivahJeevan";
+
+String body = """
+<h2>Hi %s,</h2>
+<p>Your premium plan has been manually activated by admin.</p>
+
+<ul>
+<li>Plan: %s</li>
+<li>Amount Paid: ₹%d</li>
+<li>Payment ID: %s</li>
+<li>Expiry Date: %s</li>
+</ul>
+
+<p>Enjoy premium features!</p>
+
+<br>Regards,<br>
+<b>VivahJeevan Team</b>
+""".formatted(name, planCode, amountRupees, paymentId,
+premiumEnd != null ? premiumEnd.format(fmt) : "N/A");
+
+sendEmail(toEmail, subject, body, true);
+}
 }
