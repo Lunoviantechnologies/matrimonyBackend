@@ -214,9 +214,12 @@ public class Profile {
 
 	private String sports;
 	
-			
-		private Boolean banned;
+
+		@Column(  nullable = false)	
+		private boolean banned;
 		private LocalDateTime bannedAt;
+		@Column(length = 255)
+
 		private String banReason;
 	
 	@Column(nullable = false)

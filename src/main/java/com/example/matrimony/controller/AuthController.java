@@ -74,6 +74,12 @@ public class AuthController {
                         .status(403)
                         .body("Your account approval is in pending please wait ");
             }
+            
+         // Block login if banned
+            if (profile.isBanned()) {
+                return ResponseEntity.status(403)
+                        .body("Your account is banned by admin.");
+            }
 
             // 🔐 Correct BCrypt comparison
             if (!passwordEncoder.matches(password, profile.getCreatePassword())) {

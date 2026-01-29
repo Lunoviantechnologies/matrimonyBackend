@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.matrimony.dto.BanRequest;
 import com.example.matrimony.entity.UserReport;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -80,6 +81,13 @@ public class AdminReportController {
         return ResponseEntity.ok("User permanently deleted.");
     }
     
+    @PutMapping("/banuser/{userId}")
+    public ResponseEntity<String> banUser(@PathVariable Long userId,
+                                          @RequestBody BanRequest request) {
+        adminReportService.banUser(userId, request.getReason());
+        return ResponseEntity.ok("User banned successfully");
+    }
+    
     //Get All Api
     @GetMapping("/reports/GetAll")
     public ResponseEntity<List<UserReport>> getAllReports() {
@@ -88,26 +96,10 @@ public class AdminReportController {
 
 }
 
-//    @GetMapping("/{reportId}")
-//    public ResponseEntity<?> getReportById(@PathVariable Long reportId) {
-//        return ResponseEntity.ok(adminReportService.getReportById(reportId));
-//    }
-//    
-//    @PutMapping("/delete/{id}")
-//    public ResponseEntity<String> deleteUserReport(@PathVariable Long id) {
-//    	adminReportService.deleteReportById(id);
-//        return ResponseEntity.ok("User report deleted successfully");
-//    }
-//    
-//    @GetMapping("/deleted-profiles")
-//    public List<DeletedProfile> getDeletedProfiles() {
-//        return deletedProfileRepo.findAll();
-//    }
-//
 //
 //    @GetMapping("/GetAll")
 //    public ResponseEntity<?> getAllReports() {
 //        return ResponseEntity.ok(adminReportService.getAllReports());
 //    }
 //}
-//>>>>>>> 4060a55b04b5eec296199c344fa94374991a109b
+

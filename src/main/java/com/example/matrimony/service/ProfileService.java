@@ -64,7 +64,19 @@ public class ProfileService {
         if (req.getEmail() == null || req.getEmail().isBlank())
             throw new IllegalArgumentException("Email cannot be empty");
 
-        if (profileRepository.existsByEmailId(req.getEmail())) {
+       
+     // Check if email already exists
+        Optional<Profile> existingEmail = profileRepository.findByEmailId(req.getEmail());
+
+        if (existingEmail.isPresent()) {
+            Profile existing = existingEmail.get();
+
+            // 🔒 Banned user cannot register again
+            if (existing.isBanned()) {
+                throw new RuntimeException("You are permanently banned and cannot register again");
+            }
+
+            // Normal duplicate user
             throw new EmailAlreadyExistsException("Email already registered");
         }
 

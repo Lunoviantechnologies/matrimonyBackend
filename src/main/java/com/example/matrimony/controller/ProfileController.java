@@ -45,16 +45,18 @@ public class ProfileController {
     private ProfileRepository profileRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
     @Autowired
     private ObjectMapper objectMapper;
     
+
     // ✅ Constructor Injection (prevents NullPointerException)
     public ProfileController(ProfileService profileService) {
         this.profileService = profileService;
     }
 
-   
- // api for the registration  
+
+ // api for the registration
     @PostMapping("/register")
     public ResponseEntity<?> createProfile(
             @RequestParam("profile") String profileJson,
@@ -98,7 +100,9 @@ public class ProfileController {
     @GetMapping("/myprofiles/{id}")
     public ResponseEntity<ProfileDto> getProfile(@PathVariable Long id) {
         Optional<Profile> p = profileRepository.findById(id);
-        if (p.isEmpty()) return ResponseEntity.notFound().build();
+        if (p.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
 
         Profile profile = p.get();
         ProfileDto dto = new ProfileDto();
@@ -126,7 +130,7 @@ public class ProfileController {
         dto.setweight(profile.getWeight());
         dto.setHobbies(profile.getHobbies());
         dto.setAscendant(profile.getAscendant());
-        dto.setBasicPlanetaryPosition(profile.getBasicPlanetaryPosition());       
+        dto.setBasicPlanetaryPosition(profile.getBasicPlanetaryPosition());
         dto.setFamilyStatus(profile.getFamilyStatus());
         dto.setFamilyType(profile.getFamilyType());
         dto.setHighestEducation(profile.getHighestEducation());
@@ -170,7 +174,7 @@ public class ProfileController {
         dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());
-       
+
         if (profile.getPayments() != null && !profile.getPayments().isEmpty()) {
 
             List<PaymentDto> paymentDtos = profile.getPayments()
@@ -183,7 +187,7 @@ public class ProfileController {
                         paymentDto.setName(payment.getName());
 
                         paymentDto.setPlanCode(payment.getPlanCode());
-                        paymentDto.setAmount((int) (payment.getAmount() / 100));
+                        paymentDto.setAmount(payment.getAmount() / 100L);
                         paymentDto.setCurrency(payment.getCurrency());
                         paymentDto.setStatus(payment.getStatus());
 
@@ -230,11 +234,11 @@ public class ProfileController {
         }
 
 
-       
+
         return ResponseEntity.ok(dto);
     }
 
-    
+
 
 
     @GetMapping("/Allprofiles")
@@ -265,7 +269,7 @@ public class ProfileController {
 
         return ResponseEntity.ok(profiles);
     }
-    
+
     // ✅ UPDATE PROFILE API
     @PutMapping("/update/{id}")
     public ResponseEntity<Profile> updateProfileByUser(
@@ -300,15 +304,15 @@ public class ProfileController {
         return ResponseEntity.ok(Map.of("message", "Privacy settings updated"));
     }
 // DELETE: Delete Profile by ID
-    
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteProfile(@PathVariable Long id) {
         profileService.requestAccountDeletion(id);
         return ResponseEntity.ok("Profile deletion scheduled");
     }
 
-    
-    
+
+
     @PostMapping("/recover-account")
     public ResponseEntity<?> recoverAccount(Authentication authentication) {
 
@@ -321,9 +325,9 @@ public class ProfileController {
 
         return ResponseEntity.ok("Account recovered successfully");
     }
-    
-    
-    
+
+
+
     @GetMapping("/count")
     public ResponseEntity<Map<String, Long>> getProfilesCount() {
         long count = profileService.getRegisteredProfilesCount();

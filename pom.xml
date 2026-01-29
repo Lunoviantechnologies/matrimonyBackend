@@ -51,6 +51,12 @@
 </dependency>
 
 
+<!-- MySQL Connector
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <scope>runtime</scope>
+</dependency>   (stable 8.x) -->
 
     <!-- Validation -->
     <dependency>
