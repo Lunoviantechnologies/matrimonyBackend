@@ -92,7 +92,7 @@ public class ProfileController {
         dto.setGender(profile.getGender());
         dto.setAboutYourself(profile.getAboutYourself());
         dto.setReligion(profile.getReligion());
-        dto.setCaste(profile.getCaste());
+        dto.setHabbits(profile.getHabbits());
         dto.setSubCaste(profile.getSubCaste());
         dto.setDosham(profile.getDosham());
         dto.setMotherTongue(profile.getMotherTongue());
@@ -142,6 +142,7 @@ public class ProfileController {
         dto.setPartnerWork(profile.getPartnerWork());
         dto.setPartnerHobbies(profile.getPartnerHobbies());
         dto.setSports(profile.getSports());
+        dto.setHabbits(profile.getHabbits());
         dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());

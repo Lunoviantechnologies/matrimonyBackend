@@ -369,7 +369,7 @@ public class PaymentController {
         dto.setUserId(rec.getUserId());
         dto.setName(rec.getName());
         dto.setPlanCode(rec.getPlanCode());
-        dto.setAmount(Math.toIntExact(rec.getAmount() / 100));
+        dto.setAmount(Math.toIntExact(rec.getAmount()));
         dto.setCurrency(rec.getCurrency());
         dto.setStatus(rec.getStatus());
         dto.setRazorpayOrderId(rec.getRazorpayOrderId());
@@ -403,7 +403,7 @@ public class PaymentController {
                     profile.getEmailId(),
                     rec.getName(),
                     rec.getPlanCode(),
-                    Math.toIntExact(rec.getAmount() / 100), 
+                    Math.toIntExact(rec.getAmount()), 
                     rec.getRazorpayPaymentId(),
                     profile.getPremiumEnd()
             );

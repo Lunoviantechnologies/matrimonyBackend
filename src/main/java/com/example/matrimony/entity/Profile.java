@@ -29,11 +29,16 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "profiles")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+
+
 public class Profile {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
+
+
 
 	private String profileFor;
 
@@ -80,7 +85,11 @@ public class Profile {
 
 	// community
 	private String religion;
-	private String caste;
+	private String gothram;
+	
+	@Column(columnDefinition = "TEXT")
+	private String habbits;
+
 	private String subCaste;
 	private String dosham;
 	private String motherTongue;
@@ -169,7 +178,9 @@ public class Profile {
 	private String partnerEducation;
 	private String partnerWork;
 	private String partnerHobbies;
-	@Column(name="vegiterian", nullable = false)
+
+	@Column(name="vegiterian")
+
 	private String vegiterian;
 
 	// Additional fields from your other file
@@ -182,7 +193,7 @@ public class Profile {
 	private String partnerLocationPref;
 	private String partnerWorkStatus;
 	private boolean premium;
-
+	
 	// for payment experiration
 	@Column(name = "premium_start")
 	private LocalDateTime premiumStart;
@@ -204,6 +215,15 @@ public class Profile {
 	private LocalDateTime deleteRequestedAt;
 
 	private String sports;
+	
+		@Column(  nullable = true)	
+		private boolean banned;
+
+		@Column(nullable = true)
+		private LocalDateTime bannedAt;
+
+		@Column( name = "ban_reason", columnDefinition = "TEXT", nullable = true)
+		private String banReason;
 	
 	@Column(nullable = false)
     private Boolean approved = Boolean.FALSE;   // admin approval
@@ -330,13 +350,7 @@ public class Profile {
 		this.religion = religion;
 	}
 
-	public String getCaste() {
-		return caste;
-	}
-
-	public void setCaste(String caste) {
-		this.caste = caste;
-	}
+	
 
 	public String getSubCaste() {
 		return subCaste;
@@ -961,6 +975,41 @@ public class Profile {
 	public synchronized void setApproved(Boolean approved) {
 		this.approved = approved;
 	}
+	
+	
+
+	public boolean isBanned() {
+		return banned;
+	}
+
+	public void setBanned(boolean banned) {
+		this.banned = banned;
+	}
+
+	public LocalDateTime getBannedAt() {
+		return bannedAt;
+	}
+
+	public void setBannedAt(LocalDateTime bannedAt) {
+		this.bannedAt = bannedAt;
+	}
+
+	public String getBanReason() {
+		return banReason;
+	}
+
+	public void setBanReason(String banReason) {
+		this.banReason = banReason;
+	}
+	
+
+	public String getHabbits() {
+		return habbits;
+	}
+
+	public void setHabbits(String habbits) {
+		this.habbits = habbits;
+	}
 
 	@Override
 	public String toString() {
@@ -968,7 +1017,7 @@ public class Profile {
 				+ lastName + ", mobileNumber=" + mobileNumber + ", createPassword=" + createPassword + ", role=" + role
 				+ ", createdAt=" + createdAt + ", active=" + active + ", age=" + age + ", dateOfBirth=" + dateOfBirth
 				+ ", emailId=" + emailId + ", gender=" + gender + ", aboutYourself=" + aboutYourself + ", religion="
-				+ religion + ", caste=" + caste + ", subCaste=" + subCaste + ", dosham=" + dosham + ", motherTongue="
+				+ religion + ", subCaste=" + subCaste + ", dosham=" + dosham + ", motherTongue="
 				+ motherTongue + ", membershipType=" + membershipType + ", accountStatus=" + accountStatus
 				+ ", lastActive=" + lastActive + ", maritalStatus=" + maritalStatus + ", noOfChildren=" + noOfChildren
 				+ ", isChildrenLivingWithYou=" + isChildrenLivingWithYou + ", height=" + height + ", familyStatus="
@@ -991,4 +1040,14 @@ public class Profile {
 				+ ", sentMessages=" + sentMessages + ", receivedMessages=" + receivedMessages + ", payments=" + payments
 				+ ", friends=" + friends + "]";
 	}
+
+
+	public String getGothram() {
+		return gothram;
+	}
+
+	public void setGothram(String gothram) {
+		this.gothram = gothram;
+	}
+
 }

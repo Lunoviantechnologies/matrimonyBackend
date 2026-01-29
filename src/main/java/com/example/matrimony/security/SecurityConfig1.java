@@ -134,7 +134,9 @@ public class SecurityConfig1 {
                      "/api/admin/delete-profile/**",
                      "/api/reports/GetAll",
                      "/api/archived-chats/between",
-                     "/api/archived-chats/Get/**"
+                     "/api/archived-chats/Get/**",
+                     "/api/admin/reports/*/reject" ,
+                     "/api/admin/backup-delete/**"
                                         
                 ).hasRole("ADMIN")
 

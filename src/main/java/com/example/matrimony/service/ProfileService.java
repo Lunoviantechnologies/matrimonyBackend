@@ -90,7 +90,7 @@ public class ProfileService {
 
         profile.setGender(req.getGender());
         profile.setReligion(req.getReligion());
-        profile.setCaste(req.getCaste());
+   
         profile.setSubCaste(req.getSubCaste());
         profile.setDosham(req.getDosham());
         profile.setMaritalStatus(req.getMaritalStatus());
@@ -352,7 +352,7 @@ public class ProfileService {
 
         // ---------- COMMUNITY ----------
         existingProfile.setReligion(updatedProfile.getReligion());
-        existingProfile.setCaste(updatedProfile.getCaste());
+       
         existingProfile.setSubCaste(updatedProfile.getSubCaste());
         existingProfile.setDosham(updatedProfile.getDosham());
         existingProfile.setMotherTongue(updatedProfile.getMotherTongue());
@@ -383,7 +383,7 @@ public class ProfileService {
         existingProfile.setAncestralOrigin(updatedProfile.getAncestralOrigin());
         existingProfile.setLivingWith(updatedProfile.getLivingWith());
         existingProfile.setChildrenDetails(updatedProfile.getChildrenDetails());
-
+        existingProfile.setHabbits(updatedProfile.getHabbits());
         // ---------- EDUCATION & CAREER ----------
         existingProfile.setHighestEducation(updatedProfile.getHighestEducation());
         existingProfile.setCollegeName(updatedProfile.getCollegeName());
@@ -411,6 +411,7 @@ public class ProfileService {
         existingProfile.setPartnerEducation(updatedProfile.getPartnerEducation());
         existingProfile.setPartnerWork(updatedProfile.getPartnerWork());
         existingProfile.setPartnerHobbies(updatedProfile.getPartnerHobbies());
+        existingProfile.setHabbits(updatedProfile.getHabbits());
 
         existingProfile.setHobbies(updatedProfile.getHobbies());
         existingProfile.setWeight(updatedProfile.getWeight());

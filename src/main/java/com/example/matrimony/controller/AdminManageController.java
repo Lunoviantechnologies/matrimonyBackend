@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.matrimony.dto.ChatMessageDto;
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.entity.Profile;
@@ -106,7 +108,7 @@ public class AdminManageController {
         dto.setGender(profile.getGender());
         dto.setAboutYourself(profile.getAboutYourself());
         dto.setReligion(profile.getReligion());
-        dto.setCaste(profile.getCaste());
+        
         dto.setSubCaste(profile.getSubCaste());
         dto.setDosham(profile.getDosham());
         dto.setMotherTongue(profile.getMotherTongue());
@@ -155,7 +157,9 @@ public class AdminManageController {
         dto.setPartnerReligion(profile.getPartnerReligion());
         dto.setPartnerWork(profile.getPartnerWork());
         dto.setPartnerHobbies(profile.getPartnerHobbies());
+        dto.setGothram(profile.getGothram());
         dto.setSports(profile.getSports());
+        dto.setHabbits(profile.getHabbits());
         dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());
@@ -309,7 +313,7 @@ public class AdminManageController {
 
         // --- RELIGION & PERSONAL ---
         if (updatedDto.getReligion() != null) existing.setReligion(updatedDto.getReligion());
-        if (updatedDto.getCaste() != null) existing.setCaste(updatedDto.getCaste());
+     
         if (updatedDto.getSubCaste() != null) existing.setSubCaste(updatedDto.getSubCaste());
         if (updatedDto.getDosham() != null) existing.setDosham(updatedDto.getDosham());
         if (updatedDto.getMotherTongue() != null) existing.setMotherTongue(updatedDto.getMotherTongue());
@@ -331,6 +335,7 @@ public class AdminManageController {
         if (updatedDto.getNoOfChildren() != null) existing.setNoOfChildren(updatedDto.getNoOfChildren());
         if (updatedDto.getIsChildrenLivingWithYou() != null) existing.setIsChildrenLivingWithYou(updatedDto.getIsChildrenLivingWithYou());
         if (updatedDto.getSpiritualPath() !=null) existing.setSpiritualPath(updatedDto.getSpiritualPath());
+        if (updatedDto.getHabbits() !=null) existing.setHabbits(updatedDto.getHabbits());
 
         // --- EDUCATION & WORK ---
         if (updatedDto.getHighestEducation() != null) existing.setHighestEducation(updatedDto.getHighestEducation());
@@ -364,7 +369,7 @@ public class AdminManageController {
         if (updatedDto.getPartnerReligion() != null) existing.setPartnerReligion(updatedDto.getPartnerReligion());
         if (updatedDto.getPartnerWork() != null) existing.setPartnerWork(updatedDto.getPartnerWork());
         if (updatedDto.getPartnerHobbies() != null) existing.setPartnerHobbies(updatedDto.getPartnerHobbies());
-
+        if (updatedDto.getGothram() != null) existing.setGothram(updatedDto.getGothram());
         // --- MEMBERSHIP & SYSTEM ---
         if (updatedDto.getMembershipType() != null) existing.setMembershipType(updatedDto.getMembershipType());
         if (updatedDto.getAccountStatus() != null) existing.setAccountStatus(updatedDto.getAccountStatus());
@@ -512,5 +517,14 @@ public class AdminManageController {
         profileService.rejectProfile(profileId, reason);
 
         return ResponseEntity.ok("Profile rejected and deleted successfully");
+    }
+    @GetMapping("/conversation/{senderId}/{receiverId}")
+    public Page<ChatMessageDto> getConversation(
+            @PathVariable Long senderId,
+            @PathVariable Long receiverId,
+            @RequestParam(defaultValue = "0", required = false) int page,
+            @RequestParam(defaultValue = "20", required = false) int size
+    ) {
+        return chatService.getConversation(senderId, receiverId, page, size);
     }
 }

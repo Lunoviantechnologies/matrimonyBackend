@@ -2,18 +2,20 @@ package com.example.matrimony.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.matrimony.entity.UserReport;
+import com.example.matrimony.dto.ReportRequest;
+import com.example.matrimony.dto.UserReportRequest;
 import com.example.matrimony.service.UserReportService;
 
 @RestController
 @RequestMapping("/api/reports")
+@CrossOrigin
 public class UserReportController {
 
     @Autowired
@@ -22,7 +24,11 @@ public class UserReportController {
     @PostMapping("/user/{reportedUserId}")
     public ResponseEntity<?> reportUser(
             @PathVariable Long reportedUserId,
-            @RequestBody UserReport request) {
+
+//            @RequestBody ReportRequest request) {
+
+            @RequestBody UserReportRequest request) {
+
 
         return ResponseEntity.ok(
                 reportService.reportUser(
@@ -33,10 +39,13 @@ public class UserReportController {
                 )
         );
     }
-    @GetMapping("/GetAll")
-    public ResponseEntity<?> getAllReports() {
-        return ResponseEntity.ok(reportService.getAllReports());
     }
 
 
-}
+
+//    @GetMapping("/GetAll")
+//    public ResponseEntity<?> getAllReports() {
+//        return ResponseEntity.ok(reportService.getAllReports());
+//    }
+
+
