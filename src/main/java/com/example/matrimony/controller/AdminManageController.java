@@ -194,10 +194,34 @@ public class AdminManageController {
 
             dto.setPayments(paymentDtos);
         }
+        
+        // ================= DOCUMENT FILE (Base64) ✅ SAME LOGIC =================
+        if (profile.getDocumentFile() != null && !profile.getDocumentFile().isBlank()) {
+            try {
+                Path docPath = Paths.get("uploads/documents")
+                        .resolve(profile.getDocumentFile());
 
+                if (Files.exists(docPath)) {
+                    byte[] docBytes = Files.readAllBytes(docPath);
+                    String base64Doc = Base64.getEncoder().encodeToString(docBytes);
 
+                    String mimeType = Files.probeContentType(docPath);
+                    if (mimeType == null) {
+                        mimeType = "application/octet-stream";
+                    }
 
+                    dto.setDocumentFile("data:" + mimeType + ";base64," + base64Doc);
+                } else {
+                    dto.setDocumentFile(null);
+                }
+            } catch (Exception e) {
+                dto.setDocumentFile(null);
+            }
+        } else {
+            dto.setDocumentFile(null);
+        }
 
+       
 
         // ------------------------------
         // ✅ New: build image URL instead of returning Base64
@@ -221,8 +245,6 @@ public class AdminManageController {
         } else {
             dto.setUpdatePhoto(null);
         }
-
-
        
         return ResponseEntity.ok(dto);
     }
@@ -454,7 +476,7 @@ public class AdminManageController {
     public ResponseEntity<List<com.example.matrimony.entity.ChatMessage>> getChatMessages() {
         return ResponseEntity.ok(chatService.recentMessages());
     }
-    
+    //upload photo user
     @PutMapping("/photo/{id}")
     public ResponseEntity<?> updatePhoto(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
 

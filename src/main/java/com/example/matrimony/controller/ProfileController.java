@@ -31,6 +31,10 @@ import com.example.matrimony.entity.Profile;
 import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.service.ProfileService;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
 @CrossOrigin(origins="*")
 @RestController
 @RequestMapping("/api/profiles")
@@ -41,6 +45,8 @@ public class ProfileController {
     private ProfileRepository profileRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private ObjectMapper objectMapper;
     
     // ✅ Constructor Injection (prevents NullPointerException)
     public ProfileController(ProfileService profileService) {
@@ -50,25 +56,43 @@ public class ProfileController {
    
  // api for the registration  
     @PostMapping("/register")
-    public ResponseEntity<?> createProfile(@RequestBody Profile profile) {
-        if (profile == null) {
-            return ResponseEntity.badRequest().body("Profile cannot be null");
-        }
-        if (profile.getEmailId() == null || profile.getEmailId().isBlank()) {
-            return ResponseEntity.badRequest().body("Email is required");
-        }
+    public ResponseEntity<?> createProfile(
+            @RequestParam("profile") String profileJson,
+            @RequestParam("document") MultipartFile document) {
 
         try {
-            // ✅ bcrypt before save
+            // ✅ Convert JSON string to Profile object
+            Profile profile = objectMapper.readValue(profileJson, Profile.class);
+
+            if (profile.getEmailId() == null || profile.getEmailId().isBlank()) {
+                return ResponseEntity.badRequest().body("Email is required");
+            }
+
+            // ✅ Encrypt password
             profile.setCreatePassword(
                     passwordEncoder.encode(profile.getCreatePassword())
             );
+
+            // ✅ Save document file
+            if (document != null && !document.isEmpty()) {
+                String uploadDir = "uploads/documents";
+                Files.createDirectories(Paths.get(uploadDir));
+
+                String fileName = System.currentTimeMillis() + "_" + document.getOriginalFilename();
+                Path filePath = Paths.get(uploadDir).resolve(fileName);
+
+                Files.copy(document.getInputStream(), filePath);
+
+                // 👉 save filename in DB (add field in Profile entity if not present)
+                profile.setDocumentFile(fileName);
+            }
 
             Profile saved = profileRepository.save(profile);
             return ResponseEntity.ok(saved);
 
         } catch (Exception ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            ex.printStackTrace();
+            return ResponseEntity.badRequest().body("Registration failed: " + ex.getMessage());
         }
     }
     @GetMapping("/myprofiles/{id}")
