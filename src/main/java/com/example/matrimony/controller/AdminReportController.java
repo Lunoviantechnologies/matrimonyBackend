@@ -88,26 +88,10 @@ public class AdminReportController {
 
 }
 
-//    @GetMapping("/{reportId}")
-//    public ResponseEntity<?> getReportById(@PathVariable Long reportId) {
-//        return ResponseEntity.ok(adminReportService.getReportById(reportId));
-//    }
-//    
-//    @PutMapping("/delete/{id}")
-//    public ResponseEntity<String> deleteUserReport(@PathVariable Long id) {
-//    	adminReportService.deleteReportById(id);
-//        return ResponseEntity.ok("User report deleted successfully");
-//    }
-//    
-//    @GetMapping("/deleted-profiles")
-//    public List<DeletedProfile> getDeletedProfiles() {
-//        return deletedProfileRepo.findAll();
-//    }
-//
 //
 //    @GetMapping("/GetAll")
 //    public ResponseEntity<?> getAllReports() {
 //        return ResponseEntity.ok(adminReportService.getAllReports());
 //    }
 //}
-//>>>>>>> 4060a55b04b5eec296199c344fa94374991a109b
+

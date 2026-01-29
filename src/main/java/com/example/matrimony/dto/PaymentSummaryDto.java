@@ -7,9 +7,11 @@ public class PaymentSummaryDto {
     private Long id;
     private String name;
     private String planCode;
-    private Integer amount;      // RUPEES
+
+    private Long amount;   // ✅ RUPEES (safe)
     private String currency;
     private String status;
+
     private String razorpayOrderId;
     private String razorpayPaymentId;
     private LocalDateTime createdAt;
@@ -24,8 +26,8 @@ public class PaymentSummaryDto {
     public String getPlanCode() { return planCode; }
     public void setPlanCode(String planCode) { this.planCode = planCode; }
 
-    public Integer getAmount() { return amount; }
-    public void setAmount(Integer amount) { this.amount = amount; }
+    public Long getAmount() { return amount; }
+    public void setAmount(Long amount) { this.amount = amount; }
 
     public String getCurrency() { return currency; }
     public void setCurrency(String currency) { this.currency = currency; }
