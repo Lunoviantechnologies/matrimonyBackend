@@ -1,6 +1,7 @@
 package com.example.matrimony.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.matrimony.dto.BanRequest;
+import com.example.matrimony.entity.Profile;
 import com.example.matrimony.entity.UserReport;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -81,17 +83,33 @@ public class AdminReportController {
         return ResponseEntity.ok("User permanently deleted.");
     }
     
+//    @PutMapping("/banuser/{userId}")
+//    public ResponseEntity<?> banUser(@PathVariable Long userId,
+//                                     @RequestBody BanRequest req) {
+//
+//        adminReportService.banUser(userId, req.getReason());
+//        return ResponseEntity.ok(Map.of("message", "User banned"));
+//    }
+    
     @PutMapping("/banuser/{userId}")
-    public ResponseEntity<String> banUser(@PathVariable Long userId,
-                                          @RequestBody BanRequest request) {
-        adminReportService.banUser(userId, request.getReason());
+    public ResponseEntity<?> banUser(@PathVariable Long userId,
+                                     @RequestBody BanRequest request) {
+
+        adminReportService.banUser(
+            userId,
+            request.getReason(),
+            request.getAdminComment()
+        );
+
         return ResponseEntity.ok("User banned successfully");
     }
+
+
+
     
-    //Get All Api
     @GetMapping("/reports/GetAll")
     public ResponseEntity<List<UserReport>> getAllReports() {
-        return ResponseEntity.ok(adminReportService.getPendingReports());
+        return ResponseEntity.ok(adminReportService.getAllReports());
     }
 
 }

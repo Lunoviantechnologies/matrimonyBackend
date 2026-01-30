@@ -181,22 +181,46 @@ public class AdminReportService {
         profileRepo.delete(profile);
     }
     
+    
+ // ================= GET ALL REPORTS =================
+    public List<UserReport> getAllReports() {
+        return reportRepo.findAll();
+    }
+
+    //
+//    @Transactional
+//    public void banUser(Long userId, String reason) {
+//
+//        Profile profile = profileRepo.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        profile.setBanned(true);
+//        profile.setActive(false);    
+//        profile.setBannedAt(LocalDateTime.now());
+//        profile.setBanReason(reason);
+//
+//        profileRepo.save(profile);
+//
+//       reportRepo.updateStatusByReportedUser(userId, ReportStatus.BANNED);
+//    }
     @Transactional
-    public void banUser(Long userId, String reason) {
+    public void banUser(Long userId, String reason, String adminComment) {
 
         Profile profile = profileRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (profile.isBanned()) {
-            throw new RuntimeException("User already banned");
-        }
-
         profile.setBanned(true);
-        profile.setActive(false); // disable login
+        profile.setActive(false);
         profile.setBannedAt(LocalDateTime.now());
         profile.setBanReason(reason);
-
         profileRepo.save(profile);
+
+        // ✅ Save admin comment in reports
+        reportRepo.updateStatusAndCommentByReportedUser(
+                userId,
+                ReportStatus.BANNED,
+                adminComment
+        );
     }
 
 }

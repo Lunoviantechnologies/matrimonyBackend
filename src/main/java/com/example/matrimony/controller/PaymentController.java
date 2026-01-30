@@ -292,4 +292,22 @@ public class PaymentController {
         if (end.isBefore(LocalDateTime.now())) return "Your plan has expired";
         return "Your plan will expire on " + end.toLocalDate() + " at " + end.toLocalTime().withSecond(0).withNano(0);
     }
+    
+    @GetMapping("/successful")
+    public List<PaymentDto> getAllPaymentsByStatuses() {
+        List<String> statuses = List.of("PAID", "CREATED", "FAILED");
+        return paymentRepo.findByStatusInOrderByCreatedAtDesc(statuses)
+                          .stream()
+                          .map(this::toDto)
+                          .toList();
+    }
+
+
+    // admin: payment by paymentId
+    @GetMapping("/admin/successful/{paymentId}")
+    public ResponseEntity<?> getSuccessfulPaymentById(@PathVariable Long paymentId) {
+        return paymentRepo.findByIdAndStatus(paymentId, "PAID")
+                .map(rec -> ResponseEntity.ok(toDto(rec)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 }
