@@ -3,12 +3,14 @@ package com.example.matrimony.service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.matrimony.entity.Admin;
 import com.example.matrimony.entity.Notification;
@@ -95,7 +97,7 @@ public class Notificationadminservice {
                 });
     }
 
-	public static void sendTicketNotification(String memberId, String string, String string2, Long id) {
+	public void sendTicketNotification(String memberId, String string, String string2, Long id) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -121,7 +123,64 @@ public class Notificationadminservice {
 
 	    notificationRepository.save(notification);
 	}
+	@Transactional
+	public void notifyAdmin(String type, String message, Map<String, Object> data) {
 
+	    try {
+	        List<Admin> admins = adminRepository.findAll();
+
+	        if (admins.isEmpty()) {
+	            System.out.println("⚠️ No admins found. Notification skipped.");
+	            return;
+	        }
+
+	        for (Admin admin : admins) {
+
+	            if (admin.getAdminId() == null) continue;
+
+	            Notification notification = new Notification();
+	            notification.setType(type);
+	            notification.setMessage(message);
+	            notification.setSenderId(null); // SYSTEM
+	            notification.setReceiverId(admin.getAdminId());
+	            notification.setRead(false);
+	            notification.setCreatedAt(LocalDateTime.now());
+
+	            if (data != null) {
+	                notification.setData(objectMapper.writeValueAsString(data));
+	            }
+
+	            notificationRepository.save(notification);
+	        }
+
+	        System.out.println("✅ ADMIN NOTIFICATION SAVED (DB ONLY)");
+
+	    } catch (Exception e) {
+	        System.err.println("❌ ADMIN NOTIFICATION FAILED");
+	        e.printStackTrace();
+	    }
+	}
+
+
+	private void setRead(boolean b) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void setData(String writeValueAsString) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void setMessage(String message) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void setType(String type) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 
 }
