@@ -122,22 +122,61 @@ public class FriendRequestService {
     }
 
     
- 
-
-    
+    @Transactional
     public List<FriendDTO> getSentBy(Long senderId) {
+
         List<FriendRequest> requests = requestRepository.findBySender_Id(senderId);
 
+        // 🔔 Send notification for each sent request status
+        for (FriendRequest req : requests) {
+
+            NotificationDto notif = new NotificationDto();
+            notif.setSenderId(req.getReceiver().getId());   // receiver as sender
+            notif.setReceiverId(req.getSender().getId());   // original sender
+            notif.setType("FRIEND_REQUEST_STATUS");
+            notif.setMessage(
+                    req.getReceiver().getFirstName() + " " +
+                    req.getReceiver().getLastName() +
+                    " has " + req.getStatus().name().toLowerCase() +
+                    " your friend request"
+            );
+            notif.setData(
+                    Map.of(
+                            "requestId", req.getId(),
+                            "status", req.getStatus().name()
+                    )
+            );
+
+            notificationService.sendToUserAndSave(notif);
+        }
+
         return requests.stream()
-            .map(req -> new FriendDTO(
-                req.getId(),    
-                req.getSender().getId(),
-                req.getReceiver().getId(),
-                req.getReceiver().getFirstName() + " " + req.getReceiver().getLastName(),           
-                req.getStatus().name()
-            ))
-            .toList();
+                .map(req -> new FriendDTO(
+                        req.getId(),
+                        req.getSender().getId(),
+                        req.getReceiver().getId(),
+                        req.getReceiver().getFirstName() + " " +
+                        req.getReceiver().getLastName(),
+                        req.getStatus().name()
+                ))
+                .toList();
     }
+
+
+    
+//    public List<FriendDTO> getSentBy(Long senderId) {
+//        List<FriendRequest> requests = requestRepository.findBySender_Id(senderId);
+//
+//        return requests.stream()
+//            .map(req -> new FriendDTO(
+//                req.getId(),    
+//                req.getSender().getId(),
+//                req.getReceiver().getId(),
+//                req.getReceiver().getFirstName() + " " + req.getReceiver().getLastName(),           
+//                req.getStatus().name()
+//            ))
+//            .toList();
+//    }
 
  
     public String deleteSentRequest(Long requestId) {

@@ -29,6 +29,7 @@ public class AdminReportService {
     @Autowired
     private UserBlockRepository chatBlockRepo;
     
+    
     private DeletedProfileBackupDTO buildBackup(
             Profile profile,
             List<ChatMessageDto> chatDtos
@@ -129,6 +130,7 @@ public class AdminReportService {
 
    
  // ================= PERMANENT DELETE WITH FULL BACKUP =================
+    
     @Transactional
     public void permanentDeleteUser(Long userId) {
 
@@ -136,32 +138,29 @@ public class AdminReportService {
         Profile profile = profileRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 2️⃣ REMOVE ALL BLOCK REFERENCES (BOTH SIDES)
+      
+        // 3️⃣ DELETE BLOCK RELATIONS
         chatBlockRepo.deleteAllByBlockedId(userId);
         chatBlockRepo.deleteAllByBlockerId(userId);
 
-        // ✅ CRITICAL: force execution of block deletes
-        chatBlockRepo.flush();
-
-        // 3️⃣ FETCH chats for BACKUP
-        List<ChatMessage> chats =
-                chatRepo.findAllBySender_IdOrReceiver_Id(userId, userId);
-
-        List<ChatMessageDto> chatDtos = chats.stream()
+        // 4️⃣ FETCH chats for BACKUP
+        List<ChatMessageDto> chatDtos = chatRepo
+                .findAllBySender_IdOrReceiver_Id(userId, userId)
+                .stream()
                 .map(ChatMessageDto::fromEntity)
                 .toList();
 
-        // 4️⃣ Build backup DTO
+        // 5️⃣ BUILD BACKUP
         DeletedProfileBackupDTO backupDTO = buildBackup(profile, chatDtos);
 
         String fullJson;
         try {
             fullJson = objectMapper.writeValueAsString(backupDTO);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create backup JSON", e);
+            throw new RuntimeException("Backup JSON failed", e);
         }
 
-        // 5️⃣ Save snapshot
+        // 6️⃣ SAVE SNAPSHOT
         DeletedProfileSnapshot snapshot = new DeletedProfileSnapshot();
         snapshot.setUserId(userId);
         snapshot.setFullProfileJson(fullJson);
@@ -171,13 +170,13 @@ public class AdminReportService {
 
         snapshotRepo.save(snapshot);
 
-        // 6️⃣ Delete remaining dependencies
+        // 7️⃣ DELETE DEPENDENT DATA
         chatRepo.deleteAllBySender_IdOrReceiver_Id(userId, userId);
         profileViewLogRepo.deleteAllByProfileId(userId);
         friendRequestRepo.deleteAllByProfileId(userId);
         reportRepo.deleteAllByReportedUser_Id(userId);
 
-        // 7️⃣ FINAL DELETE (NOW FK SAFE)
+        // 8️⃣ FINALLY DELETE PROFILE
         profileRepo.delete(profile);
     }
     
@@ -222,5 +221,58 @@ public class AdminReportService {
                 adminComment
         );
     }
+
+    
+//    @Transactional
+//    public void permanentDeleteUser(Long userId) {
+//
+//        // 1️⃣ Fetch profile
+//        Profile profile = profileRepo.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        // 2️⃣ REMOVE ALL BLOCK REFERENCES (BOTH SIDES)
+//        chatBlockRepo.deleteAllByBlockedId(userId);
+//        chatBlockRepo.deleteAllByBlockerId(userId);
+//
+//        // ✅ CRITICAL: force execution of block deletes
+//        chatBlockRepo.flush();
+//
+//        // 3️⃣ FETCH chats for BACKUP
+//        List<ChatMessage> chats =
+//                chatRepo.findAllBySender_IdOrReceiver_Id(userId, userId);
+//
+//        List<ChatMessageDto> chatDtos = chats.stream()
+//                .map(ChatMessageDto::fromEntity)
+//                .toList();
+//
+//        // 4️⃣ Build backup DTO
+//        DeletedProfileBackupDTO backupDTO = buildBackup(profile, chatDtos);
+//
+//        String fullJson;
+//        try {
+//            fullJson = objectMapper.writeValueAsString(backupDTO);
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to create backup JSON", e);
+//        }
+//
+//        // 5️⃣ Save snapshot
+//        DeletedProfileSnapshot snapshot = new DeletedProfileSnapshot();
+//        snapshot.setUserId(userId);
+//        snapshot.setFullProfileJson(fullJson);
+//        snapshot.setDeletedAt(LocalDateTime.now());
+//        snapshot.setDeletedByAdmin("ADMIN");
+//        snapshot.setDeleteReason("Permanent delete");
+//
+//        snapshotRepo.save(snapshot);
+//
+//        // 6️⃣ Delete remaining dependencies
+//        chatRepo.deleteAllBySender_IdOrReceiver_Id(userId, userId);
+//        profileViewLogRepo.deleteAllByProfileId(userId);
+//        friendRequestRepo.deleteAllByProfileId(userId);
+//        reportRepo.deleteAllByReportedUser_Id(userId);
+//
+//        // 7️⃣ FINAL DELETE (NOW FK SAFE)
+//        profileRepo.delete(profile);
+//    }
 
 }

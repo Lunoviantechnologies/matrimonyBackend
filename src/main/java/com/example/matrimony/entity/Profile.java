@@ -25,6 +25,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Value;
 
 @Entity
 @Table(name = "profiles")
@@ -37,9 +38,6 @@ public class Profile {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-
-
-
 	private String profileFor;
 
 	@NotBlank
@@ -72,6 +70,7 @@ public class Profile {
 	@Min(18)
 	private int age;
 
+	@JsonFormat(pattern = "yyyy-MM-dd")
 	private LocalDate dateOfBirth;
 
 	@Email
@@ -120,6 +119,7 @@ public class Profile {
 	private String updatePhoto;
 
 	@Column(name = "document_file", length = 512)
+	
 	private String documentFile;
 
 	// family details
@@ -216,10 +216,12 @@ public class Profile {
 
 	private String sports;
 	
+
 		@Column(  nullable = false)	
 		private boolean banned;
 		private LocalDateTime bannedAt;
 		@Column(length = 255)
+
 		private String banReason;
 	
 	@Column(nullable = false)

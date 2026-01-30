@@ -106,4 +106,9 @@ public class NotificationadminController {
         service.markAllRead(adminId);
         return ResponseEntity.ok().build();
     }
+
+	public void notifyAdmin(String string, String adminMessage, Map<String, Object> of) {
+		// TODO Auto-generated method stub
+		
+	}
 }
