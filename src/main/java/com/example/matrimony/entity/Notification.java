@@ -2,6 +2,7 @@ package com.example.matrimony.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "notifications")
@@ -113,4 +114,9 @@ public class Notification {
     public Instant getCreatedAt() { return createdAt; }
 
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+	public void setCreatedAt(LocalDateTime now) {
+		// TODO Auto-generated method stub
+		
+	}
 }

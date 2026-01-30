@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -15,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+//@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig1 {
 
     @Autowired
@@ -53,6 +55,7 @@ public class SecurityConfig1 {
                    "/ws-chat/**" ,
                    "/api/tickets",
                    "/api/admin/create-admin"
+                  
                   
                 ).permitAll()
 
@@ -137,8 +140,15 @@ public class SecurityConfig1 {
                      "/api/archived-chats/Get/**",
                      "/api/admin/reports/*/reject" ,
                      "/api/admin/backup-delete/**",
-                     "api/admin/banuser/**"
+<<<<<<< HEAD
+                     "/api/admin/banuser/**"
                                         
+=======
+                     "api/admin/banuser/**",
+                     "/api/profiles/view-document/**"
+                     
+                                       
+>>>>>>> b3c5595f2c8cc411b1e4769935131ded5e801933
                 ).hasRole("ADMIN")
 
                 // ✅ All others must be authenticated
