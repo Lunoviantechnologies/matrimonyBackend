@@ -194,7 +194,7 @@ public class EmailService {
 			return;
 		}
 
-        String subject = "✅ Your VivahJeevan Profile is Approved";
+        String subject = "Your VivahJeevan Profile is Approved";
 
         String body = """
             <h2>Dear %s,</h2>
@@ -224,7 +224,7 @@ public class EmailService {
 			return;
 		}
 
-        String subject = "✅ Your Support Ticket Has Been Resolved - VivahJeevan";
+        String subject = " Your Support Ticket Has Been Resolved - VivahJeevan";
 
         String body = """
             <h2>Dear %s,</h2>
@@ -271,7 +271,7 @@ public class EmailService {
 			return;
 		}
 
-        String subject = "❌ Profile Review Update - VivahJeevan";
+        String subject = " Profile Review Update - VivahJeevan";
 
         String body = """
             <h2>Dear %s,</h2>
@@ -297,7 +297,7 @@ public class EmailService {
 			return;
 		}
 
-        String subject = "⚠️ Account Deletion Requested - VivahJeevan";
+        String subject = " Account Deletion Requested - VivahJeevan";
 
         String body = """
             <h2>Dear %s,</h2>
@@ -322,7 +322,7 @@ public class EmailService {
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a");
 
-        String subject = "⏳ Your Premium Plan Has Expired";
+        String subject = " Your Premium Plan Has Expired";
 
         String body = """
             <h2>Hi %s,</h2>
@@ -344,7 +344,7 @@ public class EmailService {
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a");
 
-        String subject = "⏰ Premium Plan Expiring Soon";
+        String subject = " Premium Plan Expiring Soon";
 
         String body = """
             <h2>Hi %s,</h2>
@@ -368,7 +368,7 @@ public class EmailService {
 
 DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a");
 
-String subject = "💎 Premium Plan Activated - VivahJeevan";
+String subject = " Premium Plan Activated - VivahJeevan";
 
 String body = """
 <h2>Hi %s,</h2>
@@ -390,4 +390,45 @@ premiumEnd != null ? premiumEnd.format(fmt) : "N/A");
 
 sendEmail(toEmail, subject, body, true);
 }
+    
+ // =====================================================
+ // USER REGISTRATION SUCCESS EMAIL
+ // =====================================================
+ public void sendRegistrationSuccessEmail(String toEmail, String name) {
+
+     if (toEmail == null || toEmail.isBlank()) {
+         return;
+     }
+
+     String subject = " Welcome to VivahJeevan - Registration Successful";
+
+     String body = """
+         <h2>Dear %s,</h2>
+
+         <p>Welcome to <b>VivahJeevan</b>! 🎉</p>
+         <p>Your account has been <b>successfully registered</b>.</p>
+
+         <h3> What You Can Do Now</h3>
+         <ul>
+             <li>Create and update your profile</li>
+             <li>Browse matches and send interests</li>
+             <li>Chat with matches (Premium required)</li>
+             <li>Upgrade to premium for full features</li>
+         </ul>
+
+         <p>To get better matches, please complete your profile with accurate details and photos.</p>
+
+         <p>If you have any questions, feel free to contact our support team.</p>
+
+         <br>
+         <p>Warm Regards,<br>
+         <b>VivahJeevan Team</b></p>
+
+         %s
+         """.formatted(name, footer());
+
+     sendEmail(toEmail, subject, body, true);
+ }
+
 }
+
