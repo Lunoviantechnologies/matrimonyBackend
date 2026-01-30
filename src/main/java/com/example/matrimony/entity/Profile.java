@@ -25,6 +25,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Value;
 
 @Entity
 @Table(name = "profiles")
@@ -118,6 +119,7 @@ public class Profile {
 	private String updatePhoto;
 
 	@Column(name = "document_file", length = 512)
+	
 	private String documentFile;
 
 	// family details

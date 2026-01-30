@@ -54,6 +54,7 @@ public class SecurityConfig1 {
                    "/api/tickets",
                    "/api/admin/create-admin"
                   
+                  
                 ).permitAll()
 
                 // ✅ Restricted employee endpoints
@@ -137,8 +138,10 @@ public class SecurityConfig1 {
                      "/api/archived-chats/Get/**",
                      "/api/admin/reports/*/reject" ,
                      "/api/admin/backup-delete/**",
-                     "api/admin/banuser/**"
-                                        
+                     "api/admin/banuser/**",
+                     "/api/profiles/view-document/**"
+                     
+                                       
                 ).hasRole("ADMIN")
 
                 // ✅ All others must be authenticated

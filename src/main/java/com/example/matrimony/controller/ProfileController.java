@@ -1,5 +1,6 @@
 package com.example.matrimony.controller;
 
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,8 +11,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-//import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -22,18 +27,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.dto.PrivacySettingsDto;
 import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.repository.ProfileRepository;
+import com.example.matrimony.service.Notificationadminservice;
 import com.example.matrimony.service.ProfileService;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
+
+
 
 @CrossOrigin(origins="*")
 @RestController
@@ -48,13 +55,19 @@ public class ProfileController {
 
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private Notificationadminservice notificationservice;
     
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     // ✅ Constructor Injection (prevents NullPointerException)
     public ProfileController(ProfileService profileService) {
         this.profileService = profileService;
     }
 
+    
+     
 
  // api for the registration
     @PostMapping("/register")
@@ -75,28 +88,102 @@ public class ProfileController {
                     passwordEncoder.encode(profile.getCreatePassword())
             );
 
-            // ✅ Save document file
+            // ✅ Save document file (USING SAME PATH AS VIEW API)
             if (document != null && !document.isEmpty()) {
-                String uploadDir = "uploads/documents";
+
+                // Create directory if not exists
                 Files.createDirectories(Paths.get(uploadDir));
 
-                String fileName = System.currentTimeMillis() + "_" + document.getOriginalFilename();
-                Path filePath = Paths.get(uploadDir).resolve(fileName);
+                // Unique filename
+                String fileName = System.currentTimeMillis()
+                        + "_" + document.getOriginalFilename();
 
+                // Resolve absolute path
+                Path filePath = Paths.get(uploadDir)
+                        .resolve(fileName)
+                        .normalize();
+
+                // Save file
                 Files.copy(document.getInputStream(), filePath);
 
-                // 👉 save filename in DB (add field in Profile entity if not present)
+                // Save filename in DB
                 profile.setDocumentFile(fileName);
             }
 
+            // ✅ Save profile
             Profile saved = profileRepository.save(profile);
+
+            // ================== 🔔 ADMIN NOTIFICATION ==================
+            String adminMessage =
+                    "New user registered: " +
+                    profile.getFirstName() + " " + profile.getLastName() +
+                    " (" + profile.getEmailId() + ")";
+
+            notificationservice.notifyAdmin(
+                    "USER_REGISTERED",
+                    adminMessage,
+                    Map.of(
+                            "userId", profile.getId(),
+                            "name", profile.getFirstName() + " " + profile.getLastName(),
+                            "email", profile.getEmailId(),
+                            "mobile", profile.getMobileNumber()
+                    )
+            );
+
+
             return ResponseEntity.ok(saved);
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.badRequest().body("Registration failed: " + ex.getMessage());
+            return ResponseEntity.badRequest()
+                    .body("Registration failed: " + ex.getMessage());
         }
     }
+
+
+    
+//    @PostMapping("/register")
+//    public ResponseEntity<?> createProfile(
+//            @RequestParam("profile") String profileJson,
+//            @RequestParam("document") MultipartFile document) {
+//
+//        try {
+//            // ✅ Convert JSON string to Profile object
+//            Profile profile = objectMapper.readValue(profileJson, Profile.class);
+//
+//            if (profile.getEmailId() == null || profile.getEmailId().isBlank()) {
+//                return ResponseEntity.badRequest().body("Email is required");
+//            }
+//
+//            // ✅ Encrypt password
+//            profile.setCreatePassword(
+//                    passwordEncoder.encode(profile.getCreatePassword())
+//            );
+//
+//            // ✅ Save document file
+//            if (document != null && !document.isEmpty()) {
+//                String uploadDir = "uploads/documents";
+//                Files.createDirectories(Paths.get(uploadDir));
+//
+//                String fileName = System.currentTimeMillis() + "_" + document.getOriginalFilename();
+//                Path filePath = Paths.get(uploadDir).resolve(fileName);
+//
+//                Files.copy(document.getInputStream(), filePath);
+//
+//                // 👉 save filename in DB (add field in Profile entity if not present)
+//                profile.setDocumentFile(fileName);
+//            }
+//
+//            Profile saved = profileRepository.save(profile);
+//            return ResponseEntity.ok(saved);
+//
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            return ResponseEntity.badRequest().body("Registration failed: " + ex.getMessage());
+//        }
+//    }
+    
+    
     @GetMapping("/myprofiles/{id}")
     public ResponseEntity<ProfileDto> getProfile(@PathVariable Long id) {
         Optional<Profile> p = profileRepository.findById(id);
@@ -153,6 +240,7 @@ public class ProfileController {
         dto.setSiblings(profile.getSiblings());
         dto.setRashi(profile.getRashi());
         dto.setNakshatra(profile.getNakshatra());
+        dto.setGothram(profile.getGothram());
         dto.setPartnerAgeRange(profile.getPartnerAgeRange());
         dto.setPartnerEducation(profile.getPartnerEducation());
         dto.setPartnerLocationPref(profile.getPartnerLocationPref());
@@ -335,5 +423,45 @@ public class ProfileController {
         response.put("count", count);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/view-document/{fileName}")
+    public ResponseEntity<Resource> viewDocument(@PathVariable String fileName) {
+        try {
+            if (fileName.contains("..")) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            Path filePath = Paths.get(uploadDir)
+                    .resolve(fileName)
+                    .normalize();
+
+            // 🔍 DEBUG (KEEP UNTIL VERIFIED)
+            System.out.println("Looking for file at: " + filePath.toAbsolutePath());
+
+            if (!Files.exists(filePath)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = new UrlResource(filePath.toUri());
+
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(
+                            HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + resource.getFilename() + "\""
+                    )
+                    .body(resource);
+ 
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 
 }
