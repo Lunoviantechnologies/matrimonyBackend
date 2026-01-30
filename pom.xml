@@ -43,20 +43,20 @@
 
     
    <!-- MySQL Connector (stable 8.x) -->
-<dependency>
+<!-- <dependency>
   <groupId>com.mysql</groupId>
   <artifactId>mysql-connector-j</artifactId>
   <version>8.0.33</version>
   <scope>runtime</scope>
-</dependency>
+</dependency> -->
 
 
-<!-- MySQL Connector
+<!-- PostgreSQL Connector  (stable 8.x) -->
 <dependency>
     <groupId>org.postgresql</groupId>
     <artifactId>postgresql</artifactId>
     <scope>runtime</scope>
-</dependency>   (stable 8.x) -->
+</dependency>  
 
     <!-- Validation -->
     <dependency>

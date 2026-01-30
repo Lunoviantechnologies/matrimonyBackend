@@ -27,15 +27,23 @@ public class WebConfig implements WebMvcConfigurer {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow multiple origins (comma-separated)
-        config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        // Allow multiple origins (comma-separated); trim spaces
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+        config.setAllowedOrigins(origins);
 
         config.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
         );
 
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+
+        // When credentials are true, browser CORS does NOT allow origin "*".
+        // Use allowCredentials(false) when using "*", so CORS works.
+        boolean useWildcard = origins.size() == 1 && "*".equals(origins.get(0));
+        config.setAllowCredentials(!useWildcard);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
