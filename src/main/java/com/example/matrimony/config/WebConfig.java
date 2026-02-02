@@ -19,7 +19,8 @@ public class WebConfig implements WebMvcConfigurer {
     // CORS CONFIGURATION
     // ===========================
 
-    @Value("${app.cors.allowed-origins}")
+    // Default "*" so missing/wrong property on server does not cause 403
+    @Value("${app.cors.allowed-origins:*}")
     private String allowedOrigins;
 
     @Bean
@@ -27,12 +28,15 @@ public class WebConfig implements WebMvcConfigurer {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow multiple origins (comma-separated); trim spaces
+        // Allow multiple origins (comma-separated); trim spaces and trailing slashes
         List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
+                .map(s -> s.endsWith("/") ? s.substring(0, s.length() - 1) : s)
                 .filter(s -> !s.isEmpty())
                 .toList();
-        config.setAllowedOrigins(origins);
+
+        // Use setAllowedOriginPatterns so https + http and www + non-www all work (avoids 403 from CORS)
+        config.setAllowedOriginPatterns(origins);
 
         config.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
@@ -41,7 +45,6 @@ public class WebConfig implements WebMvcConfigurer {
         config.setAllowedHeaders(List.of("*"));
 
         // When credentials are true, browser CORS does NOT allow origin "*".
-        // Use allowCredentials(false) when using "*", so CORS works.
         boolean useWildcard = origins.size() == 1 && "*".equals(origins.get(0));
         config.setAllowCredentials(!useWildcard);
 

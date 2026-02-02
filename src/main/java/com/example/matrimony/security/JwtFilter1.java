@@ -91,15 +91,20 @@ public class JwtFilter1 extends OncePerRequestFilter {
 	            token = authHeader.substring(7);
 	            try {
 	                email = jwtUtil.extractUsername(token);
-	                roles = jwtUtil.extractAllClaims(token).get("roles", List.class);
+	                List<?> rawRoles = jwtUtil.extractAllClaims(token).get("roles", List.class);
+	                roles = (rawRoles != null)
+	                        ? rawRoles.stream().map(String::valueOf).toList()
+	                        : null;
 	            } catch (Exception e) {
 	                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-	                response.getWriter().write("Invalid JWT");
+	                response.setContentType("application/json");
+	                response.getWriter().write("{\"error\":\"Invalid JWT\"}");
 	                return;
 	            }
 	        }
 
-	        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+	        if (email != null && roles != null && !roles.isEmpty()
+	                && SecurityContextHolder.getContext().getAuthentication() == null) {
 
 	            // Decide which service to use (OK)
 	            UserDetails userDetails =
@@ -109,7 +114,7 @@ public class JwtFilter1 extends OncePerRequestFilter {
 
 	            if (jwtUtil.validateToken(token, userDetails.getUsername())) {
 
-	                // ✅ AUTHORITIES MUST COME FROM JWT
+	                // ✅ AUTHORITIES MUST COME FROM JWT (safe string conversion)
 	                var authorities = roles.stream()
 	                        .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
 	                        .toList();

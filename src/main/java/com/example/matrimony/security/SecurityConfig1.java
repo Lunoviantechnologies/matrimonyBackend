@@ -140,7 +140,7 @@ public class SecurityConfig1 {
                      "/api/archived-chats/Get/**",
                      "/api/admin/reports/*/reject" ,
                      "/api/admin/backup-delete/**",
-                     "api/admin/banuser/**",
+                     "/api/admin/banuser/**",
                      "/api/profiles/view-document/**"
                 ).hasRole("ADMIN")
 
