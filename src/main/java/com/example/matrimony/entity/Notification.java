@@ -1,6 +1,9 @@
 package com.example.matrimony.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 
@@ -23,8 +26,9 @@ public class Notification {
     @Column(name = "receiver_id", nullable = false)
     private Long receiverId;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
-    private String data; // JSON stored as string
+    private String data; // JSON: Hibernate binds as JSON for PostgreSQL
 
     @Column(name = "is_read")
     private boolean isRead = false;
