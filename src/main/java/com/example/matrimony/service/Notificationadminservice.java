@@ -144,7 +144,7 @@ public class Notificationadminservice {
 	            notification.setSenderId(null); // SYSTEM
 	            notification.setReceiverId(admin.getAdminId());
 	            notification.setRead(false);
-	            notification.setCreatedAt(LocalDateTime.now());
+	            notification.setCreatedAt(Instant.now());
 
 	            if (data != null) {
 	                notification.setData(objectMapper.writeValueAsString(data));
