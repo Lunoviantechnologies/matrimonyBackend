@@ -141,8 +141,15 @@ public class SecurityConfig1 {
                      "/api/admin/reports/*/reject" ,
                      "/api/admin/backup-delete/**",
                      "/api/admin/banuser/**",
-                     "/api/profiles/view-document/**"
-                ).hasRole("ADMIN")
+                     "/api/profiles/view-document/**",
+                     "/api/admin/manage/all",
+                     "/api/admin/manage/delete/**"
+                ).hasAnyRole("ADMIN", "SUPER_ADMIN")
+                
+                .requestMatchers(
+                        "/api/admin/manage/**"   // create admin, manage admins
+                ).hasRole("SUPER_ADMIN")
+
 
                 // ✅ All others must be authenticated
                 .anyRequest().authenticated()
