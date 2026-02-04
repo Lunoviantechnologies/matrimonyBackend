@@ -17,7 +17,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
@@ -167,8 +166,7 @@ public class Profile {
 	private String rashi;
 	private String nakshatra;
 	private String ascendant;
-	@Lob
-	@Column(name = "basic_planetary_position", columnDefinition = "LONGTEXT")
+	@Column(name = "basic_planetary_position", columnDefinition = "TEXT")
 	private String basicPlanetaryPosition;
 
 	// Preferences
