@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.matrimony.entity.State;
+
 public class ProfileListDto {
     private Long id;
     private String profileFor;
@@ -65,11 +67,21 @@ public class ProfileListDto {
     public void setGender(String gender) { this.gender = gender; }
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
-    public String getState() { return state; }
-    public void setState(String state) { this.state = state; }
-    public String getCountry() { return country; }
-    public void setCountry(String country) { this.country = country; }
-    public String getOccupation() { return occupation; }
+   
+    
+	public String getState() {
+		return state;
+	}
+	public void setState(String state) {
+		this.state = state;
+	}
+	public String getCountry() {
+		return country;
+	}
+	public void setCountry(String country) {
+		this.country = country;
+	}
+	public String getOccupation() { return occupation; }
     public void setOccupation(String occupation) { this.occupation = occupation; }
     public String getCompanyName() { return companyName; }
     public void setCompanyName(String companyName) { this.companyName = companyName; }

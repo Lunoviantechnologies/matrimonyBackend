@@ -54,6 +54,11 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
     void updateLastActive(@Param("id") Long id,
                           @Param("time") LocalDateTime time);
 
+    // ===== Referral support (Refer & Earn) =====
+
+    boolean existsByReferralCode(String referralCode);
+
+    Optional<Profile> findByReferralCode(String referralCode);
      
 }
  

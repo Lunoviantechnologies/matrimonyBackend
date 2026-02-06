@@ -136,9 +136,8 @@ public class AdminManageController {
         dto.setCompanyName(profile.getCompanyName());
         dto.setAnnualIncome(profile.getAnnualIncome());
         dto.setWorkLocation(profile.getWorkLocation());
-        dto.setState(profile.getState());
-        dto.setCountry(profile.getCountry());
-        dto.setCity(profile.getCity());
+      
+        dto.setCityName(profile.getCity());
         dto.setBodyType(profile.getBodyType());
         dto.setComplexion(profile.getComplexion());
         dto.setExperience(profile.getExperience());
@@ -255,7 +254,7 @@ public class AdminManageController {
         } else {
             dto.setUpdatePhoto(null);
         }
-
+       
         return ResponseEntity.ok(dto);
     }
 
@@ -472,15 +471,15 @@ public class AdminManageController {
 		}
 
         // --- LOCATION ---
-        if (updatedDto.getCity() != null) {
-			existing.setCity(updatedDto.getCity());
+        if (updatedDto.getCityName() != null) {
+			existing.setCity(updatedDto.getCityName());
 		}
-        if (updatedDto.getState() != null) {
-			existing.setState(updatedDto.getState());
-		}
-        if (updatedDto.getCountry() != null) {
-			existing.setCountry(updatedDto.getCountry());
-		}
+//        if (updatedDto.getState() != null) {
+//			existing.setState(updatedDto.getState());
+//		}
+//        if (updatedDto.getCountry() != null) {
+//			existing.setCountry(updatedDto.getCountry());
+//		}
 
         // --- HOBBIES ---
         if (updatedDto.getHobbies() != null) {
@@ -655,6 +654,10 @@ public class AdminManageController {
 
         }).orElse(ResponseEntity.badRequest().body("Profile not found"));
     }
+    
+   
+    
+    
     @PostMapping("/profiles/approve/{id}")
     public ResponseEntity<Map<String, Object>> approve(@PathVariable Long id) {
         try {
@@ -695,4 +698,6 @@ public class AdminManageController {
     ) {
         return chatService.getConversation(senderId, receiverId, page, size);
     }
+   
+
 }

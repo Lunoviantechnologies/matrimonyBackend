@@ -5,7 +5,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.JoinColumn;
 
 public class ProfileDto {
 
@@ -56,6 +59,11 @@ public class ProfileDto {
     private String familyStatus;
     private String familyType;
     private String spiritualPath;
+    private String UpdatePhoto1;
+    private String UpdatePhoto2;
+    private String UpdatePhoto3;
+    private String UpdatePhoto4;
+    
 
     // Family details
     private String fatherName;
@@ -80,9 +88,14 @@ public class ProfileDto {
     private String companyName;
     private String annualIncome;
     private String workLocation;
-    private String state;
-    private String country;
-    private String city;
+ // Location IDs
+    private Long countryId;
+    private Long stateId;
+    private Long cityId;
+    
+    private String countryName;
+    private String stateName;
+    private String cityName;
 
     // Astrology
     private String rashi;
@@ -108,6 +121,8 @@ public class ProfileDto {
 
     // Files / photos
     private String updatePhoto;
+
+   
     private String documentFile;
     private Integer documentFilePresent;
 
@@ -129,9 +144,35 @@ public class ProfileDto {
 //
 //    // Friends as DTO
 //    private List<ProfileDto> friends = new ArrayList<>();
+    
+    
 
     public synchronized String getSports() {
 		return sports;
+	}
+	public String getUpdatePhoto1() {
+		return UpdatePhoto1;
+	}
+	public void setUpdatePhoto1(String updatePhoto1) {
+		UpdatePhoto1 = updatePhoto1;
+	}
+	public String getUpdatePhoto2() {
+		return UpdatePhoto2;
+	}
+	public void setUpdatePhoto2(String updatePhoto2) {
+		UpdatePhoto2 = updatePhoto2;
+	}
+	public String getUpdatePhoto3() {
+		return UpdatePhoto3;
+	}
+	public void setUpdatePhoto3(String updatePhoto3) {
+		UpdatePhoto3 = updatePhoto3;
+	}
+	public String getUpdatePhoto4() {
+		return UpdatePhoto4;
+	}
+	public void setUpdatePhoto4(String updatePhoto4) {
+		UpdatePhoto4 = updatePhoto4;
 	}
 	public synchronized void setSports(String sports) {
 		this.sports = sports;
@@ -300,6 +341,7 @@ public class ProfileDto {
 	public Integer getNumberOfBrothers() {
 		return numberOfBrothers;
 	}
+	
 	public void setNumberOfBrothers(Integer numberOfBrothers) {
 		this.numberOfBrothers = numberOfBrothers;
 	}
@@ -375,24 +417,7 @@ public class ProfileDto {
 	public void setWorkLocation(String workLocation) {
 		this.workLocation = workLocation;
 	}
-	public String getState() {
-		return state;
-	}
-	public void setState(String state) {
-		this.state = state;
-	}
-	public String getCountry() {
-		return country;
-	}
-	public void setCountry(String country) {
-		this.country = country;
-	}
-	public String getCity() {
-		return city;
-	}
-	public void setCity(String city) {
-		this.city = city;
-	}
+	
 	public String getRashi() {
 		return rashi;
 	}
@@ -561,6 +586,43 @@ public class ProfileDto {
         this.emailVerified = emailVerified;
     }
 
+    
+	public Long getCountryId() {
+		return countryId;
+	}
+	public void setCountryId(Long countryId) {
+		this.countryId = countryId;
+	}
+	public Long getStateId() {
+		return stateId;
+	}
+	public void setStateId(Long stateId) {
+		this.stateId = stateId;
+	}
+	public Long getCityId() {
+		return cityId;
+	}
+	public void setCityId(Long cityId) {
+		this.cityId = cityId;
+	}
+	public String getCountryName() {
+		return countryName;
+	}
+	public void setCountryName(String countryName) {
+		this.countryName = countryName;
+	}
+	public String getStateName() {
+		return stateName;
+	}
+	public void setStateName(String stateName) {
+		this.stateName = stateName;
+	}
+	public String getCityName() {
+		return cityName;
+	}
+	public void setCityName(String cityName) {
+		this.cityName = cityName;
+	}
 	// to string method
 	@Override
 	public String toString() {
@@ -580,8 +642,8 @@ public class ProfileDto {
 				+ ", ancestralOrigin=" + ancestralOrigin + ", livingWith=" + livingWith + ", childrenDetails="
 				+ childrenDetails + ", highestEducation=" + highestEducation + ", collegeName=" + collegeName
 				+ ", employedIn=" + employedIn + ", sector=" + sector + ", occupation=" + occupation + ", companyName="
-				+ companyName + ", annualIncome=" + annualIncome + ", workLocation=" + workLocation + ", state=" + state
-				+ ", country=" + country + ", city=" + city + ", rashi=" + rashi + ", nakshatra=" + nakshatra
+				+ companyName + ", annualIncome=" + annualIncome + ", workLocation=" + workLocation + ", state=" + stateName
+				+ ", country=" + countryName + ", city=" + cityName + ", rashi=" + rashi + ", nakshatra=" + nakshatra
 				+ ", ascendant=" + ascendant + ", basicPlanetaryPosition=" + basicPlanetaryPosition + ",Hobbies="
 				+ Hobbies + ", partnerAgeRange=" + partnerAgeRange + ", partnerReligion=" + partnerReligion
 				+ ", partnerEducation=" + partnerEducation + ", partnerLocationPref=" + partnerLocationPref
@@ -608,7 +670,6 @@ public class ProfileDto {
 	public void setHabbits(String habbits) {
 		this.habbits = habbits;
 	}
-	 
-    
+	
     
 }

@@ -1,5 +1,6 @@
 package com.example.matrimony.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,14 +18,16 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Value;
 
 @Entity
 @Table(name = "profiles")
@@ -99,6 +102,13 @@ public class Profile {
 	@Column(name = "account_status", length = 50)
 	private String accountStatus = "Pending Verification";
 
+	// Refer & Earn
+	@Column(name = "referral_code", length = 20, unique = true)
+	private String referralCode;
+
+	@Column(name = "referral_reward_balance", nullable = false)
+	private BigDecimal referralRewardBalance = BigDecimal.ZERO;
+
 	@Column(name = "last_active")
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime lastActive;
@@ -116,6 +126,15 @@ public class Profile {
 	// store filenames/urls (controller writes filename)
 	@Column(name = "update_photo", length = 512)
 	private String updatePhoto;
+	@Transient
+	private String updatePhoto1;
+	@Transient
+	private String updatePhoto2;
+	@Transient
+	private String updatePhoto3;
+	@Transient
+	private String updatePhoto4;
+
 
 	@Column(name = "document_file", length = 512)
 	
@@ -158,9 +177,21 @@ public class Profile {
 	@Column(name="spiritualPath", length = 50, nullable = true )
 	private String spiritualPath;
 
-	private String state;
-	private String country;
+	// ================= LOCATION RELATIONSHIPS =================
+
+	// MANY profiles → ONE country
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "country_id")
+	private Country country;
+
+	// MANY profiles → ONE state
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "state_id")
+	private State state;
+	
+	
 	private String city;
+
 
 	// Astrology
 	private String rashi;
@@ -191,6 +222,7 @@ public class Profile {
 	private String partnerLocationPref;
 	private String partnerWorkStatus;
 	private boolean premium;
+	
 	
 	// for payment experiration
 	@Column(name = "premium_start")
@@ -233,9 +265,25 @@ public class Profile {
 	public synchronized String getSports() {
 		return sports;
 	}
-
+	
 	public synchronized void setSports(String sports) {
 		this.sports = sports;
+	}
+
+	public String getReferralCode() {
+		return referralCode;
+	}
+
+	public void setReferralCode(String referralCode) {
+		this.referralCode = referralCode;
+	}
+
+	public BigDecimal getReferralRewardBalance() {
+		return referralRewardBalance;
+	}
+
+	public void setReferralRewardBalance(BigDecimal referralRewardBalance) {
+		this.referralRewardBalance = referralRewardBalance;
 	}
 
 	public synchronized void setWeight(String weight) {
@@ -305,6 +353,18 @@ public class Profile {
 	@jakarta.persistence.JoinTable(name = "profile_friends", joinColumns = @jakarta.persistence.JoinColumn(name = "profile_id"), inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "friend_id"))
 	@JsonIgnore
 	private List<Profile> friends = new ArrayList<>();
+	
+	@OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	private List<Profilepicture> profilePictures = new ArrayList<>();
+
+	public List<Profilepicture> getProfilePictures() {
+	    return profilePictures;
+	}
+
+	public void setProfilePictures(List<Profilepicture> profilePictures) {
+	    this.profilePictures = profilePictures;
+	}
+
 
 	// Payments helpers
 	public List<PaymentRecord> getPayments() {
@@ -598,29 +658,30 @@ public class Profile {
 		this.workLocation = workLocation;
 	}
 
-	public String getState() {
-		return state;
+	public Country getCountry() {
+	    return country;
 	}
 
-	public void setState(String state) {
-		this.state = state;
+	public void setCountry(Country country) {
+	    this.country = country;
 	}
 
-	public String getCountry() {
-		return country;
+	public State getState() {
+	    return state;
 	}
 
-	public void setCountry(String country) {
-		this.country = country;
+	public void setState(State state) {
+	    this.state = state;
 	}
 
 	public String getCity() {
-		return city;
+	    return city;
 	}
 
 	public void setCity(String city) {
-		this.city = city;
+	    this.city = city;
 	}
+
 
 	public String getRashi() {
 		return rashi;
@@ -1046,5 +1107,38 @@ public class Profile {
 	public void setGothram(String gothram) {
 		this.gothram = gothram;
 	}
+
+	public String getUpdatePhoto1() {
+		return updatePhoto1;
+	}
+
+	public void setUpdatePhoto1(String updatePhoto1) {
+		this.updatePhoto1 = updatePhoto1;
+	}
+
+	public String getUpdatePhoto2() {
+		return updatePhoto2;
+	}
+
+	public void setUpdatePhoto2(String updatePhoto2) {
+		this.updatePhoto2 = updatePhoto2;
+	}
+
+	public String getUpdatePhoto3() {
+		return updatePhoto3;
+	}
+
+	public void setUpdatePhoto3(String updatePhoto3) {
+		this.updatePhoto3 = updatePhoto3;
+	}
+
+	public String getUpdatePhoto4() {
+		return updatePhoto4;
+	}
+
+	public void setUpdatePhoto4(String updatePhoto4) {
+		this.updatePhoto4 = updatePhoto4;
+	}
+
 
 }
