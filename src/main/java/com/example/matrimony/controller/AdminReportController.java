@@ -1,8 +1,6 @@
 package com.example.matrimony.controller;
 
 import java.util.List;
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
@@ -10,7 +8,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.matrimony.dto.BanRequest;
-import com.example.matrimony.entity.Profile;
 import com.example.matrimony.entity.UserReport;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -51,18 +48,7 @@ public class AdminReportController {
         adminReportService.approveReport(reportId, adminComment);
         return ResponseEntity.ok("Report approved. User banned.");
     }
-
-    // ================= REJECT REPORT =================
-//    @PostMapping("/{reportId}/reject")
-//    public ResponseEntity<?> rejectReport(
-//            @PathVariable Long reportId,
-//            @RequestBody(required = false) String adminComment) {
-//
-//        adminReportService.rejectReport(reportId, adminComment);
-//        return ResponseEntity.ok("Report rejected.");
-//    }
-    
-    
+   
     
   //PUT method for update the status
     @PutMapping("/reports/{reportId}/reject")
@@ -82,14 +68,7 @@ public class AdminReportController {
         adminReportService.permanentDeleteUser(userId);
         return ResponseEntity.ok("User permanently deleted.");
     }
-    
-//    @PutMapping("/banuser/{userId}")
-//    public ResponseEntity<?> banUser(@PathVariable Long userId,
-//                                     @RequestBody BanRequest req) {
-//
-//        adminReportService.banUser(userId, req.getReason());
-//        return ResponseEntity.ok(Map.of("message", "User banned"));
-//    }
+
     
     @PutMapping("/banuser/{userId}")
     public ResponseEntity<?> banUser(@PathVariable Long userId,
@@ -103,9 +82,6 @@ public class AdminReportController {
 
         return ResponseEntity.ok("User banned successfully");
     }
-
-
-
     
     @GetMapping("/reports/GetAll")
     public ResponseEntity<List<UserReport>> getAllReports() {
@@ -114,10 +90,4 @@ public class AdminReportController {
 
 }
 
-//
-//    @GetMapping("/GetAll")
-//    public ResponseEntity<?> getAllReports() {
-//        return ResponseEntity.ok(adminReportService.getAllReports());
-//    }
-//}
 

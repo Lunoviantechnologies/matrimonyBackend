@@ -35,8 +35,13 @@ public class PaymentRecord {
     @Column(name = "razorpay_signature")
     private String razorpaySignature;
 
+
+    
     private String planCode;
+    @Column(name = "transaction_id") 
     private String transactionId;
+
+    @Column(name = "payment_mode")
     private String paymentMode;
 
     // store amount in paise
@@ -53,6 +58,9 @@ public class PaymentRecord {
     private Profile profile;
 
     private LocalDateTime createdAt;
+    
+    private LocalDateTime premiumEnd;
+    private String expiryMessage;
 
     @PrePersist
     public void onCreate() {
@@ -177,6 +185,30 @@ public class PaymentRecord {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+
+
+	public LocalDateTime getPremiumEnd() {
+		return premiumEnd;
+	}
+
+
+
+	public void setPremiumEnd(LocalDateTime premiumEnd) {
+		this.premiumEnd = premiumEnd;
+	}
+
+
+
+	public String getExpiryMessage() {
+		return expiryMessage;
+	}
+
+
+
+	public void setExpiryMessage(String expiryMessage) {
+		this.expiryMessage = expiryMessage;
 	}
 
 

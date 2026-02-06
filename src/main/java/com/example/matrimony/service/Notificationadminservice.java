@@ -123,6 +123,7 @@ public class Notificationadminservice {
 
 	    notificationRepository.save(notification);
 	}
+
 	@Transactional
 	public void notifyAdmin(String type, String message, Map<String, Object> data) {
 
@@ -160,8 +161,7 @@ public class Notificationadminservice {
 	        e.printStackTrace();
 	    }
 	}
-
-
+	
 	private void setRead(boolean b) {
 		// TODO Auto-generated method stub
 		

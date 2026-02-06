@@ -29,8 +29,12 @@ public class ProfileListMapper {
         dto.setGender(p.getGender());
 
         dto.setCity(p.getCity());
-        dto.setState(p.getState());
-        dto.setCountry(p.getCountry());
+        if (p.getState() != null) {
+            dto.setState(p.getState().getName());
+        }
+        if (p.getCountry() != null) {
+            dto.setCountry(p.getCountry().getName());
+        }
 
         dto.setOccupation(p.getOccupation());
         dto.setCompanyName(p.getCompanyName());
