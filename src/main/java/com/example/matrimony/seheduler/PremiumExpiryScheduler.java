@@ -38,8 +38,8 @@ public class PremiumExpiryScheduler {
      * - Sends expiry emails
      * - Sends 3-day reminder emails
      */
-    //@Scheduled(cron = "0 0 9 * * ?")
-    @Scheduled(fixedRate = 60000) 
+    @Scheduled(cron = "0 0 9 * * ?")
+    //@Scheduled(fixedRate = 60000) 
     @Transactional
     public void handlePremiumExpiry() {
 
