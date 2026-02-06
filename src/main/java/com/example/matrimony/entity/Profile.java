@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -98,6 +99,13 @@ public class Profile {
 
 	@Column(name = "account_status", length = 50)
 	private String accountStatus = "Pending Verification";
+
+	// Refer & Earn
+	@Column(name = "referral_code", length = 20, unique = true)
+	private String referralCode;
+
+	@Column(name = "referral_reward_balance", nullable = false)
+	private BigDecimal referralRewardBalance = BigDecimal.ZERO;
 
 	@Column(name = "last_active")
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -233,9 +241,25 @@ public class Profile {
 	public synchronized String getSports() {
 		return sports;
 	}
-
+	
 	public synchronized void setSports(String sports) {
 		this.sports = sports;
+	}
+
+	public String getReferralCode() {
+		return referralCode;
+	}
+
+	public void setReferralCode(String referralCode) {
+		this.referralCode = referralCode;
+	}
+
+	public BigDecimal getReferralRewardBalance() {
+		return referralRewardBalance;
+	}
+
+	public void setReferralRewardBalance(BigDecimal referralRewardBalance) {
+		this.referralRewardBalance = referralRewardBalance;
 	}
 
 	public synchronized void setWeight(String weight) {
