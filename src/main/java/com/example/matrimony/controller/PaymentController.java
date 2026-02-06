@@ -1,5 +1,6 @@
 package com.example.matrimony.controller;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,7 @@ import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.entity.PaymentRecord;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.entity.SubscriptionPlan;
+import com.example.matrimony.referral.ReferralService;
 import com.example.matrimony.repository.PaymentRecordRepository;
 import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.repository.SubscriptionPlanRepository;
@@ -46,6 +48,7 @@ public class PaymentController {
     private final EmailService emailService;
     private final SubscriptionPlanRepository subscriptionPlanRepo;
     private final PricingService pricingService;
+    private final ReferralService referralService; // ✅ FIXED
 
     @Value("${razorpay.key_id}")
     private String razorpayKeyId;
@@ -53,14 +56,16 @@ public class PaymentController {
     @Value("${razorpay.key_secret}")
     private String razorpayKeySecret;
 
-    public PaymentController(RazorpayService razorpayService,
-                             PaymentRecordRepository paymentRepo,
-                             ProfileRepository profileRepo,
-                             PaymentNotificationService notificationService,
-                             EmailService emailService,
-                             SubscriptionPlanRepository subscriptionPlanRepo,
-                             PricingService pricingService) {
-
+    public PaymentController(
+            RazorpayService razorpayService,
+            PaymentRecordRepository paymentRepo,
+            ProfileRepository profileRepo,
+            PaymentNotificationService notificationService,
+            EmailService emailService,
+            SubscriptionPlanRepository subscriptionPlanRepo,
+            PricingService pricingService,
+            ReferralService referralService // ✅ FIXED
+    ) {
         this.razorpayService = razorpayService;
         this.paymentRepo = paymentRepo;
         this.profileRepo = profileRepo;
@@ -68,6 +73,7 @@ public class PaymentController {
         this.emailService = emailService;
         this.subscriptionPlanRepo = subscriptionPlanRepo;
         this.pricingService = pricingService;
+        this.referralService = referralService;
     }
 
     // ============================================================
@@ -83,16 +89,22 @@ public class PaymentController {
         Profile profile = profileRepo.findById(req.getProfileId())
                 .orElseThrow(() -> new RuntimeException("profile_not_found"));
 
-        // ✅ Enterprise price source
-        long rupees = pricingService.calculateFinalPrice(req.getPlanCode());
-        long paise = rupees * 100;
+        long baseRupees = pricingService.calculateFinalPrice(req.getPlanCode());
+
+        long rewardBalance = profile.getReferralRewardBalance() != null
+                ? profile.getReferralRewardBalance().longValue()
+                : 0L;
+
+        long referralDiscount = Math.min(baseRupees, rewardBalance);
+        long finalRupees = baseRupees - referralDiscount;
+        long paise = finalRupees * 100;
 
         PaymentRecord rec = new PaymentRecord();
         rec.setProfile(profile);
         rec.setUserId(profile.getId());
         rec.setName(getDisplayName(profile));
         rec.setPlanCode(req.getPlanCode());
-        rec.setAmount(rupees); // ✅ LONG NOT INT
+        rec.setAmount(finalRupees);
         rec.setCurrency("INR");
         rec.setStatus("PENDING");
         rec.setCreatedAt(LocalDateTime.now());
@@ -107,7 +119,7 @@ public class PaymentController {
             return ResponseEntity.ok(Map.of(
                     "razorpayOrderId", rec.getRazorpayOrderId(),
                     "razorpayKey", razorpayKeyId,
-                    "amountRupees", rupees,
+                    "amountRupees", finalRupees,
                     "currency", "INR",
                     "paymentRecordId", rec.getId()
             ));
@@ -116,7 +128,8 @@ public class PaymentController {
             rec.setStatus("FAILED");
             paymentRepo.save(rec);
             log.error("Razorpay order failed", e);
-            return ResponseEntity.internalServerError().body(Map.of("error", "order_failed"));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "order_failed"));
         }
     }
 
@@ -138,12 +151,10 @@ public class PaymentController {
         PaymentRecord rec = paymentRepo.findByRazorpayOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("order_not_found"));
 
-        // ✅ Idempotency
         if ("PAID".equals(rec.getStatus())) {
             return ResponseEntity.ok(Map.of("status", "already_verified"));
         }
 
-        // ✅ Verify signature
         String generated = hmac(orderId + "|" + paymentId, razorpayKeySecret);
         if (!generated.equals(signature)) {
             rec.setStatus("FAILED");
@@ -151,7 +162,6 @@ public class PaymentController {
             return ResponseEntity.badRequest().body(Map.of("error", "signature_invalid"));
         }
 
-        // Fetch payment details
         Payment payment = razorpayService.fetchPayment(paymentId);
 
         rec.setTransactionId(paymentId);
@@ -161,7 +171,6 @@ public class PaymentController {
         rec.setStatus("PAID");
         paymentRepo.save(rec);
 
-        // ================= APPLY PREMIUM =================
         Profile profile = rec.getProfile();
         if (profile != null) {
 
@@ -169,26 +178,46 @@ public class PaymentController {
                     .findByPlanCodeAndActiveTrue(rec.getPlanCode())
                     .orElseThrow(() -> new RuntimeException("plan_not_found"));
 
-            long months = plan.getDurationMonths();
             LocalDateTime now = LocalDateTime.now();
-
-            LocalDateTime baseTime = profile.getPremiumEnd() != null &&
-                    profile.getPremiumEnd().isAfter(now)
-                    ? profile.getPremiumEnd()
-                    : now;
+            LocalDateTime baseTime =
+                    profile.getPremiumEnd() != null && profile.getPremiumEnd().isAfter(now)
+                            ? profile.getPremiumEnd()
+                            : now;
 
             profile.setPremium(true);
 
-            // ✅ DO NOT OVERRIDE START DATE IF RENEWAL
             if (profile.getPremiumStart() == null) {
                 profile.setPremiumStart(now);
             }
 
-            profile.setPremiumEnd(baseTime.plusMonths(months));
+            profile.setPremiumEnd(baseTime.plusMonths(plan.getDurationMonths()));
+
+            BigDecimal referralBalance = profile.getReferralRewardBalance() != null
+                    ? profile.getReferralRewardBalance()
+                    : BigDecimal.ZERO;
+
+            if (referralBalance.signum() > 0) {
+                BigDecimal basePrice =
+                        BigDecimal.valueOf(pricingService.calculateFinalPrice(rec.getPlanCode()));
+                BigDecimal finalAmount =
+                        BigDecimal.valueOf(rec.getAmount());
+
+                BigDecimal discountToConsume =
+                        referralBalance.min(
+                                basePrice.subtract(finalAmount).max(BigDecimal.ZERO)
+                        );
+
+                profile.setReferralRewardBalance(
+                        referralBalance.subtract(discountToConsume)
+                );
+            }
+
             profileRepo.save(profile);
+
+            // ✅ MARK REFERRAL COMPLETED AFTER PAYMENT
+            referralService.markReferralCompletedForUser(profile);
         }
 
-        // ================= SEND EMAIL AFTER COMMIT =================
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
                     @Override
@@ -197,13 +226,12 @@ public class PaymentController {
                     }
                 }
         );
-        
 
         return ResponseEntity.ok(Map.of("status", "success"));
     }
 
     // ============================================================
-    // USER PAYMENT HISTORY
+    // PAYMENT HISTORY
     // ============================================================
     @GetMapping("/successful/{profileId}")
     public List<PaymentDto> getPayments(@PathVariable Long profileId) {
@@ -227,7 +255,7 @@ public class PaymentController {
         dto.setUserId(rec.getUserId());
         dto.setName(rec.getName());
         dto.setPlanCode(rec.getPlanCode());
-        dto.setAmount(rec.getAmount()); // ✅ LONG
+        dto.setAmount(rec.getAmount());
         dto.setCurrency(rec.getCurrency());
         dto.setStatus(rec.getStatus());
         dto.setRazorpayOrderId(rec.getRazorpayOrderId());
@@ -235,15 +263,12 @@ public class PaymentController {
         dto.setCreatedAt(rec.getCreatedAt());
 
         if (rec.getProfile() != null) {
-            LocalDateTime end = rec.getProfile().getPremiumEnd();
-            dto.setPremiumEnd(end);
-            dto.setExpiryMessage(buildExpiryMessage(end));
+            dto.setPremiumEnd(rec.getProfile().getPremiumEnd());
         }
 
         return dto;
     }
 
-    // ================= SAFE EMAIL + SMS =================
     private void safeNotify(PaymentRecord rec) {
         try {
             Profile profile = rec.getProfile();
@@ -256,7 +281,7 @@ public class PaymentController {
                     rec.getAmount(),
                     rec.getRazorpayOrderId(),
                     rec.getRazorpayPaymentId(),
-                    profile.getPremiumEnd() 
+                    profile.getPremiumEnd()
             );
 
             emailService.sendPaymentSuccessEmail(
@@ -268,7 +293,6 @@ public class PaymentController {
                     rec.getRazorpayPaymentId(),
                     profile.getPremiumEnd()
             );
-
         } catch (Exception e) {
             log.error("Notification failed", e);
         }
@@ -286,29 +310,5 @@ public class PaymentController {
         StringBuilder sb = new StringBuilder();
         for (byte b : raw) sb.append(String.format("%02x", b));
         return sb.toString();
-    }
-
-    private String buildExpiryMessage(LocalDateTime end) {
-        if (end == null) return "No active plan";
-        if (end.isBefore(LocalDateTime.now())) return "Your plan has expired";
-        return "Your plan will expire on " + end.toLocalDate() + " at " + end.toLocalTime().withSecond(0).withNano(0);
-    }
-    
-    @GetMapping("/successful")
-    public List<PaymentDto> getAllPaymentsByStatuses() {
-        List<String> statuses = List.of("PAID", "CREATED", "FAILED");
-        return paymentRepo.findByStatusInOrderByCreatedAtDesc(statuses)
-                          .stream()
-                          .map(this::toDto)
-                          .toList();
-    }
-
-
-    // admin: payment by paymentId
-    @GetMapping("/admin/successful/{paymentId}")
-    public ResponseEntity<?> getSuccessfulPaymentById(@PathVariable Long paymentId) {
-        return paymentRepo.findByIdAndStatus(paymentId, "PAID")
-                .map(rec -> ResponseEntity.ok(toDto(rec)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

@@ -13,6 +13,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,9 @@ public class AdminManageController {
     private final ProfileRepository profileRepository;
     private final ProfileService profileService;
     private final ChatService chatService;
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     public AdminManageController(ProfileRepository profileRepository, ProfileService profileService, ChatService chatService) {
         this.profileRepository = profileRepository;
@@ -195,11 +199,11 @@ public class AdminManageController {
 
             dto.setPayments(paymentDtos);
         }
-        
-        // ================= DOCUMENT FILE (Base64) ✅ SAME LOGIC =================
+
+        // ================= DOCUMENT FILE (same dir as registration/view-document) =================
         if (profile.getDocumentFile() != null && !profile.getDocumentFile().isBlank()) {
             try {
-                Path docPath = Paths.get("uploads/documents")
+                Path docPath = Paths.get(uploadDir)
                         .resolve(profile.getDocumentFile());
 
                 if (Files.exists(docPath)) {
@@ -222,7 +226,6 @@ public class AdminManageController {
             dto.setDocumentFile(null);
         }
 
-       
 
         // ------------------------------
         // ✅ New: build image URL instead of returning Base64

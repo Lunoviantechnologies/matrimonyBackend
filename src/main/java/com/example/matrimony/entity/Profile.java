@@ -1,5 +1,6 @@
 package com.example.matrimony.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,7 +19,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -101,6 +101,13 @@ public class Profile {
 
 	@Column(name = "account_status", length = 50)
 	private String accountStatus = "Pending Verification";
+
+	// Refer & Earn
+	@Column(name = "referral_code", length = 20, unique = true)
+	private String referralCode;
+
+	@Column(name = "referral_reward_balance", nullable = false)
+	private BigDecimal referralRewardBalance = BigDecimal.ZERO;
 
 	@Column(name = "last_active")
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -190,8 +197,7 @@ public class Profile {
 	private String rashi;
 	private String nakshatra;
 	private String ascendant;
-	@Lob
-	@Column(name = "basic_planetary_position", columnDefinition = "LONGTEXT")
+	@Column(name = "basic_planetary_position", columnDefinition = "TEXT")
 	private String basicPlanetaryPosition;
 
 	// Preferences
@@ -259,9 +265,25 @@ public class Profile {
 	public synchronized String getSports() {
 		return sports;
 	}
-
+	
 	public synchronized void setSports(String sports) {
 		this.sports = sports;
+	}
+
+	public String getReferralCode() {
+		return referralCode;
+	}
+
+	public void setReferralCode(String referralCode) {
+		this.referralCode = referralCode;
+	}
+
+	public BigDecimal getReferralRewardBalance() {
+		return referralRewardBalance;
+	}
+
+	public void setReferralRewardBalance(BigDecimal referralRewardBalance) {
+		this.referralRewardBalance = referralRewardBalance;
 	}
 
 	public synchronized void setWeight(String weight) {

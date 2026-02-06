@@ -123,45 +123,45 @@ public class Notificationadminservice {
 
 	    notificationRepository.save(notification);
 	}
-//	@Transactional
-//	public void notifyAdmin(String type, String message, Map<String, Object> data) {
-//
-//	    try {
-//	        List<Admin> admins = adminRepository.findAll();
-//
-//	        if (admins.isEmpty()) {
-//	            System.out.println("⚠️ No admins found. Notification skipped.");
-//	            return;
-//	        }
-//
-//	        for (Admin admin : admins) {
-//
-//	            if (admin.getAdminId() == null) continue;
-//
-//	            Notification notification = new Notification();
-//	            notification.setType(type);
-//	            notification.setMessage(message);
-//	            notification.setSenderId(null); // SYSTEM
-//	            notification.setReceiverId(admin.getAdminId());
-//	            notification.setRead(false);
-//	            notification.setCreatedAt(LocalDateTime.now());
-//
-//	            if (data != null) {
-//	                notification.setData(objectMapper.writeValueAsString(data));
-//	            }
-//
-//	            notificationRepository.save(notification);
-//	        }
-//
-//	        System.out.println("✅ ADMIN NOTIFICATION SAVED (DB ONLY)");
-//
-//	    } catch (Exception e) {
-//	        System.err.println("❌ ADMIN NOTIFICATION FAILED");
-//	        e.printStackTrace();
-//	    }
-//	}
 
+	@Transactional
+	public void notifyAdmin(String type, String message, Map<String, Object> data) {
 
+	    try {
+	        List<Admin> admins = adminRepository.findAll();
+
+	        if (admins.isEmpty()) {
+	            System.out.println("⚠️ No admins found. Notification skipped.");
+	            return;
+	        }
+
+	        for (Admin admin : admins) {
+
+	            if (admin.getAdminId() == null) continue;
+
+	            Notification notification = new Notification();
+	            notification.setType(type);
+	            notification.setMessage(message);
+	            notification.setSenderId(null); // SYSTEM
+	            notification.setReceiverId(admin.getAdminId());
+	            notification.setRead(false);
+	            notification.setCreatedAt(Instant.now());
+
+	            if (data != null) {
+	                notification.setData(objectMapper.writeValueAsString(data));
+	            }
+
+	            notificationRepository.save(notification);
+	        }
+
+	        System.out.println("✅ ADMIN NOTIFICATION SAVED (DB ONLY)");
+
+	    } catch (Exception e) {
+	        System.err.println("❌ ADMIN NOTIFICATION FAILED");
+	        e.printStackTrace();
+	    }
+	}
+	
 	private void setRead(boolean b) {
 		// TODO Auto-generated method stub
 		
