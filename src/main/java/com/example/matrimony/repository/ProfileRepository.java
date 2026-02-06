@@ -48,6 +48,11 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
     """, nativeQuery = true)
     void deleteAllByProfileId(@Param("profileId") Long profileId);
 
+    // ===== Referral support (Refer & Earn) =====
+
+    boolean existsByReferralCode(String referralCode);
+
+    Optional<Profile> findByReferralCode(String referralCode);
      
 }
  
