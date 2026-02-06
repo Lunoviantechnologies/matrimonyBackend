@@ -1,6 +1,7 @@
 package com.example.matrimony.mapper;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,11 +13,10 @@ import com.example.matrimony.entity.Profile;
 public class ProfileListMapper {
 
     public static ProfileListDto toDto(Profile p) {
-        if (p == null) {
-            return null;
-        }
+        if (p == null) return null;
 
         ProfileListDto dto = new ProfileListDto();
+
         dto.setId(p.getId());
         dto.setProfileFor(p.getProfileFor());
         dto.setFirstName(p.getFirstName());
@@ -49,36 +49,64 @@ public class ProfileListMapper {
         dto.setLastActive(p.getLastActive());
         dto.setCreatedAt(p.getCreatedAt());
 
-        // ✅ SAFE PAYMENTS MAPPING
-        List<PaymentSummaryDto> payments =
+        // ===============================
+        // GET ONLY LATEST PAID PAYMENT
+        // ===============================
+        PaymentSummaryDto latestPayment = mapLatestPaidPayment(p);
+        dto.setLatestPayment(latestPayment);
+
+        // optional: if you still want all payments history
+        List<PaymentSummaryDto> allPayments =
                 p.getPayments() == null ? Collections.emptyList() :
                 p.getPayments().stream()
                         .map(ProfileListMapper::mapPayment)
                         .collect(Collectors.toList());
 
-        dto.setPayments(payments);
+        dto.setPayments(allPayments);
 
         return dto;
     }
 
-    private static PaymentSummaryDto mapPayment(PaymentRecord r) {
-        if (r == null) {
+    // =====================================================
+    // LATEST PAID PAYMENT ONLY (IMPORTANT)
+    // =====================================================
+    private static PaymentSummaryDto mapLatestPaidPayment(Profile p) {
+
+        if (p.getPayments() == null || p.getPayments().isEmpty()) {
             return null;
         }
+
+        PaymentRecord latest = p.getPayments().stream()
+                .filter(pay -> "PAID".equals(pay.getStatus()))
+                .max(Comparator.comparing(PaymentRecord::getCreatedAt))
+                .orElse(null);
+
+        if (latest == null) return null;
+
+        return mapPayment(latest);
+    }
+
+    // =====================================================
+    // NORMAL PAYMENT MAPPING
+    // =====================================================
+    private static PaymentSummaryDto mapPayment(PaymentRecord r) {
+        if (r == null) return null;
 
         PaymentSummaryDto dto = new PaymentSummaryDto();
         dto.setId(r.getId());
         dto.setName(r.getName());
         dto.setPlanCode(r.getPlanCode());
-
-        // ✅ RUPEES STORED IN DB → DO NOT DIVIDE AGAIN
         dto.setAmount(r.getAmount());
-
         dto.setCurrency(r.getCurrency());
         dto.setStatus(r.getStatus());
         dto.setRazorpayOrderId(r.getRazorpayOrderId());
         dto.setRazorpayPaymentId(r.getRazorpayPaymentId());
         dto.setCreatedAt(r.getCreatedAt());
+
+        dto.setPlanName(r.getPlanName());
+        dto.setPremiumStart(r.getPremiumStart());
+        dto.setPremiumEnd(r.getPremiumEnd());
+        dto.setExpiryMessage(r.getExpiryMessage());
 
         return dto;
     }

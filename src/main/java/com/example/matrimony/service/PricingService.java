@@ -1,5 +1,7 @@
 package com.example.matrimony.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
@@ -19,8 +21,9 @@ public class PricingService {
 
     /**
      * Entry point used by controllers / payment layer
+     * RETURNS RUPEES (BigDecimal)
      */
-    public long calculateFinalPrice(String planCode) {
+    public BigDecimal calculateFinalPrice(String planCode) {
 
         SubscriptionPlan plan = repo.findByPlanCodeAndActiveTrue(planCode)
                 .orElseThrow(() -> new RuntimeException("Invalid or inactive plan"));
@@ -30,15 +33,16 @@ public class PricingService {
 
     /**
      * SINGLE source of truth for pricing logic
+     * ALL calculations in BigDecimal (RUPEES)
      */
-    private long calculateFinalPriceInternal(SubscriptionPlan plan) {
+    private BigDecimal calculateFinalPriceInternal(SubscriptionPlan plan) {
 
         LocalDateTime now = LocalDateTime.now();
 
         /* ===============================
          * 1. Resolve Base Price
          * =============================== */
-        long basePrice = plan.getPriceRupees();
+        BigDecimal basePrice = plan.getPriceRupees(); // BigDecimal
 
         if (plan.getFestivalPrice() != null &&
             plan.getFestivalStart() != null &&
@@ -46,7 +50,7 @@ public class PricingService {
             now.isAfter(plan.getFestivalStart()) &&
             now.isBefore(plan.getFestivalEnd())) {
 
-            basePrice = plan.getFestivalPrice();
+            basePrice = plan.getFestivalPrice(); // BigDecimal
         }
 
         /* ===============================
@@ -59,19 +63,34 @@ public class PricingService {
             now.isAfter(plan.getDiscountStart()) &&
             now.isBefore(plan.getDiscountEnd())) {
 
+            // PERCENTAGE DISCOUNT
             if (plan.getDiscountType() == DiscountType.PERCENTAGE) {
 
-                if (plan.getDiscountValue() < 0 || plan.getDiscountValue() > 100) {
+                BigDecimal discountPercent = plan.getDiscountValue();
+
+                if (discountPercent.compareTo(BigDecimal.ZERO) < 0 ||
+                    discountPercent.compareTo(BigDecimal.valueOf(100)) > 0) {
                     throw new IllegalStateException(
                         "Discount percentage must be between 0 and 100");
                 }
 
-                return basePrice - (basePrice * plan.getDiscountValue() / 100);
+                BigDecimal discountAmount = basePrice
+                        .multiply(discountPercent)
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+                return basePrice
+                        .subtract(discountAmount)
+                        .setScale(2, RoundingMode.HALF_UP);
             }
-            // FLAT discount
-            return Math.max(0, basePrice - plan.getDiscountValue());
+
+            // FLAT DISCOUNT
+            BigDecimal finalAmount = basePrice.subtract(plan.getDiscountValue());
+
+            return finalAmount.compareTo(BigDecimal.ZERO) < 0
+                    ? BigDecimal.ZERO
+                    : finalAmount.setScale(2, RoundingMode.HALF_UP);
         }
 
-        return basePrice;
+        return basePrice.setScale(2, RoundingMode.HALF_UP);
     }
 }

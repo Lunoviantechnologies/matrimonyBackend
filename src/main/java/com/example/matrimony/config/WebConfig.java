@@ -22,7 +22,6 @@ public class WebConfig implements WebMvcConfigurer {
     // Default "*" so missing/wrong property on server does not cause 403
     @Value("${app.cors.allowed-origins:*}")
     private String allowedOrigins;
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 

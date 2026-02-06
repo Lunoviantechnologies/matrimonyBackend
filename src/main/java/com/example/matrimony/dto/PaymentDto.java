@@ -1,5 +1,6 @@
 package com.example.matrimony.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -11,7 +12,7 @@ public class PaymentDto {
     private String name;
 
     private String planCode;
-    private Long amount; // RUPEES ✅ only once
+    private BigDecimal amount; // RUPEES  only once
     private String currency;
     private String status;
 
@@ -27,10 +28,24 @@ public class PaymentDto {
     private LocalDateTime createdAt;
     private LocalDateTime premiumEnd;
     private String expiryMessage;
+    private String planName;
+    private LocalDateTime premiumStart;
 
     // ================= GETTERS & SETTERS =================
 
-    public Long getId() { return id; }
+    public String getPlanName() {
+		return planName;
+	}
+	public void setPlanName(String planName) {
+		this.planName = planName;
+	}
+	public LocalDateTime getPremiumStart() {
+		return premiumStart;
+	}
+	public void setPremiumStart(LocalDateTime premiumStart) {
+		this.premiumStart = premiumStart;
+	}
+	public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public Long getUserId() { return userId; }
@@ -42,8 +57,8 @@ public class PaymentDto {
     public String getPlanCode() { return planCode; }
     public void setPlanCode(String planCode) { this.planCode = planCode; }
 
-    public Long getAmount() { return amount; }
-    public void setAmount(Long amount) { this.amount = amount; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
     public String getCurrency() { return currency; }
     public void setCurrency(String currency) { this.currency = currency; }

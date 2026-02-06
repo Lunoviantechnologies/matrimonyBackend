@@ -1,8 +1,9 @@
 package com.example.matrimony.service;
 
+import java.math.BigDecimal;
 import java.text.NumberFormat;
-import java.util.Locale;
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class PaymentNotificationService {
 
-    private static final Logger log = LoggerFactory.getLogger(PaymentNotificationService.class);
+    private static final Logger log =
+            LoggerFactory.getLogger(PaymentNotificationService.class);
 
     private final EmailService emailService;
     private final Msg91SmsService msg91SmsService;
@@ -23,16 +25,17 @@ public class PaymentNotificationService {
     }
 
     /**
-     * amountRupees = DB stored rupees (NOT paise)
+     * amountRupees = FINAL amount in RUPEES (already converted, no /100 here)
      */
-    public void notifyPaymentSuccess(String toEmail,
-                                     String phoneNumber,
-                                     String name,
-                                     String planCode,
-                                     Long amountRupees,
-                                     String razorpayOrderId,
-                                     String razorpayPaymentId,
-                                     LocalDateTime premiumEnd) {
+    public void notifyPaymentSuccess(
+            String toEmail,
+            String phoneNumber,
+            String name,
+            String planCode,
+            BigDecimal amountRupees,
+            String razorpayOrderId,
+            String razorpayPaymentId,
+            LocalDateTime premiumEnd) {
 
         // ================= SEND EMAIL =================
         try {
@@ -40,13 +43,13 @@ public class PaymentNotificationService {
                     toEmail,
                     name,
                     planCode,
-                    amountRupees,          // RUPEES
+                    amountRupees,          // ✅ RUPEES
                     razorpayOrderId,
                     razorpayPaymentId,
-                    premiumEnd             // ✅ FIXED
+                    premiumEnd
             );
         } catch (Exception e) {
-            log.error("Payment email failed", e);
+            log.error("Payment email failed for orderId={}", razorpayOrderId, e);
         }
 
         // ================= SEND SMS =================
@@ -55,12 +58,13 @@ public class PaymentNotificationService {
                 return;
             }
 
-            double rupees = amountRupees == null ? 0.0 : amountRupees.doubleValue();
-            String amountStr = NumberFormat.getCurrencyInstance(new Locale("en", "IN"))
-                    .format(rupees);
+            String amountStr = NumberFormat
+                    .getCurrencyInstance(new Locale("en", "IN"))
+                    .format(amountRupees == null ? BigDecimal.ZERO : amountRupees);
 
             String sms = String.format(
-                    "Hi %s, your payment of %s for plan %s was successful. Order ID: %s, Payment ID: %s. - VivahJeevan",
+                    "Hi %s, your payment of %s for plan %s was successful. " +
+                    "Order ID: %s, Payment ID: %s. - VivahJeevan",
                     name,
                     amountStr,
                     planCode,
@@ -71,7 +75,7 @@ public class PaymentNotificationService {
             msg91SmsService.sendSms(phoneNumber, sms);
 
         } catch (Exception e) {
-            log.error("Payment SMS failed", e);
+            log.error("Payment SMS failed for orderId={}", razorpayOrderId, e);
         }
     }
 }

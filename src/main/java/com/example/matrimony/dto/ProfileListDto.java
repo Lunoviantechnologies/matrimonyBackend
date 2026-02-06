@@ -105,4 +105,8 @@ public class ProfileListDto {
     public void setPayments(List<PaymentSummaryDto> payments) { this.payments = payments; }
     public Boolean getActiveFlag() { return activeFlag; }
     public void setActiveFlag(Boolean activeFlag) { this.activeFlag = activeFlag; }
+	public void setLatestPayment(PaymentSummaryDto latestPayment) {
+		// TODO Auto-generated method stub
+		
+	}
 }

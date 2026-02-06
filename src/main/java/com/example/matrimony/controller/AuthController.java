@@ -1,5 +1,6 @@
 package com.example.matrimony.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +42,7 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         if (loginRequest == null || loginRequest.getEmailId() == null || loginRequest.getCreatePassword() == null) {
@@ -83,10 +84,13 @@ public class AuthController {
                         .body("Your account is banned by admin.");
             }
 
-            // 🔐 Correct BCrypt comparison
+            //  Correct BCrypt comparison
             if (!passwordEncoder.matches(password, profile.getCreatePassword())) {
                 return ResponseEntity.status(401).body("Invalid user password");
             }
+            
+            //Auto active based on login
+            profileRepository.updateLastActive(profile.getId(), LocalDateTime.now());     
 
             String token = jwtUtil.generateToken(
                     profile.getId(),

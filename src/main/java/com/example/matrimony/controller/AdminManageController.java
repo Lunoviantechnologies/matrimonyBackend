@@ -1,6 +1,7 @@
 package com.example.matrimony.controller;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -181,7 +182,8 @@ public class AdminManageController {
                         paymentDto.setName(payment.getName());
 
                         paymentDto.setPlanCode(payment.getPlanCode());
-                        paymentDto.setAmount(payment.getAmount() / 100);
+                        paymentDto.setAmount(payment.getAmount());
+
                         paymentDto.setCurrency(payment.getCurrency());
                         paymentDto.setStatus(payment.getStatus());
 
@@ -190,7 +192,10 @@ public class AdminManageController {
 
                         paymentDto.setPaymentMode(payment.getPaymentMode());
                         paymentDto.setTransactionId(payment.getTransactionId());
-
+                        paymentDto.setPremiumStart(payment.getPremiumStart());
+                        paymentDto.setPremiumEnd(payment.getPremiumEnd());
+                        paymentDto.setPlanName(payment.getPlanName());
+                        paymentDto.setExpiryMessage(payment.getExpiryMessage());
                         paymentDto.setCreatedAt(payment.getCreatedAt());
 
                         return paymentDto;
@@ -228,7 +233,7 @@ public class AdminManageController {
 
 
         // ------------------------------
-        // ✅ New: build image URL instead of returning Base64
+        //  New: build image URL instead of returning Base64
         // ------------------------------
         if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
             try {
@@ -682,6 +687,8 @@ public class AdminManageController {
 
         return ResponseEntity.ok("Profile rejected and deleted successfully");
     }
+    
+    
     @GetMapping("/conversation/{senderId}/{receiverId}")
     public Page<ChatMessageDto> getConversation(
             @PathVariable Long senderId,

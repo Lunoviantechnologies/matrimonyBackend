@@ -1,5 +1,7 @@
 package com.example.matrimony.controller;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.matrimony.dto.UpdateSubscriptionPlanFullRequest;
 import com.example.matrimony.entity.DiscountType;
-import com.example.matrimony.entity.PlanFeature;
 import com.example.matrimony.entity.SubscriptionPlan;
 import com.example.matrimony.repository.SubscriptionPlanRepository;
 import com.example.matrimony.service.PricingService;
@@ -54,15 +55,10 @@ public class SubscriptionPlanController {
                                  new UpdateSubscriptionPlanFullRequest();
 
                          // ===== Plan basic details =====
-                        
                          dto.setPlanCode(plan.getPlanCode());
                          dto.setPlanName(plan.getPlanName());
                          dto.setDurationMonths(plan.getDurationMonths());
                          dto.setPriceRupees(plan.getPriceRupees());
-                         dto.setId(plan.getId());
-                         
-                         
-                         
 
                          // ===== Festival pricing =====
                          dto.setFestivalPrice(plan.getFestivalPrice());
@@ -93,18 +89,8 @@ public class SubscriptionPlanController {
 
                          // ===== Status =====
                          dto.setActive(Boolean.TRUE.equals(plan.getActive()));
-                         
-                      // ===== Plan Features =====
-                         if (plan.getPlanFeature() != null) {
-                             dto.setContacts(plan.getPlanFeature().getContacts());
-                             dto.setChat(plan.getPlanFeature().getChat());
-                             dto.setAstroSupport(plan.getPlanFeature().getAstroSupport());
-                             dto.setRelationshipManager(plan.getPlanFeature().getRelationshipManager());
-                             dto.setBenefit(plan.getPlanFeature().getBenefit());
-                         }
 
-
-                         // ✅ REQUIRED
+                         //  REQUIRED
                          return dto;
 
                      })
@@ -140,9 +126,12 @@ public class SubscriptionPlanController {
             return ResponseEntity.badRequest().body("Duration months must be > 0");
         }
 
-        if (req.getPriceRupees() == null || req.getPriceRupees() <= 0) {
-            return ResponseEntity.badRequest().body("Price must be > 0");
-        }
+        if (req.getPriceRupees() == null ||
+        	    req.getPriceRupees().compareTo(BigDecimal.ZERO) <= 0) {
+
+        	    return ResponseEntity.badRequest().body("Price must be > 0");
+        	}
+
 
         SubscriptionPlan plan = new SubscriptionPlan();
 
@@ -152,17 +141,16 @@ public class SubscriptionPlanController {
         plan.setDurationMonths(req.getDurationMonths());
         plan.setPriceRupees(req.getPriceRupees());
         plan.setActive(req.isActive()); // ← IMPORTANT
-        
-        
-        
 
         /* ================= FESTIVAL PRICING ================= */
         if (req.getFestivalPrice() != null) {
 
-            if (req.getFestivalPrice() <= 0) {
-                return ResponseEntity.badRequest()
-                        .body("Festival price must be greater than 0");
-            }
+        	if (req.getFestivalPrice() == null ||
+        		    req.getFestivalPrice().compareTo(BigDecimal.ZERO) <= 0) {
+
+        		    return ResponseEntity.badRequest()
+        		            .body("Festival price must be greater than 0");
+        		}
 
             if (req.getFestivalStart() == null || req.getFestivalEnd() == null) {
                 return ResponseEntity.badRequest()
@@ -208,11 +196,14 @@ public class SubscriptionPlanController {
             }
 
             if (req.getDiscountType() == DiscountType.PERCENTAGE &&
-                (req.getDiscountValue() < 0 || req.getDiscountValue() > 100)) {
+            	    (req.getDiscountValue() == null ||
+            	     req.getDiscountValue().compareTo(BigDecimal.ZERO) < 0 ||
+            	     req.getDiscountValue().compareTo(BigDecimal.valueOf(100)) > 0)) {
 
-                return ResponseEntity.badRequest()
-                        .body("Percentage discount must be between 0 and 100");
-            }
+            	    return ResponseEntity.badRequest()
+            	            .body("Percentage discount must be between 0 and 100");
+            	}
+
 
             LocalDateTime ds;
             LocalDateTime de;
@@ -264,9 +255,14 @@ public class SubscriptionPlanController {
             plan.setDurationMonths(req.getDurationMonths());
         }
 
-        if (req.getPriceRupees() != null && req.getPriceRupees() > 0) {
-            plan.setPriceRupees(req.getPriceRupees());
-        }
+        if (req.getPriceRupees() != null &&
+        	    req.getPriceRupees().compareTo(BigDecimal.ZERO) > 0) {
+
+        	    plan.setPriceRupees(
+        	        req.getPriceRupees().setScale(2, RoundingMode.HALF_UP)
+        	    );
+        	}
+
 
         /* ================= FESTIVAL PRICING ================= */
         boolean festivalTouched =
@@ -282,10 +278,13 @@ public class SubscriptionPlanController {
                 plan.setFestivalEnd(null);
             } else { 
 
-                if (req.getFestivalPrice() <= 0) {
-                    return ResponseEntity.badRequest()
-                            .body("Festival price must be greater than 0");
-                }
+            	if (req.getFestivalPrice() == null ||
+            		    req.getFestivalPrice().compareTo(BigDecimal.ZERO) <= 0) {
+
+            		    return ResponseEntity.badRequest()
+            		            .body("Festival price must be greater than 0");
+            		}
+
 
                 if (req.getFestivalStart() == null || req.getFestivalEnd() == null) {
                     return ResponseEntity.badRequest()
@@ -332,11 +331,14 @@ public class SubscriptionPlanController {
             }
 
             if (req.getDiscountType() == DiscountType.PERCENTAGE &&
-                (req.getDiscountValue() < 0 || req.getDiscountValue() > 100)) {
+            	    (req.getDiscountValue() == null ||
+            	     req.getDiscountValue().compareTo(BigDecimal.ZERO) < 0 ||
+            	     req.getDiscountValue().compareTo(BigDecimal.valueOf(100)) > 0)) {
 
-                return ResponseEntity.badRequest()
-                        .body("Percentage discount must be between 0 and 100");
-            }
+            	    return ResponseEntity.badRequest()
+            	            .body("Percentage discount must be between 0 and 100");
+            	}
+
 
             LocalDateTime ds;
             LocalDateTime de;

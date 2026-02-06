@@ -2,6 +2,7 @@
 package com.example.matrimony.controller;
 
 
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,7 +36,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.dto.PrivacySettingsDto;
 import com.example.matrimony.dto.ProfileDto;
+import com.example.matrimony.dto.ProfileListDto;
 import com.example.matrimony.entity.Profile;
+import com.example.matrimony.mapper.ProfileListMapper;
 import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.service.Notificationadminservice;
 import com.example.matrimony.service.ProfilePhotoService;
@@ -67,10 +70,12 @@ public class ProfileController {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+
     // ✅ Constructor Injection (prevents NullPointerException)
     public ProfileController(ProfileService profileService,
     		 ProfilePhotoService profilePhotoService
     		) {
+
         this.profileService = profileService;
         this.profilePhotoService = profilePhotoService;
     }
@@ -85,19 +90,19 @@ public class ProfileController {
             @RequestParam("document") MultipartFile document) {
 
         try {
-            // ✅ Convert JSON string to Profile object
+            //  Convert JSON string to Profile object
             Profile profile = objectMapper.readValue(profileJson, Profile.class);
 
             if (profile.getEmailId() == null || profile.getEmailId().isBlank()) {
                 return ResponseEntity.badRequest().body("Email is required");
             }
 
-            // ✅ Encrypt password
+            //  Encrypt password
             profile.setCreatePassword(
                     passwordEncoder.encode(profile.getCreatePassword())
             );
 
-            // ✅ Save document file (USING SAME PATH AS VIEW API)
+            //  Save document file (USING SAME PATH AS VIEW API)
             if (document != null && !document.isEmpty()) {
 
                 // Create directory if not exists
@@ -119,7 +124,7 @@ public class ProfileController {
                 profile.setDocumentFile(fileName);
             }
 
-            // ✅ Save profile
+            //  Save profile
             Profile saved = profileRepository.save(profile);
 
             // ================== 🔔 ADMIN NOTIFICATION ==================
@@ -257,7 +262,8 @@ public class ProfileController {
                         paymentDto.setName(payment.getName());
 
                         paymentDto.setPlanCode(payment.getPlanCode());
-                        paymentDto.setAmount(payment.getAmount() / 100L);
+                        paymentDto.setAmount(payment.getAmount());
+
                         paymentDto.setCurrency(payment.getCurrency());
                         paymentDto.setStatus(payment.getStatus());
 
@@ -266,8 +272,13 @@ public class ProfileController {
 
                         paymentDto.setPaymentMode(payment.getPaymentMode());
                         paymentDto.setTransactionId(payment.getTransactionId());
+
+                        
+                        paymentDto.setPlanName(payment.getPlanName());
+                        paymentDto.setPremiumStart(payment.getPremiumStart());
                         paymentDto.setPremiumEnd(payment.getPremiumEnd());
                         paymentDto.setExpiryMessage(payment.getExpiryMessage());
+
                         paymentDto.setCreatedAt(payment.getCreatedAt());
 
                         return paymentDto;
@@ -282,7 +293,7 @@ public class ProfileController {
 
 
         // ------------------------------
-        // ✅ New: build image URL instead of returning Base64
+        //  New: build image URL instead of returning Base64
         // ------------------------------
         if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
             try {
@@ -376,37 +387,6 @@ public class ProfileController {
 
 
 
-//
-//    @GetMapping("/Allprofiles")
-//    public ResponseEntity<List<Profile>> listProfiles() {
-//
-//        List<Profile> profiles = profileService.listAll();
-//
-//        profiles.forEach(profile -> {
-//            if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
-//                try {
-//                    Path imagePath = Paths.get("uploads/profile-photos")
-//                            .resolve(profile.getUpdatePhoto());
-//
-//                    if (Files.exists(imagePath)) {
-//                        byte[] imageBytes = Files.readAllBytes(imagePath);
-//                        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-//                        profile.setUpdatePhoto("data:image/jpeg;base64," + base64Image);
-//                    } else {
-//                        profile.setUpdatePhoto(null);
-//                    }
-//               } catch (Exception e) {
-//                    profile.setUpdatePhoto(null);
-//                }
-//            } else {
-//                profile.setUpdatePhoto(null);
-//            }
-//        });
-//
-//        return ResponseEntity.ok(profiles);
-//    }
-
-    // ✅ UPDATE PROFILE API
     @PutMapping("/update/{id}")
     public ResponseEntity<Profile> updateProfileByUser(
             @PathVariable Long id,

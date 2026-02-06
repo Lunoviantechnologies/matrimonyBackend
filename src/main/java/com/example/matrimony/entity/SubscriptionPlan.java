@@ -1,5 +1,6 @@
 package com.example.matrimony.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -45,10 +46,10 @@ public class SubscriptionPlan {
     private Integer durationMonths;
 
     @Column(name = "price_rupees", nullable = false)
-    private Long priceRupees;
+    private BigDecimal priceRupees;
 
     @Column(name = "festival_price_rupees")
-    private Long festivalPrice;
+    private BigDecimal festivalPrice;
 
     @Column(name = "festival_start")
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -73,7 +74,7 @@ public class SubscriptionPlan {
     @Enumerated(EnumType.STRING)
     private DiscountType discountType;
 
-    private Long discountValue;
+    private BigDecimal discountValue;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime discountStart;
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -103,16 +104,16 @@ public class SubscriptionPlan {
 	public void setDurationMonths(Integer durationMonths) {
 		this.durationMonths = durationMonths;
 	}
-	public Long getPriceRupees() {
+	public BigDecimal getPriceRupees() {
 		return priceRupees;
 	}
-	public void setPriceRupees(Long priceRupees) {
+	public void setPriceRupees(BigDecimal priceRupees) {
 		this.priceRupees = priceRupees;
 	}
-	public Long getFestivalPrice() {
+	public BigDecimal getFestivalPrice() {
 		return festivalPrice;
 	}
-	public void setFestivalPrice(Long festivalPrice) {
+	public void setFestivalPrice(BigDecimal festivalPrice) {
 		this.festivalPrice = festivalPrice;
 	}
 	public LocalDateTime getFestivalStart() {
@@ -145,10 +146,10 @@ public class SubscriptionPlan {
 	public void setDiscountType(DiscountType discountType) {
 		this.discountType = discountType;
 	}
-	public Long getDiscountValue() {
+	public BigDecimal getDiscountValue() {
 		return discountValue;
 	}
-	public void setDiscountValue(Long discountValue) {
+	public void setDiscountValue(BigDecimal discountValue) {
 		this.discountValue = discountValue;
 	}
 	public LocalDateTime getDiscountStart() {
