@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +23,9 @@ public class PremiumExpiryScheduler {
 
     private final ProfileRepository profileRepo;
     private final EmailService emailService;
-
+   
+    @Value("${admin.email:}")
+    private String adminEmail;
     public PremiumExpiryScheduler(ProfileRepository profileRepo,
                                   EmailService emailService) {
         this.profileRepo = profileRepo;
@@ -35,14 +38,15 @@ public class PremiumExpiryScheduler {
      * - Sends expiry emails
      * - Sends 3-day reminder emails
      */
-    @Scheduled(cron = "0 0 9 * * ?")
+    //@Scheduled(cron = "0 0 9 * * ?")
+    @Scheduled(fixedRate = 60000) 
     @Transactional
     public void handlePremiumExpiry() {
 
         LocalDateTime now = LocalDateTime.now();
 
         // ===============================
-        // 1️⃣ EXPIRE ALREADY EXPIRED PLANS
+        // 1️ EXPIRE ALREADY EXPIRED PLANS
         // ===============================
         List<Profile> expiredProfiles =
                 profileRepo.findByPremiumTrueAndPremiumEndBefore(now);
@@ -62,9 +66,9 @@ public class PremiumExpiryScheduler {
             }
         }
 
-        // =========================================
-        // 2️⃣ SEND 3-DAY EXPIRY REMINDER EMAILS
-        // =========================================
+        // ==============================================
+        // 2️ SEND 3-DAY EXPIRY REMINDER EMAILS  for user
+        // ==============================================
         LocalDateTime warningTime = now.plusDays(3);
 
         List<Profile> expiringSoon =
@@ -87,5 +91,53 @@ public class PremiumExpiryScheduler {
 
         log.info("Premium expiry job completed. Expired={}, Reminders={}",
                 expiredProfiles.size(), expiringSoon.size());
+        
+     // ====================================================
+     // 3️ SEND ADMIN DAILY EXPIRY ALERT (3 DAYS) for admin
+     // ====================================================
+        
+        // ====================================================
+        // 3️ SEND ADMIN DAILY EXPIRY ALERT (3 DAYS) for admin
+        // ====================================================
+
+       try {
+
+           if (adminEmail == null || adminEmail.isBlank()) {
+               log.warn("Admin email not configured. Skipping admin alert.");
+           }
+           else if (!expiringSoon.isEmpty()) {
+
+               StringBuilder adminMail = new StringBuilder();
+               adminMail.append("Premium Expiry Alert - Next 3 Days\n\n");
+               adminMail.append("Total Users Expiring: ")
+                        .append(expiringSoon.size())
+                        .append("\n\n");
+
+               adminMail.append("User Details:\n");
+               adminMail.append("---------------------------------\n");
+
+               for (Profile p : expiringSoon) {
+                   adminMail.append("ID: ").append(p.getId())
+                           .append(" | Name: ").append(p.getFirstName())
+                           .append(" | Email: ").append(p.getEmailId())
+                           .append(" | Expiry: ").append(p.getPremiumEnd())
+                           .append("\n");
+               }
+
+               emailService.sendSimpleMail(
+                       adminEmail,
+                       "Premium Expiring in 3 Days - Admin Alert",
+                       adminMail.toString()
+               );
+
+               log.info("Admin expiry alert sent. Count={}", expiringSoon.size());
+           } 
+           else {
+               log.info("No users expiring in next 3 days. Admin mail skipped.");
+           }
+
+       } catch (Exception e) {
+           log.error("Failed to send admin expiry alert", e);
+       }
     }
 }

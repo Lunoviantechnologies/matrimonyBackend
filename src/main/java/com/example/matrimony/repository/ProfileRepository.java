@@ -47,6 +47,12 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
            OR friend_id = :profileId
     """, nativeQuery = true)
     void deleteAllByProfileId(@Param("profileId") Long profileId);
+    
+    @Modifying
+    @Transactional
+    @Query("update Profile p set p.lastActive = :time where p.id = :id")
+    void updateLastActive(@Param("id") Long id,
+                          @Param("time") LocalDateTime time);
 
      
 }

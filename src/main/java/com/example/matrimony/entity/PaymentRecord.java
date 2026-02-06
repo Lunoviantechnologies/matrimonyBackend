@@ -1,5 +1,6 @@
 package com.example.matrimony.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -39,11 +40,10 @@ public class PaymentRecord {
     private String transactionId;
     private String paymentMode;
 
-    // store amount in paise
-    private long amount;
-
+    // store amount in PAISE only
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal amount;
     private String currency;
-
     @Column(length = 32)
     private String status;
 
@@ -53,18 +53,50 @@ public class PaymentRecord {
     private Profile profile;
 
     private LocalDateTime createdAt;
+    
+    private String planName;
+    private LocalDateTime premiumStart; 
+    private LocalDateTime premiumEnd;   
+    @Column(length = 200)
+    private String expiryMessage; 
 
-    @PrePersist
+    public String getPlanName() {
+		return planName;
+	}
+
+	public void setPlanName(String planName) {
+		this.planName = planName;
+	}
+
+	public LocalDateTime getPremiumStart() {
+		return premiumStart;
+	}
+
+	public void setPremiumStart(LocalDateTime premiumStart) {
+		this.premiumStart = premiumStart;
+	}
+
+	public LocalDateTime getPremiumEnd() {
+		return premiumEnd;
+	}
+
+	public void setPremiumEnd(LocalDateTime premiumEnd) {
+		this.premiumEnd = premiumEnd;
+	}
+
+	public String getExpiryMessage() {
+		return expiryMessage;
+	}
+
+	public void setExpiryMessage(String expiryMessage) {
+		this.expiryMessage = expiryMessage;
+	}
+
+	@PrePersist
     public void onCreate() {
-        if (createdAt == null) {
-			createdAt = LocalDateTime.now();
-		}
-        if (status == null) {
-			status = "PENDING";
-		}
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (status == null) status = "PENDING";
     }
-
-
 
 	public Long getId() {
 		return id;
@@ -90,7 +122,6 @@ public class PaymentRecord {
 		this.name = name;
 	}
 
-	 // getters / setters
 	public String getRazorpayOrderId() {
 		return razorpayOrderId;
 	}
@@ -139,11 +170,11 @@ public class PaymentRecord {
 		this.paymentMode = paymentMode;
 	}
 
-	public long getAmount() {
+	public BigDecimal getAmount() {
 		return amount;
 	}
 
-	public void setAmount(long amount) {
+	public void setAmount(BigDecimal amount) {
 		this.amount = amount;
 	}
 
@@ -179,6 +210,5 @@ public class PaymentRecord {
 		this.createdAt = createdAt;
 	}
 
-
-
+    
 }
