@@ -2,6 +2,8 @@ package com.example.matrimony.dto;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+
 public class PaymentDto {
 
     private Long id;
@@ -16,7 +18,10 @@ public class PaymentDto {
     private String razorpayOrderId;
     private String razorpayPaymentId;
 
+
+    @Column(name = "payment_mode")
     private String paymentMode;
+    @Column(name = "transaction_id") 
     private String transactionId;
 
     private LocalDateTime createdAt;

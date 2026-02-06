@@ -1,3 +1,4 @@
+
 package com.example.matrimony.controller;
 
 
@@ -37,6 +38,7 @@ import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.service.Notificationadminservice;
+import com.example.matrimony.service.ProfilePhotoService;
 import com.example.matrimony.service.ProfileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -54,6 +56,10 @@ public class ProfileController {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private ProfilePhotoService profilePhotoService;
+
+    
+    @Autowired
     private ObjectMapper objectMapper;
     @Autowired
     private Notificationadminservice notificationservice;
@@ -62,8 +68,11 @@ public class ProfileController {
     private String uploadDir;
 
     // ✅ Constructor Injection (prevents NullPointerException)
-    public ProfileController(ProfileService profileService) {
+    public ProfileController(ProfileService profileService,
+    		 ProfilePhotoService profilePhotoService
+    		) {
         this.profileService = profileService;
+        this.profilePhotoService = profilePhotoService;
     }
 
     
@@ -142,47 +151,6 @@ public class ProfileController {
 
 
     
-//    @PostMapping("/register")
-//    public ResponseEntity<?> createProfile(
-//            @RequestParam("profile") String profileJson,
-//            @RequestParam("document") MultipartFile document) {
-//
-//        try {
-//            // ✅ Convert JSON string to Profile object
-//            Profile profile = objectMapper.readValue(profileJson, Profile.class);
-//
-//            if (profile.getEmailId() == null || profile.getEmailId().isBlank()) {
-//                return ResponseEntity.badRequest().body("Email is required");
-//            }
-//
-//            // ✅ Encrypt password
-//            profile.setCreatePassword(
-//                    passwordEncoder.encode(profile.getCreatePassword())
-//            );
-//
-//            // ✅ Save document file
-//            if (document != null && !document.isEmpty()) {
-//                String uploadDir = "uploads/documents";
-//                Files.createDirectories(Paths.get(uploadDir));
-//
-//                String fileName = System.currentTimeMillis() + "_" + document.getOriginalFilename();
-//                Path filePath = Paths.get(uploadDir).resolve(fileName);
-//
-//                Files.copy(document.getInputStream(), filePath);
-//
-//                // 👉 save filename in DB (add field in Profile entity if not present)
-//                profile.setDocumentFile(fileName);
-//            }
-//
-//            Profile saved = profileRepository.save(profile);
-//            return ResponseEntity.ok(saved);
-//
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//            return ResponseEntity.badRequest().body("Registration failed: " + ex.getMessage());
-//        }
-//    }
-    
     
     @GetMapping("/myprofiles/{id}")
     public ResponseEntity<ProfileDto> getProfile(@PathVariable Long id) {
@@ -229,9 +197,18 @@ public class ProfileController {
         dto.setCompanyName(profile.getCompanyName());
         dto.setAnnualIncome(profile.getAnnualIncome());
         dto.setWorkLocation(profile.getWorkLocation());
-        dto.setState(profile.getState());
-        dto.setCountry(profile.getCountry());
-        dto.setCity(profile.getCity());
+       
+        if (profile.getCountry() != null) {
+            dto.setCountryId(profile.getCountry().getId());
+            dto.setCountryName(profile.getCountry().getName());
+        }
+
+        if (profile.getState() != null) {
+            dto.setStateId(profile.getState().getId());
+            dto.setStateName(profile.getState().getName());
+        }
+        
+        dto.setCityName(profile.getCity());
         dto.setBodyType(profile.getBodyType());
         dto.setComplexion(profile.getComplexion());
         dto.setExperience(profile.getExperience());
@@ -262,6 +239,11 @@ public class ProfileController {
         dto.setVegiterian(profile.getVegiterian());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setIsChildrenLivingWithYou(profile.getIsChildrenLivingWithYou());
+        dto.setUpdatePhoto1(profilePhotoService.getPhotoBase64(id, 1));
+        dto.setUpdatePhoto2(profilePhotoService.getPhotoBase64(id, 2));
+        dto.setUpdatePhoto3(profilePhotoService.getPhotoBase64(id, 3));
+        dto.setUpdatePhoto4(profilePhotoService.getPhotoBase64(id, 4));
+
 
         if (profile.getPayments() != null && !profile.getPayments().isEmpty()) {
 
@@ -284,7 +266,8 @@ public class ProfileController {
 
                         paymentDto.setPaymentMode(payment.getPaymentMode());
                         paymentDto.setTransactionId(payment.getTransactionId());
-
+                        paymentDto.setPremiumEnd(payment.getPremiumEnd());
+                        paymentDto.setExpiryMessage(payment.getExpiryMessage());
                         paymentDto.setCreatedAt(payment.getCreatedAt());
 
                         return paymentDto;
@@ -326,19 +309,18 @@ public class ProfileController {
         return ResponseEntity.ok(dto);
     }
 
-
-
-
     @GetMapping("/Allprofiles")
     public ResponseEntity<List<Profile>> listProfiles() {
 
         List<Profile> profiles = profileService.listAll();
 
         profiles.forEach(profile -> {
+
+            // ---------- MAIN updatePhoto ----------
             if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
                 try {
-                    Path imagePath = Paths.get("uploads/profile-photos")
-                            .resolve(profile.getUpdatePhoto());
+                    String fileName = Paths.get(profile.getUpdatePhoto()).getFileName().toString();
+                    Path imagePath = Paths.get("uploads/profile-photos").resolve(fileName);
 
                     if (Files.exists(imagePath)) {
                         byte[] imageBytes = Files.readAllBytes(imagePath);
@@ -353,10 +335,76 @@ public class ProfileController {
             } else {
                 profile.setUpdatePhoto(null);
             }
+
+            // ---------- updatePhoto1 2 3 4 ----------
+            profile.setUpdatePhoto1(null);
+            profile.setUpdatePhoto2(null);
+            profile.setUpdatePhoto3(null);
+            profile.setUpdatePhoto4(null);
+
+            if (profile.getProfilePictures() != null) {
+                profile.getProfilePictures().forEach(pic -> {
+
+                    if (pic.getFileName() != null && !pic.getFileName().isBlank()) {
+                        try {
+                            String fileName = Paths.get(pic.getFileName()).getFileName().toString();
+                            Path imagePath = Paths.get("uploads/profile-photos").resolve(fileName);
+
+                            if (Files.exists(imagePath)) {
+                                byte[] imageBytes = Files.readAllBytes(imagePath);
+                                String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+                                String base64 = "data:image/jpeg;base64," + base64Image;
+
+                                if (pic.getPhotoNumber() == 1) profile.setUpdatePhoto1(base64);
+                                if (pic.getPhotoNumber() == 2) profile.setUpdatePhoto2(base64);
+                                if (pic.getPhotoNumber() == 3) profile.setUpdatePhoto3(base64);
+                                if (pic.getPhotoNumber() == 4) profile.setUpdatePhoto4(base64);
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+
         });
 
         return ResponseEntity.ok(profiles);
     }
+
+
+
+
+//
+//    @GetMapping("/Allprofiles")
+//    public ResponseEntity<List<Profile>> listProfiles() {
+//
+//        List<Profile> profiles = profileService.listAll();
+//
+//        profiles.forEach(profile -> {
+//            if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
+//                try {
+//                    Path imagePath = Paths.get("uploads/profile-photos")
+//                            .resolve(profile.getUpdatePhoto());
+//
+//                    if (Files.exists(imagePath)) {
+//                        byte[] imageBytes = Files.readAllBytes(imagePath);
+//                        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+//                        profile.setUpdatePhoto("data:image/jpeg;base64," + base64Image);
+//                    } else {
+//                        profile.setUpdatePhoto(null);
+//                    }
+//               } catch (Exception e) {
+//                    profile.setUpdatePhoto(null);
+//                }
+//            } else {
+//                profile.setUpdatePhoto(null);
+//            }
+//        });
+//
+//        return ResponseEntity.ok(profiles);
+//    }
 
     // ✅ UPDATE PROFILE API
     @PutMapping("/update/{id}")
@@ -462,6 +510,8 @@ public class ProfileController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    
+
 
 
 }

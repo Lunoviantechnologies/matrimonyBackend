@@ -39,7 +39,7 @@ import java.util.Optional;
 	    @Scheduled(cron = "0 0 1 * * ?")
 	    @Transactional
 	    public void cleanOldNotifications() {
-	        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(7);
+	        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(1);
 	        NotificationRepository.deleteByCreatedAtBefore(cutoffDate);
 	        System.out.println("🧹 Old notifications cleaned up successfully at: " + LocalDateTime.now());
 	    }
@@ -109,7 +109,7 @@ import java.util.Optional;
 	            n.setRead(true);
 	            repo.save(n);
 	        } else {
-	            // optionally throw unauthorized/not found
+	    
 	        }
 	    }
 

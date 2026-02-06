@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.matrimony.dto.UpdateSubscriptionPlanFullRequest;
 import com.example.matrimony.entity.DiscountType;
+import com.example.matrimony.entity.PlanFeature;
 import com.example.matrimony.entity.SubscriptionPlan;
 import com.example.matrimony.repository.SubscriptionPlanRepository;
 import com.example.matrimony.service.PricingService;
@@ -53,10 +54,15 @@ public class SubscriptionPlanController {
                                  new UpdateSubscriptionPlanFullRequest();
 
                          // ===== Plan basic details =====
+                        
                          dto.setPlanCode(plan.getPlanCode());
                          dto.setPlanName(plan.getPlanName());
                          dto.setDurationMonths(plan.getDurationMonths());
                          dto.setPriceRupees(plan.getPriceRupees());
+                         dto.setId(plan.getId());
+                         
+                         
+                         
 
                          // ===== Festival pricing =====
                          dto.setFestivalPrice(plan.getFestivalPrice());
@@ -87,6 +93,16 @@ public class SubscriptionPlanController {
 
                          // ===== Status =====
                          dto.setActive(Boolean.TRUE.equals(plan.getActive()));
+                         
+                      // ===== Plan Features =====
+                         if (plan.getPlanFeature() != null) {
+                             dto.setContacts(plan.getPlanFeature().getContacts());
+                             dto.setChat(plan.getPlanFeature().getChat());
+                             dto.setAstroSupport(plan.getPlanFeature().getAstroSupport());
+                             dto.setRelationshipManager(plan.getPlanFeature().getRelationshipManager());
+                             dto.setBenefit(plan.getPlanFeature().getBenefit());
+                         }
+
 
                          // ✅ REQUIRED
                          return dto;
@@ -136,6 +152,9 @@ public class SubscriptionPlanController {
         plan.setDurationMonths(req.getDurationMonths());
         plan.setPriceRupees(req.getPriceRupees());
         plan.setActive(req.isActive()); // ← IMPORTANT
+        
+        
+        
 
         /* ================= FESTIVAL PRICING ================= */
         if (req.getFestivalPrice() != null) {

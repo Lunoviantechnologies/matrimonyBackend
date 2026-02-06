@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class UpdateSubscriptionPlanFullRequest {
 
+	 private Long id;
     private Long festivalPrice;
     @JsonFormat(pattern = "yyyy-MM-dd")// null = disable festival pricing
    
@@ -27,8 +28,20 @@ public class UpdateSubscriptionPlanFullRequest {
     private boolean active;
    
 
+    private Integer contacts;
+    private Boolean chat;
+    private String astroSupport;
+    private Boolean relationshipManager;
+    private String benefit;
+
     
-    public Long getFestivalPrice() { return festivalPrice; }
+    public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
+	public Long getFestivalPrice() { return festivalPrice; }
     public void setFestivalPrice(Long festivalPrice) {
         this.festivalPrice = festivalPrice;
     }
@@ -96,6 +109,38 @@ public class UpdateSubscriptionPlanFullRequest {
 	}
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+	
+
+	public Integer getContacts() {
+		return contacts;
+	}
+	public void setContacts(Integer contacts) {
+		this.contacts = contacts;
+	}
+	public Boolean getChat() {
+		return chat;
+	}
+	public void setChat(Boolean chat) {
+		this.chat = chat;
+	}
+	public String getAstroSupport() {
+		return astroSupport;
+	}
+	public void setAstroSupport(String astroSupport) {
+		this.astroSupport = astroSupport;
+	}
+	public Boolean getRelationshipManager() {
+		return relationshipManager;
+	}
+	public void setRelationshipManager(Boolean relationshipManager) {
+		this.relationshipManager = relationshipManager;
+	}
+	public String getBenefit() {
+		return benefit;
+	}
+	public void setBenefit(String benefit) {
+		this.benefit = benefit;
 	}
 	@Override
 	public String toString() {

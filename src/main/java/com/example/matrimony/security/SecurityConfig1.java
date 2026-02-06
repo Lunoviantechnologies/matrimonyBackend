@@ -54,7 +54,9 @@ public class SecurityConfig1 {
                     "/api/profiles/count",
                    "/ws-chat/**" ,
                    "/api/tickets",
-                   "/api/admin/create-admin"
+                   "/api/admin/create-admin",
+                   "/api/locations/countries",
+                   "/api/locations/states/**"
                   
                   
                 ).permitAll()
@@ -104,7 +106,14 @@ public class SecurityConfig1 {
                           "/api/block/user/**",
                           "/api/block/status/**",
                           "/api/block/unblock/**",
-                          "/api/reports/user/**"
+                          "/api/reports/user/**",
+                          "/api/astrology/match/**",
+                          "/api/astrology/match/**",
+                          "/api/astrology/profile/matches/**",
+                          "/api/profile-photos/updatePhoto1/**",
+                          "/api/profile-photos/updatePhoto2/**",
+                          "/api/profile-photos/updatePhoto3/**",
+                          "/api/profile-photos/updatePhoto4/**"                          
                    
                 ).hasRole("USER")
 

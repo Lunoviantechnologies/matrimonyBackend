@@ -28,9 +28,6 @@ import com.example.matrimony.repository.ProfileRepository;
 @Transactional
 public class ChatService {
 	
-	@Autowired
-    private Notificationadminservice adminNotificationService;
-	
 	private final BlockService blockService;  
     private final ChatMessageRepository messageRepository;
     private final ProfileRepository profileRepository;
@@ -96,24 +93,6 @@ public class ChatService {
 
         // Send notification to user
         notificationService.sendToUserAndSave(notification);
-
-        // 5️⃣ 🔔 Optional: Notify all admins that a new chat message was sent
-        String adminMessage = sender.getFirstName() + " " + sender.getLastName() +
-                " sent a message to " +
-                receiver.getFirstName() + " " + receiver.getLastName();
-
-        adminNotificationService.notifyAdmin(
-                "CHAT_MESSAGE",
-                adminMessage,
-                Map.of(
-                        "chatId", saved.getId(),
-                        "senderId", senderId,
-                        "receiverId", receiverId,
-                        "message", message
-                )
-        );
-
-        // 6️⃣ Return DTO
         return ChatMessageDto.fromEntity(saved);
     }
     

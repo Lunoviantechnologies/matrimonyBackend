@@ -4,14 +4,17 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -28,6 +31,9 @@ public class SubscriptionPlan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @OneToOne(mappedBy = "plan", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private PlanFeature planFeature;
 
     @Column(name = "plan_code", nullable = false, unique = true)
     private String planCode;
@@ -157,6 +163,15 @@ public class SubscriptionPlan {
 	public void setDiscountEnd(LocalDateTime discountEnd) {
 		this.discountEnd = discountEnd;
 	}
+	
+	public PlanFeature getPlanFeature() {
+	    return planFeature;
+	}
+
+	public void setPlanFeature(PlanFeature planFeature) {
+	    this.planFeature = planFeature;
+	}
+
 	@Override
 	public String toString() {
 		return "SubscriptionPlan [id=" + id + ", planCode=" + planCode + ", planName=" + planName + ", durationMonths="
