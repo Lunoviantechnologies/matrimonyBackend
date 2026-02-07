@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.matrimony.entity.Country;
 import com.example.matrimony.entity.State;
 
 public class ProfileListDto {
@@ -69,6 +70,8 @@ public class ProfileListDto {
     public void setCity(String city) { this.city = city; }
    
     
+	
+	
 	public String getState() {
 		return state;
 	}
