@@ -76,7 +76,7 @@ public class ReferralService {
         referral.setReferrer(referrer);
         referral.setReferred(referredUser);
         referral.setReferredEmail(referredEmail);
-        referral.setStatus(ReferralStatus.PENDING);
+        referral.setStatus(ReferralStatus.COMPLETED);
         referral.setCompletedAt(LocalDateTime.now());
 
         referralRepository.save(referral);
@@ -96,7 +96,7 @@ public class ReferralService {
             return;
         }
 
-        referral.setStatus(ReferralStatus.PENDING);
+        referral.setStatus(ReferralStatus.COMPLETED);
         referral.setCompletedAt(LocalDateTime.now());
         referralRepository.save(referral);
 
@@ -122,7 +122,7 @@ public class ReferralService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ReferralSummaryDto getSummary(Profile profile, String appBaseUrl) {
         String code = getOrCreateReferralCode(profile);
 

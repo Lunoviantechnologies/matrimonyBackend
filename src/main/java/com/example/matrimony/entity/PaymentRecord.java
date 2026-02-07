@@ -40,9 +40,11 @@ public class PaymentRecord {
     private String transactionId;
     private String paymentMode;
 
-    // store amount in PAISE only
+    // store amount in RUPEES (what user actually pays)
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
+    @Column(name = "referral_discount_used", precision = 10, scale = 2)
+    private BigDecimal referralDiscountUsed = BigDecimal.ZERO;
     private String currency;
     @Column(length = 32)
     private String status;
@@ -176,6 +178,14 @@ public class PaymentRecord {
 
 	public void setAmount(BigDecimal amount) {
 		this.amount = amount;
+	}
+
+	public BigDecimal getReferralDiscountUsed() {
+		return referralDiscountUsed != null ? referralDiscountUsed : BigDecimal.ZERO;
+	}
+
+	public void setReferralDiscountUsed(BigDecimal referralDiscountUsed) {
+		this.referralDiscountUsed = referralDiscountUsed;
 	}
 
 	public String getCurrency() {
