@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.matrimony.entity.Country;
+import com.example.matrimony.entity.State;
+
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -93,11 +96,28 @@ public class ProfileDto {
     private Long stateId;
     private Long cityId;
     
-    private String countryName;
-    private String stateName;
-    private String cityName;
+//    private Country country;
+//    private State state;
+    private String country;   // frontend sends string
+    private String state;     // frontend sends string
+    private String city;
+    private String district;
+	private String residenceStatus;
 
-    // Astrology
+    public String getDistrict() {
+		return district;
+	}
+	public void setDistrict(String district) {
+		this.district = district;
+	}
+	public String getResidenceStatus() {
+		return residenceStatus;
+	}
+	public void setResidenceStatus(String residenceStatus) {
+		this.residenceStatus = residenceStatus;
+	}
+
+	// Astrology
     private String rashi;
     private String nakshatra;
     private String ascendant;
@@ -605,23 +625,37 @@ public class ProfileDto {
 	public void setCityId(Long cityId) {
 		this.cityId = cityId;
 	}
-	public String getCountryName() {
-		return countryName;
+	
+//	public Country getCountry() {
+//		return country;
+//	}
+//	public void setCountry(Country country) {
+//		this.country = country;
+//	}
+//	public State getState() {
+//		return state;
+//	}
+//	public void setState(State state) {
+//		this.state = state;
+//	}
+	
+	public String getCity() {
+		return city;
 	}
-	public void setCountryName(String countryName) {
-		this.countryName = countryName;
+	public String getCountry() {
+		return country;
 	}
-	public String getStateName() {
-		return stateName;
+	public void setCountry(String country) {
+		this.country = country;
 	}
-	public void setStateName(String stateName) {
-		this.stateName = stateName;
+	public String getState() {
+		return state;
 	}
-	public String getCityName() {
-		return cityName;
+	public void setState(String state) {
+		this.state = state;
 	}
-	public void setCityName(String cityName) {
-		this.cityName = cityName;
+	public void setCity(String city) {
+		this.city = city;
 	}
 	// to string method
 	@Override
@@ -642,8 +676,8 @@ public class ProfileDto {
 				+ ", ancestralOrigin=" + ancestralOrigin + ", livingWith=" + livingWith + ", childrenDetails="
 				+ childrenDetails + ", highestEducation=" + highestEducation + ", collegeName=" + collegeName
 				+ ", employedIn=" + employedIn + ", sector=" + sector + ", occupation=" + occupation + ", companyName="
-				+ companyName + ", annualIncome=" + annualIncome + ", workLocation=" + workLocation + ", state=" + stateName
-				+ ", country=" + countryName + ", city=" + cityName + ", rashi=" + rashi + ", nakshatra=" + nakshatra
+				+ companyName + ", annualIncome=" + annualIncome + ", workLocation=" + workLocation + ", state=" + state
+				+ ", country=" + country + ", city=" + city + ", rashi=" + rashi + ", nakshatra=" + nakshatra
 				+ ", ascendant=" + ascendant + ", basicPlanetaryPosition=" + basicPlanetaryPosition + ",Hobbies="
 				+ Hobbies + ", partnerAgeRange=" + partnerAgeRange + ", partnerReligion=" + partnerReligion
 				+ ", partnerEducation=" + partnerEducation + ", partnerLocationPref=" + partnerLocationPref
