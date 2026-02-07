@@ -72,6 +72,7 @@ public class PaymentController {
 	// CREATE ORDER
 	// ============================================================
 	@PostMapping("/create-order")
+	@Transactional
 	public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest req) {
 
 		if (req == null || req.getProfileId() == null || req.getPlanCode() == null) {
@@ -81,36 +82,67 @@ public class PaymentController {
 		Profile profile = profileRepo.findById(req.getProfileId())
 				.orElseThrow(() -> new RuntimeException("profile_not_found"));
 
-		// Enterprise price source
-		// long rupees = pricingService.calculateFinalPrice(req.getPlanCode());
-		BigDecimal rupees = pricingService.calculateFinalPrice(req.getPlanCode()).setScale(2, RoundingMode.HALF_UP);
-
-		long paise = rupees.multiply(BigDecimal.valueOf(100)).longValue();
-
-		// STORE RUPEES IN DB
+		BigDecimal basePrice = pricingService.calculateFinalPrice(req.getPlanCode()).setScale(2, RoundingMode.HALF_UP);
+		BigDecimal rewardBalance = profile.getReferralRewardBalance() != null
+				? profile.getReferralRewardBalance()
+				: BigDecimal.ZERO;
+		BigDecimal discount = rewardBalance.min(basePrice);
+		BigDecimal finalAmount = basePrice.subtract(discount).setScale(2, RoundingMode.HALF_UP);
 
 		PaymentRecord rec = new PaymentRecord();
 		rec.setProfile(profile);
 		rec.setUserId(profile.getId());
 		rec.setName(getDisplayName(profile));
 		rec.setPlanCode(req.getPlanCode());
-		rec.setAmount(rupees);
-		// rec.setAmount(rupees); // LONG NOT INT
-		// rec.setAmount(paise); // amount is PAISE
+		rec.setAmount(finalAmount);
+		rec.setReferralDiscountUsed(discount);
 		rec.setCurrency("INR");
 		rec.setStatus("PENDING");
 		rec.setCreatedAt(LocalDateTime.now());
 
 		paymentRepo.save(rec);
 
+		// Fully covered by rewards: no Razorpay, apply premium and deduct balance
+		if (finalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+			SubscriptionPlan plan = subscriptionPlanRepo
+					.findByPlanCodeAndActiveTrue(req.getPlanCode())
+					.orElseThrow(() -> new RuntimeException("plan_not_found"));
+			LocalDateTime now = LocalDateTime.now();
+			profile.setPremium(true);
+			profile.setPremiumStart(now);
+			profile.setPremiumEnd(now.plusMonths(plan.getDurationMonths()));
+			profile.setReferralRewardBalance(rewardBalance.subtract(discount));
+			profileRepo.save(profile);
+
+			rec.setStatus("PAID");
+			rec.setPlanName(plan.getPlanName());
+			rec.setPremiumStart(now);
+			rec.setPremiumEnd(now.plusMonths(plan.getDurationMonths()));
+			rec.setExpiryMessage("Your plan expires on " + rec.getPremiumEnd().toLocalDate());
+			paymentRepo.save(rec);
+
+			return ResponseEntity.ok(Map.of(
+					"completedWithRewards", true,
+					"paymentRecordId", rec.getId(),
+					"amountRupees", BigDecimal.ZERO,
+					"currency", "INR",
+					"planName", plan.getPlanName()));
+		}
+
 		try {
+			long paise = finalAmount.multiply(BigDecimal.valueOf(100)).longValue();
 			Order order = razorpayService.createOrder(paise, "receipt_" + rec.getId());
 
 			rec.setRazorpayOrderId(order.get("id"));
 			paymentRepo.save(rec);
 
-			return ResponseEntity.ok(Map.of("razorpayOrderId", rec.getRazorpayOrderId(), "razorpayKey", razorpayKeyId,
-					"amountRupees", rupees, "currency", "INR", "paymentRecordId", rec.getId()));
+			return ResponseEntity.ok(Map.of(
+					"razorpayOrderId", rec.getRazorpayOrderId(),
+					"razorpayKey", razorpayKeyId,
+					"amountRupees", finalAmount,
+					"referralDiscountApplied", discount,
+					"currency", "INR",
+					"paymentRecordId", rec.getId()));
 
 		} catch (Exception e) {
 			rec.setStatus("FAILED");
@@ -175,6 +207,15 @@ public class PaymentController {
 	        profile.setPremium(true);
 	        profile.setPremiumStart(premiumStart);
 	        profile.setPremiumEnd(premiumEnd);
+
+	        // Deduct referral reward used from balance
+	        BigDecimal discountUsed = rec.getReferralDiscountUsed();
+	        if (discountUsed != null && discountUsed.compareTo(BigDecimal.ZERO) > 0) {
+	            BigDecimal current = profile.getReferralRewardBalance() != null
+	                    ? profile.getReferralRewardBalance()
+	                    : BigDecimal.ZERO;
+	            profile.setReferralRewardBalance(current.subtract(discountUsed).max(BigDecimal.ZERO));
+	        }
 	        profileRepo.save(profile);
 
 	        // ===== SAVE IN PAYMENT RECORD =====
