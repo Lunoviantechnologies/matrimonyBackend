@@ -136,8 +136,11 @@ public class AdminManageController {
         dto.setCompanyName(profile.getCompanyName());
         dto.setAnnualIncome(profile.getAnnualIncome());
         dto.setWorkLocation(profile.getWorkLocation());
-      
-        dto.setCityName(profile.getCity());
+      dto.setCountry(profile.getCountry());
+      dto.setState(profile.getState());
+        dto.setCity(profile.getCity());
+        dto.setDistrict(profile.getDistrict());
+        dto.setResidenceStatus(profile.getResidenceStatus());
         dto.setBodyType(profile.getBodyType());
         dto.setComplexion(profile.getComplexion());
         dto.setExperience(profile.getExperience());
@@ -471,15 +474,18 @@ public class AdminManageController {
 		}
 
         // --- LOCATION ---
-        if (updatedDto.getCityName() != null) {
-			existing.setCity(updatedDto.getCityName());
+        if (updatedDto.getCity() != null) {
+			existing.setCity(updatedDto.getCity());
 		}
-//        if (updatedDto.getState() != null) {
-//			existing.setState(updatedDto.getState());
-//		}
-//        if (updatedDto.getCountry() != null) {
-//			existing.setCountry(updatedDto.getCountry());
-//		}
+       if (updatedDto.getState() != null) {
+			existing.setState(updatedDto.getState());
+		}
+        if (updatedDto.getCountry() != null) {
+			existing.setCountry(updatedDto.getCountry());
+		}
+        if(updatedDto.getDistrict()!=null) {
+        	existing.setDistrict(updatedDto.getDistrict());
+        }
 
         // --- HOBBIES ---
         if (updatedDto.getHobbies() != null) {
@@ -499,6 +505,9 @@ public class AdminManageController {
         if (updatedDto.getBasicPlanetaryPosition() != null) {
 			existing.setBasicPlanetaryPosition(updatedDto.getBasicPlanetaryPosition());
 		}
+        if(updatedDto.getResidenceStatus()!=null) {
+        	existing.setResidenceStatus(updatedDto.getResidenceStatus());
+        }
 
         // --- PARTNER PREFERENCES ---
         if (updatedDto.getPartnerAgeRange() != null) {
