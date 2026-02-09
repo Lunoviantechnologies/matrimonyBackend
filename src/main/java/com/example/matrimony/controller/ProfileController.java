@@ -1,4 +1,3 @@
-
 package com.example.matrimony.controller;
 
 
@@ -202,20 +201,19 @@ public class ProfileController {
         dto.setCompanyName(profile.getCompanyName());
         dto.setAnnualIncome(profile.getAnnualIncome());
         dto.setWorkLocation(profile.getWorkLocation());
+
         dto.setProfileVisibility(profile.getProfileVisibility());
         dto.setHideProfilePhoto(profile.getHideProfilePhoto());
        
-        if (profile.getCountry() != null) {
-            dto.setCountryId(profile.getCountry().getId());
-            dto.setCountryName(profile.getCountry().getName());
-        }
+       
+//       dto.setCountry(profile.getCountry());
+       dto.setState(profile.getState());
+        dto.setCountry(profile.getCountry());
+       dto.setDistrict(profile.getDistrict());
+       dto.setResidenceStatus(profile.getResidenceStatus());
 
-        if (profile.getState() != null) {
-            dto.setStateId(profile.getState().getId());
-            dto.setStateName(profile.getState().getName());
-        }
         
-        dto.setCityName(profile.getCity());
+        dto.setCity(profile.getCity());
         dto.setBodyType(profile.getBodyType());
         dto.setComplexion(profile.getComplexion());
         dto.setExperience(profile.getExperience());

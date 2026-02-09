@@ -27,20 +27,13 @@ public class ProfileListMapper {
         dto.setAge(p.getAge() > 0 ? p.getAge() : null);
         dto.setEmailId(p.getEmailId());
         dto.setGender(p.getGender());
-
         dto.setCity(p.getCity());
-        if (p.getState() != null) {
-            dto.setState(p.getState().getName());
-        }
-        if (p.getCountry() != null) {
-            dto.setCountry(p.getCountry().getName());
-        }
-
+       dto.setCountry(p.getCountry());
+       dto.setState(p.getState());
         dto.setOccupation(p.getOccupation());
         dto.setCompanyName(p.getCompanyName());
         dto.setHighestEducation(p.getHighestEducation());
         dto.setAnnualIncome(p.getAnnualIncome());
-
         dto.setMembershipType(p.getMembershipType());
         dto.setAccountStatus(p.getAccountStatus());
         dto.setPremium(p.isPremium());

@@ -91,6 +91,7 @@ public class Profile {
 	@Column(columnDefinition = "TEXT")
 	private String habbits;
 
+	
 	private String subCaste;
 	private String dosham;
 	private String motherTongue;
@@ -180,16 +181,34 @@ public class Profile {
 	// ================= LOCATION RELATIONSHIPS =================
 
 	// MANY profiles → ONE country
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "country_id")
-	private Country country;
+	
+	private String country;
 
 	// MANY profiles → ONE state
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "state_id")
-	private State state;
+	
+	private String state;
+	@Column(columnDefinition = "TEXT")
+	private String district;
+	@Column(columnDefinition = "TEXT")
+	private String residenceStatus;
 	
 	
+	public String getDistrict() {
+		return district;
+	}
+
+	public void setDistrict(String district) {
+		this.district = district;
+	}
+
+	public String getResidenceStatus() {
+		return residenceStatus;
+	}
+
+	public void setResidenceStatus(String residenceStatus) {
+		this.residenceStatus = residenceStatus;
+	}
+
 	private String city;
 
 
@@ -658,20 +677,22 @@ public class Profile {
 		this.workLocation = workLocation;
 	}
 
-	public Country getCountry() {
-	    return country;
+	
+
+	public String getCountry() {
+		return country;
 	}
 
-	public void setCountry(Country country) {
-	    this.country = country;
+	public void setCountry(String country) {
+		this.country = country;
 	}
 
-	public State getState() {
-	    return state;
+	public String getState() {
+		return state;
 	}
 
-	public void setState(State state) {
-	    this.state = state;
+	public void setState(String state) {
+		this.state = state;
 	}
 
 	public String getCity() {
