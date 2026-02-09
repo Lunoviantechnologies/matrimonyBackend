@@ -110,6 +110,10 @@ public class Profile {
 	@Column(name = "referral_reward_balance", nullable = false)
 	private BigDecimal referralRewardBalance = BigDecimal.ZERO;
 
+	// Optional referral code USED when the user signs up (not stored in DB)
+	@Transient
+	private String signupReferralCode;
+
 	@Column(name = "last_active")
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime lastActive;
@@ -303,6 +307,14 @@ public class Profile {
 
 	public void setReferralRewardBalance(BigDecimal referralRewardBalance) {
 		this.referralRewardBalance = referralRewardBalance;
+	}
+
+	public String getSignupReferralCode() {
+		return signupReferralCode;
+	}
+
+	public void setSignupReferralCode(String signupReferralCode) {
+		this.signupReferralCode = signupReferralCode;
 	}
 
 	public synchronized void setWeight(String weight) {

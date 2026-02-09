@@ -41,6 +41,7 @@ import com.example.matrimony.mapper.ProfileListMapper;
 import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.service.Notificationadminservice;
 import com.example.matrimony.service.ProfilePhotoService;
+import com.example.matrimony.referral.ReferralService;
 import com.example.matrimony.service.ProfileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -69,14 +70,17 @@ public class ProfileController {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    private final ReferralService referralService;
+
 
     // ✅ Constructor Injection (prevents NullPointerException)
     public ProfileController(ProfileService profileService,
-    		 ProfilePhotoService profilePhotoService
-    		) {
+                             ProfilePhotoService profilePhotoService,
+                             ReferralService referralService) {
 
         this.profileService = profileService;
         this.profilePhotoService = profilePhotoService;
+        this.referralService = referralService;
     }
 
     
@@ -125,6 +129,17 @@ public class ProfileController {
 
             //  Save profile
             Profile saved = profileRepository.save(profile);
+
+            // If user provided a referral code at registration, apply it
+            try {
+                String usedCode = profile.getSignupReferralCode();
+                if (usedCode != null && !usedCode.isBlank()) {
+                    referralService.applyReferralCode(saved, usedCode.trim());
+                }
+            } catch (Exception e) {
+                // Do not block registration if referral fails; just log.
+                e.printStackTrace();
+            }
 
             // ================== 🔔 ADMIN NOTIFICATION ==================
             String adminMessage =
