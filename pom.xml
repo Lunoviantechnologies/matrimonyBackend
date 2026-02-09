@@ -58,12 +58,12 @@
 			<artifactId>spring-boot-starter-logging</artifactId>
 		</dependency>
 
-		<!-- PostgreSQL -->
+		<!-- PostgreSQL  --> 
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
-        </dependency>   
+        </dependency> 
 
 		<!-- MySQL Connector 
 		<dependency>
@@ -71,7 +71,7 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<version>8.0.33</version>
 			<scope>runtime</scope>
-		</dependency> (stable 8.x) -->
+		</dependency>  (stable 8.x) -->
 
 		<!-- Jackson Java Time -->
 		<dependency>

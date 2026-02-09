@@ -1,5 +1,6 @@
 package com.example.matrimony.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -114,9 +115,25 @@ public class ProfileDto {
     private String partnerHobbies;
     private String habbits;
     
+    private String profileVisibility;
+    private Boolean hideProfilePhoto;
+
     // getters & setters
 
-    @Column(name = "email_verified", nullable = false)
+    public String getProfileVisibility() {
+		return profileVisibility;
+	}
+	public void setProfileVisibility(String profileVisibility) {
+		this.profileVisibility = profileVisibility;
+	}
+	public Boolean getHideProfilePhoto() {
+		return hideProfilePhoto;
+	}
+	public void setHideProfilePhoto(Boolean hideProfilePhoto) {
+		this.hideProfilePhoto = hideProfilePhoto;
+	}
+
+	@Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = Boolean.FALSE;
 
     // Files / photos
@@ -145,9 +162,22 @@ public class ProfileDto {
 //    // Friends as DTO
 //    private List<ProfileDto> friends = new ArrayList<>();
     
-    
+    private String referralCode;
+    private BigDecimal referralRewardBalance = BigDecimal.ZERO;
 
-    public synchronized String getSports() {
+    public String getReferralCode() {
+		return referralCode;
+	}
+	public void setReferralCode(String referralCode) {
+		this.referralCode = referralCode;
+	}
+	public BigDecimal getReferralRewardBalance() {
+		return referralRewardBalance;
+	}
+	public void setReferralRewardBalance(BigDecimal referralRewardBalance) {
+		this.referralRewardBalance = referralRewardBalance;
+	}
+	public synchronized String getSports() {
 		return sports;
 	}
 	public String getUpdatePhoto1() {

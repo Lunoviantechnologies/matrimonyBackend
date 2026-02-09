@@ -202,6 +202,8 @@ public class ProfileController {
         dto.setCompanyName(profile.getCompanyName());
         dto.setAnnualIncome(profile.getAnnualIncome());
         dto.setWorkLocation(profile.getWorkLocation());
+        dto.setProfileVisibility(profile.getProfileVisibility());
+        dto.setHideProfilePhoto(profile.getHideProfilePhoto());
        
         if (profile.getCountry() != null) {
             dto.setCountryId(profile.getCountry().getId());
