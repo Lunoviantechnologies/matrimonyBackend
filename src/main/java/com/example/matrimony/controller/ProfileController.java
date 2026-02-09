@@ -207,6 +207,7 @@ public class ProfileController {
        
        
 //       dto.setCountry(profile.getCountry());
+      
        dto.setState(profile.getState());
         dto.setCountry(profile.getCountry());
        dto.setDistrict(profile.getDistrict());
@@ -288,10 +289,6 @@ public class ProfileController {
             dto.setPayments(paymentDtos);
         }
 
-
-
-
-
         // ------------------------------
         //  New: build image URL instead of returning Base64
         // ------------------------------
@@ -314,9 +311,6 @@ public class ProfileController {
         } else {
             dto.setUpdatePhoto(null);
         }
-
-
-
         return ResponseEntity.ok(dto);
     }
 
@@ -383,8 +377,6 @@ public class ProfileController {
 
         return ResponseEntity.ok(profiles);
     }
-
-
 
 
     @PutMapping("/update/{id}")

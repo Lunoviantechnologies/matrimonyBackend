@@ -1,31 +1,35 @@
 package com.example.matrimony.service;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.matrimony.cache.NakshatraCache;
 import com.example.matrimony.entity.Nakshatra;
-import com.example.matrimony.repository.NakshatraRepository;
 
 @Service
 public class NakshatraService {
 
     @Autowired
-    private NakshatraRepository nakshatraRepository;
+    private NakshatraCache nakshatraCache;
 
     public Nakshatra calculateNakshatra(LocalDate dob) {
+    	
+    	 if (dob == null) {
+    	        throw new RuntimeException("DOB is null, cannot calculate Nakshatra");
+    	    }
 
-        long days = ChronoUnit.DAYS.between(
-                LocalDate.of(1900, 1, 1), dob);
+        int day = dob.getDayOfMonth(); // 1 to 31
+        int month = dob.getMonthValue(); // 1 to 12
 
-        double moonLongitude = (days * 13.176396) % 360;
+        int index = (day + month) % 27;
 
-        int index = (int) (moonLongitude / 13.333) + 1;
+        // IMPORTANT: Ensure index between 1 to 27
+        if (index == 0) {
+            index = 27;
+        }
 
-        return nakshatraRepository.findBySequence(index)
-                .orElseThrow(() ->
-                        new RuntimeException("Nakshatra not found for index: " + index));
+        return nakshatraCache.getBySequence(index);
     }
 }

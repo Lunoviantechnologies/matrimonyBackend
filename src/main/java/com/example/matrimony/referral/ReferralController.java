@@ -52,7 +52,7 @@ public class ReferralController {
     }
 
     @PostMapping("/use-code")
-    public ResponseEntity<?> useReferralCode(@RequestBody UseCodeRequest request,
+    public ResponseEntity<ReferralSummaryDto> useReferralCode(@RequestBody UseCodeRequest request,
                                              Authentication authentication) {
         String email = authentication.getName();
         Profile referredUser = profileService.findByEmail(email)
