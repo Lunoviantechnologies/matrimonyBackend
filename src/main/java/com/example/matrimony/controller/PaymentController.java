@@ -275,6 +275,8 @@ public class PaymentController {
 		dto.setPremiumStart(rec.getPremiumStart());
 		dto.setPremiumEnd(rec.getPremiumEnd());
 		dto.setExpiryMessage(rec.getExpiryMessage());
+		dto.setPaymentMode(rec.getPaymentMode());
+		dto.setTransactionId(rec.getTransactionId());
 
 
 		if (rec.getProfile() != null) {

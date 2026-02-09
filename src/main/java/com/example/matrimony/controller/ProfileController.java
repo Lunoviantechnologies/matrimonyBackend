@@ -216,11 +216,18 @@ public class ProfileController {
         dto.setCompanyName(profile.getCompanyName());
         dto.setAnnualIncome(profile.getAnnualIncome());
         dto.setWorkLocation(profile.getWorkLocation());
+
+        dto.setProfileVisibility(profile.getProfileVisibility());
+        dto.setHideProfilePhoto(profile.getHideProfilePhoto());
+       
+       
 //       dto.setCountry(profile.getCountry());
+      
        dto.setState(profile.getState());
         dto.setCountry(profile.getCountry());
        dto.setDistrict(profile.getDistrict());
        dto.setResidenceStatus(profile.getResidenceStatus());
+
         
         dto.setCity(profile.getCity());
         dto.setBodyType(profile.getBodyType());
@@ -297,10 +304,6 @@ public class ProfileController {
             dto.setPayments(paymentDtos);
         }
 
-
-
-
-
         // ------------------------------
         //  New: build image URL instead of returning Base64
         // ------------------------------
@@ -323,9 +326,6 @@ public class ProfileController {
         } else {
             dto.setUpdatePhoto(null);
         }
-
-
-
         return ResponseEntity.ok(dto);
     }
 
@@ -392,8 +392,6 @@ public class ProfileController {
 
         return ResponseEntity.ok(profiles);
     }
-
-
 
 
     @PutMapping("/update/{id}")
