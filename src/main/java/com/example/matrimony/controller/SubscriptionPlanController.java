@@ -38,65 +38,18 @@ public class SubscriptionPlanController {
 
     
     /* ===================== USER ===================== */
+   
     @GetMapping("/plans")
-    public ResponseEntity<List<UpdateSubscriptionPlanFullRequest>> getAllPlansForUser() {
+    public ResponseEntity<List<SubscriptionPlan>> getAllPlansForUser() {
 
-        List<SubscriptionPlan> plans = repo.findAll();
+        // ✅ FIXED: fetch with planFeature
+        List<SubscriptionPlan> plans = repo.findAllWithFeatures();
 
         if (plans.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
-        List<UpdateSubscriptionPlanFullRequest> response =
-                plans.stream()
-                     .map(plan -> {
-
-                         UpdateSubscriptionPlanFullRequest dto =
-                                 new UpdateSubscriptionPlanFullRequest();
-
-                         // ===== Plan basic details =====
-                         dto.setPlanCode(plan.getPlanCode());
-                         dto.setPlanName(plan.getPlanName());
-                         dto.setDurationMonths(plan.getDurationMonths());
-                         dto.setPriceRupees(plan.getPriceRupees());
-
-                         // ===== Festival pricing =====
-                         dto.setFestivalPrice(plan.getFestivalPrice());
-                         dto.setFestivalStart(
-                                 plan.getFestivalStart() != null
-                                         ? plan.getFestivalStart().toLocalDate().toString()
-                                         : null
-                         );
-                         dto.setFestivalEnd(
-                                 plan.getFestivalEnd() != null
-                                         ? plan.getFestivalEnd().toLocalDate().toString()
-                                         : null
-                         );
-
-                         // ===== Discount =====
-                         dto.setDiscountType(plan.getDiscountType());
-                         dto.setDiscountValue(plan.getDiscountValue());
-                         dto.setDiscountStart(
-                                 plan.getDiscountStart() != null
-                                         ? plan.getDiscountStart().toLocalDate().toString()
-                                         : null
-                         );
-                         dto.setDiscountEnd(
-                                 plan.getDiscountEnd() != null
-                                         ? plan.getDiscountEnd().toLocalDate().toString()
-                                         : null
-                         );
-
-                         // ===== Status =====
-                         dto.setActive(Boolean.TRUE.equals(plan.getActive()));
-
-                         //  REQUIRED
-                         return dto;
-
-                     })
-                     .toList();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(plans);
     }
 
     /* ===================== ADMIN ===================== */

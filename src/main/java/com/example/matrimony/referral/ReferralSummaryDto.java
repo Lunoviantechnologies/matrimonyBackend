@@ -85,4 +85,3 @@ public class ReferralSummaryDto {
         this.signupReferralCode = signupReferralCode;
     }
 }
-
