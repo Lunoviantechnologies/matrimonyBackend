@@ -34,8 +34,12 @@ public class Ticket {
     @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     private String description;
 
-    @Column(name = "document",columnDefinition="LONGBLOB")
+    @Lob
+    @Column(name = "document")
     private byte[] document;
+
+    // @Column(name = "document",columnDefinition="LONGBLOB")
+    // private byte[] document;
     
     @Column(name = "status", length = 50)
     private String status = "OPEN";
