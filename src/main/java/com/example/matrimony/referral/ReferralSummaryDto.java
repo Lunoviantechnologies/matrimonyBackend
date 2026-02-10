@@ -12,6 +12,7 @@ public class ReferralSummaryDto {
     private BigDecimal rewardBalance;
     private boolean eligibleForReward;
     private long remainingForNextReward;
+    private String signupReferralCode;
 
     public String getReferralCode() {
         return referralCode;
@@ -76,5 +77,11 @@ public class ReferralSummaryDto {
     public void setRemainingForNextReward(long remainingForNextReward) {
         this.remainingForNextReward = remainingForNextReward;
     }
-}
+    public String getSignupReferralCode() {
+        return signupReferralCode;
+    }
 
+    public void setSignupReferralCode(String signupReferralCode) {
+        this.signupReferralCode = signupReferralCode;
+    }
+}

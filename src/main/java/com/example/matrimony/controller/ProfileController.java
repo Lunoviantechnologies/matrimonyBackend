@@ -41,6 +41,7 @@ import com.example.matrimony.mapper.ProfileListMapper;
 import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.service.Notificationadminservice;
 import com.example.matrimony.service.ProfilePhotoService;
+import com.example.matrimony.referral.ReferralService;
 import com.example.matrimony.service.ProfileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -69,14 +70,17 @@ public class ProfileController {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    private final ReferralService referralService;
+
 
     // ✅ Constructor Injection (prevents NullPointerException)
     public ProfileController(ProfileService profileService,
-    		 ProfilePhotoService profilePhotoService
-    		) {
+                             ProfilePhotoService profilePhotoService,
+                             ReferralService referralService) {
 
         this.profileService = profileService;
         this.profilePhotoService = profilePhotoService;
+        this.referralService = referralService;
     }
 
     
@@ -125,6 +129,17 @@ public class ProfileController {
 
             //  Save profile
             Profile saved = profileRepository.save(profile);
+
+            // If user provided a referral code at registration, apply it
+            try {
+                String usedCode = profile.getSignupReferralCode();
+                if (usedCode != null && !usedCode.isBlank()) {
+                    referralService.applyReferralCode(saved, usedCode.trim());
+                }
+            } catch (Exception e) {
+                // Do not block registration if referral fails; just log.
+                e.printStackTrace();
+            }
 
             // ================== 🔔 ADMIN NOTIFICATION ==================
             String adminMessage =
@@ -207,6 +222,7 @@ public class ProfileController {
        
        
 //       dto.setCountry(profile.getCountry());
+      
        dto.setState(profile.getState());
         dto.setCountry(profile.getCountry());
        dto.setDistrict(profile.getDistrict());
@@ -288,10 +304,6 @@ public class ProfileController {
             dto.setPayments(paymentDtos);
         }
 
-
-
-
-
         // ------------------------------
         //  New: build image URL instead of returning Base64
         // ------------------------------
@@ -314,9 +326,6 @@ public class ProfileController {
         } else {
             dto.setUpdatePhoto(null);
         }
-
-
-
         return ResponseEntity.ok(dto);
     }
 
@@ -383,8 +392,6 @@ public class ProfileController {
 
         return ResponseEntity.ok(profiles);
     }
-
-
 
 
     @PutMapping("/update/{id}")
