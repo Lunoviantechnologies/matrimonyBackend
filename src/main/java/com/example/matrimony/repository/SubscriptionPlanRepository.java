@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.example.matrimony.entity.SubscriptionPlan;
 
@@ -15,6 +16,14 @@ public interface SubscriptionPlanRepository
     boolean existsByPlanCode(String planCode);
     List<SubscriptionPlan> findByActiveTrue();
     Optional<SubscriptionPlan> findByIdAndActiveTrue(Long id);
+    
+    //  FETCH ALL PLANS WITH FEATURES
+    @Query("SELECT sp FROM SubscriptionPlan sp LEFT JOIN FETCH sp.planFeature")
+    List<SubscriptionPlan> findAllWithFeatures();
+
+    //  FETCH SINGLE PLAN WITH FEATURES
+    @Query("SELECT sp FROM SubscriptionPlan sp LEFT JOIN FETCH sp.planFeature WHERE sp.id = :id")
+    Optional<SubscriptionPlan> findByIdWithFeature(Long id);
 
 
 }
