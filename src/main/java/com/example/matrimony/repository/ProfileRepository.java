@@ -59,6 +59,12 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
     boolean existsByReferralCode(String referralCode);
 
     Optional<Profile> findByReferralCode(String referralCode);
+    
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM profile_friends WHERE profile_id = :id OR friend_id = :id", nativeQuery = true)
+    void deleteFriendMappings(Long id);
+
      
 }
  

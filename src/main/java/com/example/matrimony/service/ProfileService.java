@@ -19,6 +19,8 @@ import com.example.matrimony.entity.Profile;
 import com.example.matrimony.exception.EmailAlreadyExistsException;
 import com.example.matrimony.repository.ChatMessageRepository;
 import com.example.matrimony.repository.FriendRequestRepository;
+import com.example.matrimony.repository.PaymentRecordRepository;
+import com.example.matrimony.repository.ProfilePhotoRepository;
 import com.example.matrimony.repository.ProfileRepository;
 
 @Service
@@ -33,9 +35,15 @@ public class ProfileService {
     private FriendRequestRepository friendRequestRepository;
     
     @Autowired
-    private ChatMessageRepository chatmessageREpository;
+    private ChatMessageRepository chatMessageRepository;
     @Autowired
     private final Notificationadminservice notificationService;
+    @Autowired
+    private PaymentRecordRepository paymentRecordRepository;
+    @Autowired
+    private ProfilePhotoRepository profilePhotoRepository;
+    
+
     
  // ===================== GET TOTAL REGISTERED PROFILES =====================
     public long getRegisteredProfilesCount() {
@@ -233,23 +241,31 @@ public class ProfileService {
     // DELETE PROFILE (robust)
     // ============================
 
+    @Transactional
     public void deleteById(Long id) {
+
         Profile profile = profileRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
-       
-        for (Profile friend : profile.getFriends()) {
-            friend.getFriends().remove(profile);
-        }       
-        profile.getSentRequests().clear();
-        profile.getReceivedRequests().clear();
-       
-        profile.getSentMessages().clear();
-        profile.getReceivedMessages().clear();
-       
-        profile.getPayments().clear();
-      
+
+        //  1. delete friend join-table mappings (most important)
+        profileRepository.deleteFriendMappings(id);
+
+        //  2. delete friend requests
+        friendRequestRepository.deleteBySenderOrReceiver(id);
+
+        //  3. delete chat messages
+        chatMessageRepository.deleteByProfileId(id);
+
+        //  4. delete payments
+        paymentRecordRepository.deleteByProfileId(id);
+
+        //  5. delete profile pictures (if table exists)
+        profilePhotoRepository.deleteByProfileId(id);
+
+        //  6. finally delete profile
         profileRepository.delete(profile);
     }
+
 
  // ============================
     // USER UPDATE PROFILE (partial)
@@ -639,4 +655,8 @@ public class ProfileService {
   // 2️⃣ Permanently delete ONLY this profile
   deleteById(profileId);
 }
+  
+  
+  
+
 }

@@ -128,4 +128,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
         List<ChatMessage> findAllBySender_IdOrReceiver_Id(Long senderId, Long receiverId);
 
         void deleteAllBySender_IdOrReceiver_Id(Long senderId, Long receiverId);
+       
+
 }

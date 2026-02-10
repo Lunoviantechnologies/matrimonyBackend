@@ -1,12 +1,16 @@
 package com.example.matrimony.repository;
 
-import com.example.matrimony.entity.PaymentRecord;
-import com.example.matrimony.entity.Profile;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import com.example.matrimony.entity.PaymentRecord;
+
+import jakarta.transaction.Transactional;
 
 public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Long> {
     Optional<PaymentRecord> findByRazorpayOrderId(String orderId);
@@ -19,5 +23,11 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Lo
 
     Optional<PaymentRecord> findByIdAndStatus(Long id, String status);
     List<PaymentRecord> findByStatusInOrderByCreatedAtDesc(List<String> statuses);
+    
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM PaymentRecord p WHERE p.profile.id = :id")
+    void deleteByProfileId(@Param("id") Long id);
+
 
 }

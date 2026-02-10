@@ -87,4 +87,10 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
            OR fr.receiver.id = :profileId
     """)
     void deleteAllByProfileId(@Param("profileId") Long profileId);
+    
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM ChatMessage c WHERE c.sender.id = :id OR c.receiver.id = :id")
+    void deleteBySenderOrReceiver(@Param("id") Long id);
+
 }

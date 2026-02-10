@@ -61,5 +61,6 @@ public class ReferralController {
         referralService.applyReferralCode(referredUser, request.getReferralCode());
         return ResponseEntity.ok().build();
     }
+    
 }
 
