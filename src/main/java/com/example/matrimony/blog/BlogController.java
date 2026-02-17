@@ -51,7 +51,7 @@ public class BlogController {
     public ResponseEntity<?> createBlog(
             @RequestParam String title,
             @RequestParam String content,
-            @RequestParam String keyword,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam String category,
             @RequestParam MultipartFile image,
             @RequestParam(defaultValue = "Admin") String author
@@ -91,7 +91,7 @@ public class BlogController {
     
     
 
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/blogs")
     public Page<Blog> getAllBlogs(@RequestParam(defaultValue = "0") int page){
         return blogService.getAllBlogsForAdmin(page);
@@ -106,17 +106,29 @@ public class BlogController {
     
     @PostMapping("/blog/like/{blogId}")
     public String likeBlog(@PathVariable Long blogId,
-                           @RequestParam String username){
+                           @RequestParam(required = false) String username){
+
+        if(username == null || username.isEmpty()){
+            username = "guest";
+        }
+
         return blogService.like(blogId, username);
     }
+
 
    
     @PostMapping("/blog/comment/{blogId}")
     public BlogComment commentBlog(@PathVariable Long blogId,
-                                   @RequestParam String username,
+                                   @RequestParam(required = false) String username,
                                    @RequestParam String message){
+
+        if(username == null || username.isEmpty()){
+            username = "guest";
+        }
+
         return blogService.comment(blogId, username, message);
     }
+
 
     
     @GetMapping("/blog/comments/{blogId}")
@@ -137,16 +149,12 @@ public class BlogController {
             @RequestParam String title,
             @RequestParam String content,
             @RequestParam String category,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) MultipartFile image,
             @RequestParam(defaultValue = "Admin") String author
     ) throws Exception {
 
-        return blogService.updateBlog(blogId, title, content, category, image, author);
+    	return blogService.updateBlog(blogId, title, content, category, keyword, image, author);
     }
     
-    @GetMapping("/user/blogs")
-    public Page<Blog> getUserBlogs(@RequestParam String username,
-                                   @RequestParam(defaultValue = "0") int page){
-        return blogService.getBlogsByAuthor(username, page);
-    }
 }
