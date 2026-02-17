@@ -60,10 +60,11 @@ public class SecurityConfig1 {
                    "/api/locations/states/**",
                    "/api/blog/comments/**",
                    "/api/blog/like/**",
-                   "/api/user/blogs"
+                   "/api/blog/**",
+                   "/api/admin/blogs"
                   
                 ).permitAll()
-               
+                  
 
                 // ✅ Restricted employee endpoints
                 .requestMatchers(
@@ -159,8 +160,7 @@ public class SecurityConfig1 {
                      "/api/admin/manage/delete/**",
                      "/api/admin/blog/create",
                      "/api/admin/blog/delete/**",
-                     "/api//admin/blog/update/**",
-                     "/api//admin/blogs"
+                     "/api//admin/blog/update/**"
                 ).hasAnyRole("ADMIN", "SUPER_ADMIN")
                 
                 .requestMatchers(
