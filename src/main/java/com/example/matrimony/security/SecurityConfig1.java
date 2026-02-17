@@ -37,6 +37,7 @@ public class SecurityConfig1 {
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+            
                 // ✅ Public Endpoints
                 .requestMatchers(
                     "/api/auth/login",
@@ -56,10 +57,13 @@ public class SecurityConfig1 {
                    "/api/tickets",
                    "/api/admin/create-admin",
                    "/api/locations/countries",
-                   "/api/locations/states/**"
-                  
+                   "/api/locations/states/**",
+                   "/api/blog/comments/**",
+                   "/api/blog/like/**",
+                   "/api/user/blogs"
                   
                 ).permitAll()
+               
 
                 // ✅ Restricted employee endpoints
                 .requestMatchers(
@@ -152,7 +156,11 @@ public class SecurityConfig1 {
                      "/api/admin/banuser/**",
                      "/api/profiles/view-document/**",
                      "/api/admin/manage/all",
-                     "/api/admin/manage/delete/**"
+                     "/api/admin/manage/delete/**",
+                     "/api/admin/blog/create",
+                     "/api/admin/blog/delete/**",
+                     "/api//admin/blog/update/**",
+                     "/api//admin/blogs"
                 ).hasAnyRole("ADMIN", "SUPER_ADMIN")
                 
                 .requestMatchers(
