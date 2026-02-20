@@ -1,7 +1,6 @@
 package com.example.matrimony.controller;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,23 +11,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -61,12 +63,21 @@ public class AdminManageController {
     }
 
 
+  
+
     @GetMapping("/profiles")
-    public ResponseEntity<List<Profile>> listProfiles() {
+    public ResponseEntity<Page<Profile>> listProfiles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
 
-        List<Profile> profiles = profileService.listAll();
+        Pageable pageable = PageRequest.of(page, size);
 
-        profiles.forEach(profile -> {
+        // Directly calling repository (no service)
+        Page<Profile> profilePage = profileRepository.findAll(pageable);
+
+        profilePage.getContent().forEach(profile -> {
+
             if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
                 try {
                     Path imagePath = Paths.get("uploads/profile-photos")
@@ -87,9 +98,8 @@ public class AdminManageController {
             }
         });
 
-        return ResponseEntity.ok(profiles);
+        return ResponseEntity.ok(profilePage);
     }
-
 
 
     @GetMapping("/profiles/{id}")
@@ -630,32 +640,66 @@ public class AdminManageController {
     }
 
     @PutMapping("/photo/{id}")
-    public ResponseEntity<?> updatePhoto(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> updatePhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
 
         return profileRepository.findById(id).map(profile -> {
 
             try {
-                // Create folder if not exists
+                // ================= FILE VALIDATION =================
+
+                if (file == null || file.isEmpty()) {
+                    return ResponseEntity.badRequest().body("File is required");
+                }
+
+                //  1MB limit
+                long maxSize = 1 * 1024 * 1024; // 1MB
+                if (file.getSize() > maxSize) {
+                    return ResponseEntity
+                            .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                            .body("File too large! Max allowed is 1MB");
+                }
+
+                //  Allow only images
+                String contentType = file.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    return ResponseEntity
+                            .badRequest()
+                            .body("Only image files are allowed");
+                }
+
+                // ================= FILE SAVE =================
+
                 Path uploadPath = Paths.get("uploads/profile-photos");
                 Files.createDirectories(uploadPath);
 
-                // Create unique filename
-                String fileName = "profile_" + id + "_" + System.currentTimeMillis() + ".jpg";
+                // Get extension dynamically
+                String originalName = file.getOriginalFilename();
+                String extension = ".jpg"; // default
+
+                if (originalName != null && originalName.contains(".")) {
+                    extension = originalName.substring(originalName.lastIndexOf("."));
+                }
+
+                // Custom filename
+                String fileName = "profile_" + id + "_" + System.currentTimeMillis() + extension;
+
                 Path filePath = uploadPath.resolve(fileName);
 
-                // Save file to folder
+                // Save file
                 Files.write(filePath, file.getBytes());
 
-                // Store only filename in DB
+                // Save in DB
                 profile.setUpdatePhoto(fileName);
                 profile.setLastActive(LocalDateTime.now());
                 profileRepository.save(profile);
 
                 return ResponseEntity.ok(Map.of(
-                	    "message", "Photo uploaded successfully",
-                	    "fileName", fileName,
-                	    "updatePhoto", "/profile-photos/" + fileName
-                	));
+                        "message", "Photo uploaded successfully",
+                        "fileName", fileName,
+                        "updatePhoto", "/profile-photos/" + fileName
+                ));
 
             } catch (IOException e) {
                 return ResponseEntity.internalServerError().body("Failed to store photo");
@@ -663,7 +707,6 @@ public class AdminManageController {
 
         }).orElse(ResponseEntity.badRequest().body("Profile not found"));
     }
-    
    
     
     

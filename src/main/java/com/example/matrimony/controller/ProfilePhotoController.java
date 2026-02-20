@@ -1,15 +1,19 @@
 package com.example.matrimony.controller;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.matrimony.entity.Profilepicture;
@@ -28,60 +32,178 @@ public class ProfilePhotoController {
 
     // ================= Upload Photo 1 =================
     @PutMapping("/updatePhoto1/{profileId}")
-    public ResponseEntity<?> uploadPhoto1(@PathVariable Long profileId,
-                                         @RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<?> uploadPhoto1(
+            @PathVariable Long profileId,
+            @RequestParam("file") MultipartFile file) {
 
-    	Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 1, file);
+        try {
+            // ================= FILE VALIDATION =================
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Photo1 uploaded successfully",
-                "fileName", saved.getFileName(),
-                "photoUrl", "/profile-photos/" + saved.getFileName()
-        ));
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File is required");
+            }
+
+            // ✅ 1MB limit
+            long maxSize = 1 * 1024 * 1024; // 1MB
+            if (file.getSize() > maxSize) {
+                return ResponseEntity
+                        .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body("File too large! Max allowed is 1MB");
+            }
+
+            // ✅ Only images
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Only image files are allowed");
+            }
+
+            // ================= SERVICE CALL =================
+            Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 1, file);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Photo1 uploaded successfully",
+                    "fileName", saved.getFileName(),
+                    "photoUrl", "/profile-photos/" + saved.getFileName()
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Failed to upload photo");
+        }
     }
-
     // ================= Upload Photo 2 =================
     @PutMapping("/updatePhoto2/{profileId}")
-    public ResponseEntity<?> uploadPhoto2(@PathVariable Long profileId,
-                                         @RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<?> uploadPhoto2(
+            @PathVariable Long profileId,
+            @RequestParam("file") MultipartFile file) {
 
-    	Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 2, file);
+        try {
+            // ================= FILE VALIDATION =================
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Photo2 uploaded successfully",
-                "fileName", saved.getFileName(),
-                "photoUrl", "/profile-photos/" + saved.getFileName()
-        ));
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File is required");
+            }
+
+            // ✅ 1MB limit
+            long maxSize = 1 * 1024 * 1024; // 1MB
+            if (file.getSize() > maxSize) {
+                return ResponseEntity
+                        .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body("File too large! Max allowed is 1MB");
+            }
+
+            // ✅ Only images
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Only image files are allowed");
+            }
+
+            // ================= SERVICE CALL =================
+            Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 2, file);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Photo2 uploaded successfully",
+                    "fileName", saved.getFileName(),
+                    "photoUrl", "/profile-photos/" + saved.getFileName()
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Failed to upload photo");
+        }
     }
 
     // ================= Upload Photo 3 =================
     @PutMapping("/updatePhoto3/{profileId}")
-    public ResponseEntity<?> uploadPhoto3(@PathVariable Long profileId,
-                                         @RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<?> uploadPhoto3(
+            @PathVariable Long profileId,
+            @RequestParam("file") MultipartFile file) {
 
-    	Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 3, file);
+        try {
+            // ================= FILE VALIDATION =================
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Photo3 uploaded successfully",
-                "fileName", saved.getFileName(),
-                "photoUrl", "/profile-photos/" + saved.getFileName()
-        ));
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File is required");
+            }
+
+            // ✅ 1MB limit
+            long maxSize = 1 * 1024 * 1024; // 1MB
+            if (file.getSize() > maxSize) {
+                return ResponseEntity
+                        .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body("File too large! Max allowed is 1MB");
+            }
+
+            // ✅ Only images
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Only image files are allowed");
+            }
+
+            // ================= SERVICE CALL =================
+            Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 3, file);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Photo3 uploaded successfully",
+                    "fileName", saved.getFileName(),
+                    "photoUrl", "/profile-photos/" + saved.getFileName()
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Failed to upload photo");
+        }
     }
 
     // ================= Upload Photo 4 =================
     @PutMapping("/updatePhoto4/{profileId}")
-    public ResponseEntity<?> uploadPhoto4(@PathVariable Long profileId,
-                                         @RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<?> uploadPhoto4(
+            @PathVariable Long profileId,
+            @RequestParam("file") MultipartFile file) {
 
-    	Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 4, file);
+        try {
+            // ================= FILE VALIDATION =================
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Photo4 uploaded successfully",
-                "fileName", saved.getFileName(),
-                "photoUrl", "/profile-photos/" + saved.getFileName()
-        ));
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File is required");
+            }
+
+            // ✅ 1MB limit
+            long maxSize = 1 * 1024 * 1024; // 1MB
+            if (file.getSize() > maxSize) {
+                return ResponseEntity
+                        .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body("File too large! Max allowed is 1MB");
+            }
+
+            // ✅ Only images
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Only image files are allowed");
+            }
+
+            // ================= SERVICE CALL =================
+            Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 4, file);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Photo4 uploaded successfully",
+                    "fileName", saved.getFileName(),
+                    "photoUrl", "/profile-photos/" + saved.getFileName()
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Failed to upload photo");
+        }
     }
-
     // ================= Delete Photo 1 =================
     @DeleteMapping("/updatePhoto1/{profileId}")
     public ResponseEntity<?> deletePhoto1(@PathVariable Long profileId) throws IOException {

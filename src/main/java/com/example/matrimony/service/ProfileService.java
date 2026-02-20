@@ -1,11 +1,18 @@
 package com.example.matrimony.service;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+//import java.awt.print.Pageable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
+//import org.hibernate.query.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -227,11 +234,14 @@ public class ProfileService {
 
 
     // LIST ALL PROFILES
-    public List<Profile> listAll() {
-        List<Profile> profiles = profileRepository.findAll();
-        if (profiles.isEmpty())
+    public Page<Profile> listAll(Pageable pageable) {
+
+        Page<Profile> profiles = profileRepository.findAll(pageable);
+
+        if (profiles.isEmpty()) {
             throw new IllegalStateException("No profiles found");
-        
+        }
+
         return profiles;
     }
 
