@@ -28,32 +28,38 @@ public class ProfilePhotoService {
     }
 
     // ================= Upload Photo =================
-    public Profilepicture uploadPhoto(Long profileId, Integer photoNumber, MultipartFile file) throws IOException {
-
-        if (photoNumber < 1 || photoNumber > 4) {
-            throw new RuntimeException("Photo number must be between 1 and 4");
-        }
+    public Profilepicture uploadPhoto(Long profileId, int photoIndex, MultipartFile file) throws IOException {
 
         Profile profile = profileRepository.findById(profileId)
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
 
+        // Create folder
+        Path uploadPath = Paths.get("uploads/profile-photos");
         Files.createDirectories(uploadPath);
 
-        String fileName = "profile_" + profileId + "_photo" + photoNumber + "_" + System.currentTimeMillis() + ".jpg";
+        // ✅ Get extension only (ignore original name)
+        String originalName = file.getOriginalFilename();
+        String extension = ".jpg"; // default
+
+        if (originalName != null && originalName.contains(".")) {
+            extension = originalName.substring(originalName.lastIndexOf("."));
+        }
+
+        // ✅ Custom filename (NO user filename)
+        String fileName = "profile_" + profileId + "_photo" + photoIndex + "_"
+                + System.currentTimeMillis() + extension;
+
         Path filePath = uploadPath.resolve(fileName);
 
-        Files.write(filePath, file.getBytes());
+        // Save file
+        Files.copy(file.getInputStream(), filePath);
 
-        Profilepicture profilePhoto = photoRepository
-                .findByProfile_IdAndPhotoNumber(profileId, photoNumber)
-                .orElse(new Profilepicture());
+        // Save in DB
+        Profilepicture picture = new Profilepicture();
+        picture.setProfile(profile);
+        picture.setFileName(fileName);
 
-        profilePhoto.setProfile(profile);
-        profilePhoto.setPhotoNumber(photoNumber);
-        profilePhoto.setFileName(fileName);
-        profilePhoto.setUploadedAt(LocalDateTime.now());
-
-        return photoRepository.save(profilePhoto);
+        return photoRepository.save(picture);
     }
 
     // ================= Delete Photo =================
