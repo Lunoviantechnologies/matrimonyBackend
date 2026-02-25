@@ -2,6 +2,7 @@ package com.example.matrimony.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import org.springframework.data.domain.Page;
@@ -38,9 +39,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.matrimony.dto.MatchSearchRequest;
+import com.example.matrimony.dto.MatchSearchResponse;
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.dto.PrivacySettingsDto;
 import com.example.matrimony.dto.ProfileDto;
+import com.example.matrimony.dto.ProfileFilterRequest;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.referral.ReferralService;
 import com.example.matrimony.repository.ProfileRepository;
@@ -111,12 +115,12 @@ public class ProfileController {
             if (document != null && !document.isEmpty()) {
 
                 //  1MB validation
-                long maxSize = 1 * 1024 * 1024; // 1MB
+            	long maxSize = 10 * 1024 * 1024; // 10MB 
 
                 if (document.getSize() > maxSize) {
                     return ResponseEntity
                             .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                            .body("File too large! Max allowed is 1MB");
+                            .body("File too large! Max allowed is 10MB");
                 }
 
                 //  File type validation
@@ -444,13 +448,15 @@ public class ProfileController {
 
     @GetMapping("/Allprofiles")
     public ResponseEntity<Page<Profile>> listProfiles(
+    		    @ModelAttribute ProfileFilterRequest req, 
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
 
-        Pageable pageable = PageRequest.of(page, size);
+       	Pageable pageable = PageRequest.of(page, size);
 
-        Page<Profile> profilePage = profileService.listAll(pageable);
+       	Page<Profile> profilePage = profileService.listAll(req, pageable);
+       	
 
         profilePage.getContent().forEach(profile -> {
 
@@ -650,7 +656,7 @@ public class ProfileController {
                     .resolve(fileName)
                     .normalize();
 
-            // 🔍 DEBUG (KEEP UNTIL VERIFIED)
+            //  DEBUG (KEEP UNTIL VERIFIED)
             System.out.println("Looking for file at: " + filePath.toAbsolutePath());
 
             if (!Files.exists(filePath)) {
@@ -678,7 +684,35 @@ public class ProfileController {
         }
     }
     
+    @PostMapping("/search")
+    public ResponseEntity<?> filterProfiles(
+            @RequestBody ProfileFilterRequest request,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
 
+        return ResponseEntity.ok(
+                profileService.filterProfiles(request, pageable)
+        );
+    }
+    @GetMapping("/view/{myId}/{otherId}")
+    public ResponseEntity<ProfileDto> viewOtherProfile(
+            @PathVariable Long myId,
+            @PathVariable Long otherId) {
+        if (myId.equals(otherId)) {
+            return ResponseEntity.badRequest().build();
+        }
 
+        return profileService.getOtherProfile(myId, otherId);
+    }
+    
+    @PostMapping("/matches/search")
+    public ResponseEntity<MatchSearchResponse> searchMatches(
+            @RequestBody MatchSearchRequest request) {
 
+        return ResponseEntity.ok(
+                profileService.search(request)
+        );
+    }
 }

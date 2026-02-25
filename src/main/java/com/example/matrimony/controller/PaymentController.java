@@ -21,6 +21,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.bind.annotation.*;
 
 import com.example.matrimony.dto.CreateOrderRequest;
+import com.example.matrimony.dto.DynamicYearlyReportResponse;
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.entity.PaymentRecord;
 import com.example.matrimony.entity.Profile;
@@ -28,12 +29,14 @@ import com.example.matrimony.entity.SubscriptionPlan;
 import com.example.matrimony.repository.PaymentRecordRepository;
 import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.repository.SubscriptionPlanRepository;
+import com.example.matrimony.service.AdminReportService;
 import com.example.matrimony.service.EmailService;
 import com.example.matrimony.service.PaymentNotificationService;
 import com.example.matrimony.service.PricingService;
 import com.example.matrimony.service.RazorpayService;
 import com.razorpay.Order;
 import com.razorpay.Payment;
+
 
 @RestController
 @RequestMapping("/api/payment")
@@ -48,6 +51,7 @@ public class PaymentController {
 	private final EmailService emailService;
 	private final SubscriptionPlanRepository subscriptionPlanRepo;
 	private final PricingService pricingService;
+	
 
 	@Value("${razorpay.key_id}")
 	private String razorpayKeyId;
@@ -57,7 +61,7 @@ public class PaymentController {
 
 	public PaymentController(RazorpayService razorpayService, PaymentRecordRepository paymentRepo,
 			ProfileRepository profileRepo, PaymentNotificationService notificationService, EmailService emailService,
-			SubscriptionPlanRepository subscriptionPlanRepo, PricingService pricingService) {
+			SubscriptionPlanRepository subscriptionPlanRepo, AdminReportService adminReportService,PricingService pricingService) {
 
 		this.razorpayService = razorpayService;
 		this.paymentRepo = paymentRepo;
@@ -66,6 +70,7 @@ public class PaymentController {
 		this.emailService = emailService;
 		this.subscriptionPlanRepo = subscriptionPlanRepo;
 		this.pricingService = pricingService;
+		
 	}
 
 	// ============================================================
@@ -343,4 +348,5 @@ public class PaymentController {
 		return paymentRepo.findByIdAndStatus(paymentId, "PAID").map(rec -> ResponseEntity.ok(toDto(rec)))
 				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
+	
 }

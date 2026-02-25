@@ -10,9 +10,22 @@ public class FriendRequestDTO {
     private String receiverName;
     private String senderEmail;
     
+    private String senderCity;
+    private Integer senderAge;
+    private String senderPhoto;
+
+    private String receiverCity;
+    private Integer receiverAge;
+    private String receiverPhoto;
+    
+    private String receiverGender;
+    private String senderGender;
+    
     private FriendRequest.Status status;
 
-    public FriendRequestDTO(Long requestId,Long senderId, Long receiverId, String senderName,String receiverName, String senderEmail, FriendRequest.Status status) {
+    public FriendRequestDTO(Long requestId,Long senderId, Long receiverId, String senderName,String receiverName, String senderEmail,
+    		Integer senderAge,String senderPhoto,String senderGender,String receiverGender,
+    		String receiverCity,Integer receiverAge,String receiverPhoto,String senderCity, FriendRequest.Status status) {
         this.requestId = requestId;
         this.senderId = senderId;
         this.receiverId = receiverId;
@@ -20,6 +33,14 @@ public class FriendRequestDTO {
         this.receiverName = receiverName;
         this.senderEmail = senderEmail; 
         this.status = status;
+        this.senderCity=senderCity;
+        this.senderAge = senderAge;
+        this.senderPhoto = senderPhoto;
+        this.receiverGender=receiverGender;
+        this.senderGender=senderGender;
+        this.receiverCity = receiverCity;
+        this.receiverAge = receiverAge;
+        this.receiverPhoto = receiverPhoto;
     }
     
     public FriendRequestDTO() {
@@ -82,6 +103,70 @@ public class FriendRequestDTO {
 
 	public void setReceiverName(String receiverName) {
 		this.receiverName = receiverName;
+	}
+
+	public String getSenderCity() {
+		return senderCity;
+	}
+
+	public void setSenderCity(String senderCity) {
+		this.senderCity = senderCity;
+	}
+
+	public Integer getSenderAge() {
+		return senderAge;
+	}
+
+	public void setSenderAge(Integer senderAge) {
+		this.senderAge = senderAge;
+	}
+
+	public String getSenderPhoto() {
+		return senderPhoto;
+	}
+
+	public void setSenderPhoto(String senderPhoto) {
+		this.senderPhoto = senderPhoto;
+	}
+
+	public String getReceiverCity() {
+		return receiverCity;
+	}
+
+	public void setReceiverCity(String receiverCity) {
+		this.receiverCity = receiverCity;
+	}
+
+	public Integer getReceiverAge() {
+		return receiverAge;
+	}
+
+	public void setReceiverAge(Integer receiverAge) {
+		this.receiverAge = receiverAge;
+	}
+
+	public String getReceiverPhoto() {
+		return receiverPhoto;
+	}
+
+	public void setReceiverPhoto(String receiverPhoto) {
+		this.receiverPhoto = receiverPhoto;
+	}
+
+	public String getReceiverGender() {
+		return receiverGender;
+	}
+
+	public void setReceiverGender(String receiverGender) {
+		this.receiverGender = receiverGender;
+	}
+
+	public String getSenderGender() {
+		return senderGender;
+	}
+
+	public void setSenderGender(String senderGender) {
+		this.senderGender = senderGender;
 	}
     
     

@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.matrimony.dto.ChatMessageDto;
 import com.example.matrimony.dto.DeletedProfileBackupDTO;
+import com.example.matrimony.dto.DynamicYearlyReportResponse;
+import com.example.matrimony.dto.PlanYearlyStats;
 import com.example.matrimony.entity.*;
 import com.example.matrimony.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +28,8 @@ public class AdminReportService {
     @Autowired private DeletedProfileSnapshotRepository snapshotRepo;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private PaymentRecordRepository paymentRecordRepository;
     @Autowired
     private UserBlockRepository chatBlockRepo;
     
@@ -222,7 +226,21 @@ public class AdminReportService {
         );
     }
 
-    
+    public DynamicYearlyReportResponse getYearlyDashboard(int year) {
+
+        List<PlanYearlyStats> plans =
+                paymentRecordRepository.getYearlyPlanStats(year);
+
+        double totalRevenue = plans.stream()
+                .mapToDouble(p -> p.getTotalRevenue())
+                .sum();
+
+        return new DynamicYearlyReportResponse(
+                year,
+                plans,
+                totalRevenue
+        );
+    }
 //    @Transactional
 //    public void permanentDeleteUser(Long userId) {
 //

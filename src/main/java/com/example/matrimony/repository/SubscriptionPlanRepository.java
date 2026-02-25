@@ -26,4 +26,5 @@ public interface SubscriptionPlanRepository
     Optional<SubscriptionPlan> findByIdWithFeature(Long id);
 
 
+    
 }

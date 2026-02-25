@@ -17,10 +17,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,12 +37,19 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.matrimony.dto.ChatMessageDto;
+import com.example.matrimony.dto.DynamicYearlyReportResponse;
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.dto.ProfileDto;
+import com.example.matrimony.dto.RecentUserResponse;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.repository.ProfileRepository;
+import com.example.matrimony.service.AdminReportService;
 import com.example.matrimony.service.ChatService;
 import com.example.matrimony.service.ProfileService;
+
+import jakarta.persistence.criteria.Predicate;
+
+import com.example.matrimony.repository.PaymentRecordRepository;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -52,14 +60,18 @@ public class AdminManageController {
     private final ProfileRepository profileRepository;
     private final ProfileService profileService;
     private final ChatService chatService;
+    private final PaymentRecordRepository paymentRepository;
+    private final AdminReportService adminReportService;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    public AdminManageController(ProfileRepository profileRepository, ProfileService profileService, ChatService chatService) {
+    public AdminManageController(ProfileRepository profileRepository,AdminReportService adminReportService, ProfileService profileService, ChatService chatService,PaymentRecordRepository paymentRepository) {
         this.profileRepository = profileRepository;
         this.profileService = profileService;
         this.chatService = chatService;
+        this.paymentRepository=paymentRepository;
+        this.adminReportService = adminReportService;
     }
 
 
@@ -68,21 +80,81 @@ public class AdminManageController {
     @GetMapping("/profiles")
     public ResponseEntity<Page<Profile>> listProfiles(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String accountStatus,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Boolean banned,
+            @RequestParam(required = false) String search
     ) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("id").ascending()
+        );
 
-        // Directly calling repository (no service)
-        Page<Profile> profilePage = profileRepository.findAll(pageable);
+        Specification<Profile> spec = Specification.where(null);
 
+        // Account Status filter
+        if (accountStatus != null && !accountStatus.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("accountStatus"), accountStatus)
+            );
+        }
+
+        // Active filter
+        if (active != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("active"), active)
+            );
+        }
+
+        // Banned filter
+        if (banned != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("banned"), banned)
+            );
+        }
+
+        // Search filter (ID, firstName, lastName)
+        if (search != null && !search.isBlank()) {
+            spec = spec.and((root, query, cb) -> {
+
+                String likePattern = "%" + search.toLowerCase() + "%";
+
+                Predicate idMatch = null;
+
+                // If search is number → match by id
+                if (search.matches("\\d+")) {
+                    idMatch = cb.equal(root.get("id"), Long.parseLong(search));
+                }
+
+                Predicate firstNameMatch = cb.like(
+                        cb.lower(root.get("firstName")),
+                        likePattern
+                );
+
+                Predicate lastNameMatch = cb.like(
+                        cb.lower(root.get("lastName")),
+                        likePattern
+                );
+
+                if (idMatch != null) {
+                    return cb.or(idMatch, firstNameMatch, lastNameMatch);
+                } else {
+                    return cb.or(firstNameMatch, lastNameMatch);
+                }
+            });
+        }
+
+        Page<Profile> profilePage = profileRepository.findAll(spec, pageable);
+
+        // Convert image to Base64
         profilePage.getContent().forEach(profile -> {
-
             if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
                 try {
                     Path imagePath = Paths.get("uploads/profile-photos")
-                            .resolve(profile.getUpdatePhoto());
-
+                            .resolve(profile.getUpdatePhoto());  
                     if (Files.exists(imagePath)) {
                         byte[] imageBytes = Files.readAllBytes(imagePath);
                         String base64Image = Base64.getEncoder().encodeToString(imageBytes);
@@ -99,6 +171,30 @@ public class AdminManageController {
         });
 
         return ResponseEntity.ok(profilePage);
+    }
+    
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+
+        long totalUsers = profileRepository.count();
+        long activeUsers = profileRepository.countByActiveTrue();
+        long inactiveUsers = profileRepository.countByActiveFalse();
+        long premiumUsers = profileRepository.countByPremiumTrue();
+        long nonPremiumUsers = profileRepository.countByPremiumFalse();
+
+        Double totalRevenue = paymentRepository.getTotalRevenue();
+        Double todayRevenue = paymentRepository.getTodayRevenue();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalUsers", totalUsers);
+        stats.put("activeUsers", activeUsers);
+        stats.put("inactiveUsers", inactiveUsers);
+        stats.put("premiumUsers", premiumUsers);
+        stats.put("nonPremiumUsers", nonPremiumUsers);
+        stats.put("totalRevenue", totalRevenue);
+        stats.put("todayRevenue", todayRevenue);
+
+        return ResponseEntity.ok(stats);
     }
 
 
@@ -654,11 +750,11 @@ public class AdminManageController {
                 }
 
                 //  1MB limit
-                long maxSize = 1 * 1024 * 1024; // 1MB
+                long maxSize = 10 * 1024 * 1024; // 10MB 
                 if (file.getSize() > maxSize) {
                     return ResponseEntity
                             .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                            .body("File too large! Max allowed is 1MB");
+                            .body("File too large! Max allowed is 10MB");
                 }
 
                 //  Allow only images
@@ -751,5 +847,23 @@ public class AdminManageController {
         return chatService.getConversation(senderId, receiverId, page, size);
     }
    
+    @GetMapping("/recent-users")
+    public ResponseEntity<RecentUserResponse> getRecentUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(
+                profileService.getRecentUsers(page, size)
+        );
+    }
+    
+    @GetMapping("/yearly-dashboard")
+    public ResponseEntity<DynamicYearlyReportResponse> getYearlyDashboard(
+            @RequestParam int year
+    ) {
+        return ResponseEntity.ok(
+                adminReportService.getYearlyDashboard(year)
+        );
+    }
 
 }

@@ -65,9 +65,10 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
     	    FROM FriendRequest fr
     	    JOIN FETCH fr.sender
     	    JOIN FETCH fr.receiver
+    	    WHERE fr.status = 'ACCEPTED'
     	    ORDER BY fr.sentAt DESC
     	""")
-    List<FriendRequest> findAllWithSenderAndReceiver();
+    	List<FriendRequest> findAllAcceptedWithSenderAndReceiver();
 
     /* =====================================================
             REJECTED  (Received / Sent)
@@ -94,5 +95,85 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
     void deleteBySenderOrReceiver(@Param("id") Long id);
 
 	boolean existsBySender_IdAndReceiver_IdAndStatus(Long senderId, Long receiverId, Status pending);
+	
+	@Query("""
+			SELECT 
+			    CASE 
+			        WHEN fr.sender.id = :userId THEN fr.receiver.id
+			        ELSE fr.sender.id
+			    END
+			FROM FriendRequest fr
+			WHERE (fr.sender.id = :userId OR fr.receiver.id = :userId)
+			AND fr.status IN ('PENDING','ACCEPTED','REJECTED')
+			""")
+			List<Long> findHiddenProfileIds(@Param("userId") Long userId);
+	
+	// received pending requests
+	@Query("SELECT COUNT(fr) FROM FriendRequest fr WHERE fr.receiver.id = :userId AND fr.status = 'PENDING'")
+	long countReceived(@Param("userId") Long userId);
 
+	// accepted (both sent & received)
+	@Query("""
+	SELECT COUNT(fr) FROM FriendRequest fr 
+	WHERE (fr.sender.id = :userId OR fr.receiver.id = :userId)
+	AND fr.status = 'ACCEPTED'
+	""")
+	long countAccepted(@Param("userId") Long userId);
+
+	// rejected (both sent & received)
+	@Query("""
+	SELECT COUNT(fr) FROM FriendRequest fr 
+	WHERE (fr.sender.id = :userId OR fr.receiver.id = :userId)
+	AND fr.status = 'REJECTED'
+	""")
+	long countRejected(@Param("userId") Long userId);
+
+	// sent pending requests
+	@Query("SELECT COUNT(fr) FROM FriendRequest fr WHERE fr.sender.id = :userId AND fr.status = 'PENDING'")
+	long countSent(@Param("userId") Long userId);
+	
+	List<FriendRequest> findByReceiverIdAndStatus(Long receiverId, FriendRequest.Status status);
+
+    List<FriendRequest> findBySenderIdAndStatus(Long senderId, FriendRequest.Status status);
+
+    List<FriendRequest> findBySenderIdOrReceiverIdAndStatus(
+            Long senderId, Long receiverId, FriendRequest.Status status);
+    
+    @Query("""
+    		SELECT fr FROM FriendRequest fr
+    		WHERE (fr.sender.id = :userId OR fr.receiver.id = :userId)
+    		AND fr.status = 'ACCEPTED'
+    		""")
+    		List<FriendRequest> findAcceptedBoth(@Param("userId") Long userId);
+
+
+    		@Query("""
+    		SELECT fr FROM FriendRequest fr
+    		WHERE (fr.sender.id = :userId OR fr.receiver.id = :userId)
+    		AND fr.status = 'REJECTED'
+    		""")
+    		List<FriendRequest> findRejectedBoth(@Param("userId") Long userId);
+    		// sent pending
+    		List<FriendRequest> findBySender_IdAndStatus(Long senderId, FriendRequest.Status status);
+    		
+    		@Query("SELECT fr.receiver.id FROM FriendRequest fr WHERE fr.sender.id = :myId AND fr.status = 'ACCEPTED'")
+    		List<Long> findAcceptedFriendIds(@Param("myId") Long myId);
+
+    		@Query("SELECT fr.receiver.id FROM FriendRequest fr WHERE fr.sender.id = :myId AND fr.status = 'PENDING'")
+    		List<Long> findSentRequestIds(@Param("myId") Long myId);
+
+    		@Query("SELECT fr.sender.id FROM FriendRequest fr WHERE fr.receiver.id = :myId AND fr.status = 'PENDING'")
+    		List<Long> findReceivedRequestIds(@Param("myId") Long myId);
+    		
+    		@Query("""
+    			    SELECT 
+    			        CASE 
+    			            WHEN fr.sender.id = :myId THEN fr.receiver.id
+    			            ELSE fr.sender.id
+    			        END
+    			    FROM FriendRequest fr
+    			    WHERE (fr.sender.id = :myId OR fr.receiver.id = :myId)
+    			      AND fr.status = 'REJECTED'
+    			""")
+    			List<Long> findRejectedIds(@Param("myId") Long myId);
 }

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.matrimony.dto.FriendDTO;
+import com.example.matrimony.dto.FriendRequestCardDto;
 import com.example.matrimony.dto.FriendRequestDTO;
 import com.example.matrimony.entity.FriendRequest;
 import com.example.matrimony.repository.ProfileRepository;
@@ -32,11 +33,6 @@ public class FriendRequestController {
         this.friendRequestService = service;
     }
     
-    // Send friend request
-//    @PostMapping("/send")
-//    public FriendRequest sendRequest(@RequestParam Long senderId, @RequestParam Long receiverId) {
-//        return friendRequestService.sendRequest(senderId, receiverId);
-//    }
     @PostMapping("/send/{senderId}/{receiverId}")
     public FriendRequest sendRequest(@PathVariable Long senderId, @PathVariable Long receiverId) {
         return friendRequestService.sendRequest(senderId, receiverId);
@@ -89,30 +85,6 @@ public class FriendRequestController {
         return ResponseEntity.ok(friendRequestService.getRejectedSent(userId));
     }
 
-    
-    
-//    @GetMapping("/accepted")
-//    public List<FriendRequestDTO> getAccepted() {
-//        return friendRequestService.getAcceptedRequests();
-//    }
-//    @GetMapping("/accepted/{userId}")
-//    public ResponseEntity<List<FriendRequest>> getAccepted(@PathVariable Long userId) {
-//        List<FriendRequest> accepted = friendRequestService.getAcceptedFriends(userId);
-//        return ResponseEntity.ok(accepted);
-//    }
-//
-//    @GetMapping("/{userId}/accepted")
-//    public List<FriendRequest> getAcceptedFriends(@PathVariable Long userId) {
-//        return friendRequestService.getAcceptedFriends(userId);
-//    }
-
-//    // Get friends by custom status
-//    @GetMapping("/{userId}/status/{status}")
-//    public List<FriendRequest> getFriendsByStatus(@PathVariable Long userId,
-//                                                  @PathVariable Status status) {
-//        return friendRequestService.getFriendsByStatus(userId, status);
-//    }
-    // ✅ GET Rejected Friend Requests
     @GetMapping("/rejected")
     public List<FriendRequestDTO> getRejected() {
         return friendRequestService.getRejectedRequests();
@@ -126,6 +98,15 @@ public class FriendRequestController {
         );
     }
 
+    @GetMapping("/filter/{userId}")
+    public ResponseEntity<List<FriendRequestCardDto>> filterRequests(
+            @PathVariable Long userId,
+            @RequestParam String type) {
+
+        return ResponseEntity.ok(
+                friendRequestService.filterRequests(userId, type)
+        );
+    }
 
 }
 

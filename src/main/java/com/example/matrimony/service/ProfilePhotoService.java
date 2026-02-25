@@ -5,7 +5,7 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
-
+import com.example.util.ImageCompressionUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +28,7 @@ public class ProfilePhotoService {
     }
 
     // ================= Upload Photo =================
+
     public Profilepicture uploadPhoto(Long profileId, int photoIndex, MultipartFile file) throws IOException {
 
         Profile profile = profileRepository.findById(profileId)
@@ -37,22 +38,18 @@ public class ProfilePhotoService {
         Path uploadPath = Paths.get("uploads/profile-photos");
         Files.createDirectories(uploadPath);
 
-        // ✅ Get extension only (ignore original name)
-        String originalName = file.getOriginalFilename();
-        String extension = ".jpg"; // default
-
-        if (originalName != null && originalName.contains(".")) {
-            extension = originalName.substring(originalName.lastIndexOf("."));
-        }
-
-        // ✅ Custom filename (NO user filename)
+        //  Always store as JPG (best compression)
         String fileName = "profile_" + profileId + "_photo" + photoIndex + "_"
-                + System.currentTimeMillis() + extension;
+                + System.currentTimeMillis() + ".jpg";
 
         Path filePath = uploadPath.resolve(fileName);
 
-        // Save file
-        Files.copy(file.getInputStream(), filePath);
+        //  COMPRESS IMAGE HERE (MAIN LOGIC)
+        ImageCompressionUtil.compressImage(
+                file,
+                "uploads/profile-photos",
+                fileName
+        );
 
         // Save in DB
         Profilepicture picture = new Profilepicture();
@@ -61,7 +58,6 @@ public class ProfilePhotoService {
 
         return photoRepository.save(picture);
     }
-
     // ================= Delete Photo =================
     public void deletePhoto(Long profileId, Integer photoNumber) throws IOException {
 

@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 //import org.hibernate.query.Page;
@@ -20,7 +22,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.matrimony.dto.MatchSearchRequest;
+import com.example.matrimony.dto.MatchSearchResponse;
 import com.example.matrimony.dto.PrivacySettingsDto;
+import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.dto.RegisterRequest;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.exception.EmailAlreadyExistsException;
@@ -29,25 +34,28 @@ import com.example.matrimony.repository.FriendRequestRepository;
 import com.example.matrimony.repository.PaymentRecordRepository;
 import com.example.matrimony.repository.ProfilePhotoRepository;
 import com.example.matrimony.repository.ProfileRepository;
+import com.example.matrimony.dto.ProfileFilterRequest;
+import com.example.matrimony.dto.ProfileMatchResponse;
+import com.example.matrimony.dto.RecentUserResponse;
+import com.example.matrimony.specification.ProfileSpecification;
 
+import io.jsonwebtoken.lang.Objects;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 @Service
 public class ProfileService {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ProfileService.class);
-
+	@Autowired
+	private ProfilePhotoService profilePhotoService;
     private final ProfileRepository profileRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-    @Autowired
     private FriendRequestRepository friendRequestRepository;
-    
-    @Autowired
     private ChatMessageRepository chatMessageRepository;
-    @Autowired
     private final Notificationadminservice notificationService;
-    @Autowired
     private PaymentRecordRepository paymentRecordRepository;
-    @Autowired
     private ProfilePhotoRepository profilePhotoRepository;
     
 
@@ -61,11 +69,19 @@ public class ProfileService {
     public ProfileService(ProfileRepository profileRepository,
             PasswordEncoder passwordEncoder,
             EmailService emailService,
-            Notificationadminservice notificationService) {
-    	this.profileRepository = profileRepository;
-    	this.passwordEncoder = passwordEncoder;
-    	this.emailService = emailService;
-    	this.notificationService = notificationService;
+            Notificationadminservice notificationService,
+            FriendRequestRepository friendRequestRepository,
+            ChatMessageRepository chatMessageRepository,
+            PaymentRecordRepository paymentRecordRepository,
+            ProfilePhotoRepository profilePhotoRepository) {
+    	    this.profileRepository = profileRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+        this.notificationService = notificationService;
+        this.friendRequestRepository = friendRequestRepository;
+        this.chatMessageRepository = chatMessageRepository;
+        this.paymentRecordRepository = paymentRecordRepository;
+        this.profilePhotoRepository = profilePhotoRepository;
    }
 
 
@@ -153,6 +169,71 @@ public class ProfileService {
     }
 
     
+    private ProfileMatchResponse mapToMatchResponse(Profile p) {
+
+        String photo = null;
+
+        try {
+            photo = profilePhotoService.getPhotoBase64(p.getId(), 1);
+        } catch (Exception e) {
+            photo = null;
+        }
+
+        return new ProfileMatchResponse(
+                p.getId(),
+                p.getFirstName(),
+                p.getLastName(),
+                p.getAge(),
+                p.getHeight(),
+                p.getCity(),
+                p.getOccupation(),
+                p.getHighestEducation(),
+                p.getReligion(),
+                p.getSubCaste(),
+                p.isPremium(),
+                p.getUpdatePhoto(),
+                p.getUpdatePhoto1(),
+                p.getUpdatePhoto2(),
+                p.getUpdatePhoto3(),
+                p.getUpdatePhoto4(),
+                p.getHideProfilePhoto(),
+                p.getGender()
+        );
+    }
+    
+    
+    private Sort buildSort(String sort) {
+
+        if (sort == null || sort.isBlank()) {
+            return Sort.by("premium").descending()
+                       .and(Sort.by("lastActive").descending());
+        }
+
+        switch (sort.toUpperCase()) {
+
+            case "NEW":
+            case "NEWEST":
+                return Sort.by("createdAt").descending();
+
+            case "ACTIVE":
+                return Sort.by("lastActive").descending();
+
+            case "PREMIUM":
+                return Sort.by("premium").descending()
+                        .and(Sort.by("lastActive").descending());
+
+            case "FREE":
+                return Sort.by("premium").ascending()
+                        .and(Sort.by("lastActive").descending());
+
+            case "RELEVANCE":
+            default:
+                return Sort.by("premium").descending()
+                        .and(Sort.by("lastActive").descending());
+        }
+    }
+    
+    
     
     
 //    public Profile register(RegisterRequest req) {
@@ -237,6 +318,18 @@ public class ProfileService {
     public Page<Profile> listAll(Pageable pageable) {
 
         Page<Profile> profiles = profileRepository.findAll(pageable);
+
+        if (profiles.isEmpty()) {
+            throw new IllegalStateException("No profiles found");
+        }
+
+        return profiles;
+    }
+    public Page<Profile> listAll(ProfileFilterRequest req, Pageable pageable) {
+
+        Specification<Profile> spec = ProfileSpecification.filter(req);
+
+        Page<Profile> profiles = profileRepository.findAll(spec, pageable);
 
         if (profiles.isEmpty()) {
             throw new IllegalStateException("No profiles found");
@@ -545,7 +638,7 @@ public class ProfileService {
         profileRepository.save(profile);
 
         // Send confirmation email
-        emailService.sendAccountDeletionEmail(  // error occur here final keyword of email service
+        emailService.sendAccountDeletionEmail(  
                 profile.getEmailId(),
                 profile.getFirstName()
         );
@@ -666,7 +759,263 @@ public class ProfileService {
   deleteById(profileId);
 }
   
+  public Page<Profile> filterProfiles(ProfileFilterRequest req) {
+	  
+	  
+	  if (req.getSearch() == null || req.getSearch().trim().isEmpty()) {
+	        return Page.empty();
+	    }
+	    Pageable pageable = PageRequest.of(
+	            req.getPage(),
+	            req.getSize(),
+	            Sort.by("createdAt").descending()
+	    );
+	    return profileRepository.findAll(
+	            ProfileSpecification.filter(req),
+	            pageable
+	    );
+	}
   
+  public Page<Profile> filterProfiles(ProfileFilterRequest req, Pageable pageable) {
+
+	    Sort sort = Sort.by("createdAt").descending(); 
+
+	    if (req.getSortBy() != null) {
+
+	        switch (req.getSortBy().toLowerCase()) {
+
+	            case "newest":
+	            case "newest_first":
+	                sort = Sort.by("createdAt").descending();
+	                break;
+
+	            case "recently_active":
+	                sort = Sort.by("lastActive").descending();
+	                break;
+
+	            case "premium":
+	                sort = Sort.by("premium").descending()
+	                           .and(Sort.by("lastActive").descending());
+	                break;
+
+	            case "free":
+	                sort = Sort.by("premium").ascending()
+	                           .and(Sort.by("lastActive").descending());
+	                break;
+
+	            case "relevance":
+	            default:
+	                sort = Sort.by("premium").descending()
+	                           .and(Sort.by("lastActive").descending());
+	                break;
+	        }
+	    }
+
+	    Pageable sortedPageable = PageRequest.of(
+	            req.getPage(),
+	            req.getSize(),
+	            sort
+	    );
+
+	    return profileRepository.findAll(
+	            ProfileSpecification.filter(req),
+	            sortedPageable
+	    );
+	}
   
+  public RecentUserResponse getRecentUsers(int page, int size) {
+
+	    Pageable pageable = PageRequest.of(
+	            page,
+	            size,
+	            Sort.by("createdAt").descending()
+	    );
+
+	    LocalDateTime now = LocalDateTime.now();
+
+	    long totalUsers = profileRepository.count();
+
+	    long joinedIn24Hours =
+	            profileRepository.countByCreatedAtAfter(
+	                    now.minusHours(24)
+	            );
+
+	    long joinedIn7Days =
+	            profileRepository.countByCreatedAtAfter(
+	                    now.minusDays(7)
+	            );
+
+	    long joinedIn30Days =
+	            profileRepository.countByCreatedAtAfter(
+	                    now.minusDays(30)
+	            );
+
+	    Page<Profile> users =
+	            profileRepository.findAll(pageable);
+
+	    return new RecentUserResponse(
+	            totalUsers,
+	            joinedIn24Hours,
+	            joinedIn7Days,
+	            joinedIn30Days,
+	            users
+	    );
+	}
+  
+  public ResponseEntity<ProfileDto> getOtherProfile(Long loginUserId, Long targetProfileId) {
+
+	    Optional<Profile> optional = profileRepository.findById(targetProfileId);
+
+	    if (optional.isEmpty()) {
+	        return ResponseEntity.notFound().build();
+	    }
+
+	    Profile profile = optional.get();
+
+	    
+	    if (profile.getId().equals(loginUserId)) {
+	        return ResponseEntity.badRequest().build();
+	    }
+
+	    ProfileDto dto = mapToDto(profile);  
+
+	    return ResponseEntity.ok(dto);
+	}
+  private ProfileDto mapToDto(Profile profile) {
+	    ProfileDto dto = new ProfileDto();
+
+	    dto.setId(profile.getId());
+	    dto.setFirstName(profile.getFirstName());
+	    dto.setLastName(profile.getLastName());
+	    dto.setAge(profile.getAge());
+	    dto.setCity(profile.getCity());
+	    dto.setGender(profile.getGender());
+	    dto.setReligion(profile.getReligion());
+	    dto.setOccupation(profile.getOccupation());
+	    dto.setCountry(profile.getCountry());
+	    dto.setMotherTongue(profile.getMotherTongue());
+	    dto.setPremium(profile.isPremium());
+
+	    // photos
+	    dto.setUpdatePhoto1(profilePhotoService.getPhotoBase64(profile.getId(),1));
+	    dto.setUpdatePhoto2(profilePhotoService.getPhotoBase64(profile.getId(),2));
+	    dto.setUpdatePhoto3(profilePhotoService.getPhotoBase64(profile.getId(),3));
+	    dto.setUpdatePhoto4(profilePhotoService.getPhotoBase64(profile.getId(),4));
+
+	    return dto;
+	}
+  
+  @Transactional(readOnly = true)
+  public MatchSearchResponse search(MatchSearchRequest request) {
+
+      ProfileFilterRequest filter = request.getFilters();
+      if (filter == null) {
+          filter = new ProfileFilterRequest();
+      }
+
+      // ===== GET MY PROFILE =====
+      Long myId = filter.getMyId();
+      Profile myProfile = profileRepository.findById(myId)
+              .orElseThrow(() -> new RuntimeException("My profile not found"));
+
+      filter.setMyId(myId);
+      filter.setMyGender(myProfile.getGender());
+      filter.setHiddenIds(getHiddenProfileIds(myId));
+   // ===== GLOBAL hidden filter (apply for ALL match types) =====
+      filter.setHiddenIds(getHiddenProfileIds(myId));
+
+
+      // ===== MATCH TYPE LOGIC =====
+      if (request.getMatchType() != null) {
+
+          switch (request.getMatchType().toUpperCase()) {
+
+              case "NEW":
+                  // profiles created last 3 days
+                  filter.setCreatedAfter(
+                          java.time.LocalDateTime.now().minusDays(3)
+                  );
+                  break;
+
+              case "NEAR":
+                  // same city
+                  filter.setCity(myProfile.getCity());
+                  break;
+
+              case "MY":
+                  // score handled later (>=70%)
+                  break;
+
+              case "MORE":
+                  // show all (no extra filter)
+                  break;
+
+              default:
+                  break;
+          }
+      }
+
+      Pageable pageable = PageRequest.of(
+              request.getPage(),
+              request.getSize(),
+              buildSort(request.getSort())
+      );
+
+      Page<Profile> page = profileRepository.findAll(
+              ProfileSpecification.filter(filter),
+              pageable
+      );
+      
+      
+      
+
+      // ===== MATCH SCORE FILTER =====
+      List<ProfileMatchResponse> content = page.getContent()
+              .stream()
+              .filter(p -> !p.getId().equals(myId))
+              .map(p -> {
+
+                  int score =
+                          com.example.util.MatchScoreUtil
+                                  .calculate(myProfile, p);
+
+                  // MY MATCH >=70%
+                  if ("MY".equalsIgnoreCase(request.getMatchType())
+                          && score < 70) {
+                      return null;
+                  }
+
+                  return mapToMatchResponse(p);
+
+              })
+              .filter(java.util.Objects::nonNull)
+              .toList();
+
+      return new MatchSearchResponse(
+              content,
+              page.getTotalPages(),
+              page.getTotalElements(),
+              page.getNumber()
+      );
+  }
+  
+  private List<Long> getHiddenProfileIds(Long myId) {
+
+	    List<Long> hidden = new ArrayList<>();
+
+	    // accepted friends
+	    hidden.addAll(friendRequestRepository.findAcceptedFriendIds(myId));
+
+	    // sent requests
+	    hidden.addAll(friendRequestRepository.findSentRequestIds(myId));
+
+	    // received requests
+	    hidden.addAll(friendRequestRepository.findReceivedRequestIds(myId));
+
+	    // rejected
+	    hidden.addAll(friendRequestRepository.findRejectedIds(myId));
+
+	    return hidden.stream().distinct().toList();
+	}
 
 }

@@ -118,7 +118,11 @@ public class SecurityConfig1 {
                           "/api/profile-photos/updatePhoto1/**",
                           "/api/profile-photos/updatePhoto2/**",
                           "/api/profile-photos/updatePhoto3/**",
-                          "/api/profile-photos/updatePhoto4/**"                          
+                          "/api/profile-photos/updatePhoto4/**",
+                          "/api/dashboard/summary",
+                          "/api/profiles/search",
+                          "/api/friends/filter/**",
+                          "/api/profiles/view/{myId}/{otherId}"
                    
                 ).hasRole("USER")
 
@@ -160,7 +164,10 @@ public class SecurityConfig1 {
                      "/api/admin/manage/delete/**",
                      "/api/admin/blog/create",
                      "/api/admin/blog/delete/**",
-                     "/api//admin/blog/update/**"
+                     "/api/admin/blog/update/**",
+                     "/api/admin/dashboard-stats",
+                     "/api/admin/recent-users",
+                     "/api/admin/yearly-dashboard"
                 ).hasAnyRole("ADMIN", "SUPER_ADMIN")
                 
                 .requestMatchers(
