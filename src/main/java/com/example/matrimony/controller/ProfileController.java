@@ -333,6 +333,7 @@ public class ProfileController {
         dto.setCompanyName(profile.getCompanyName());
         dto.setAnnualIncome(profile.getAnnualIncome());
         dto.setWorkLocation(profile.getWorkLocation());
+        dto.setMembershipType(profile.getMembershipType());
 
         dto.setProfileVisibility(profile.getProfileVisibility());
         dto.setHideProfilePhoto(profile.getHideProfilePhoto());
@@ -700,6 +701,7 @@ public class ProfileController {
     public ResponseEntity<ProfileDto> viewOtherProfile(
             @PathVariable Long myId,
             @PathVariable Long otherId) {
+
         if (myId.equals(otherId)) {
             return ResponseEntity.badRequest().build();
         }

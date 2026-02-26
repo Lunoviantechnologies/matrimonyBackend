@@ -43,7 +43,7 @@ public class ProfilePhotoController {
                 return ResponseEntity.badRequest().body("File is required");
             }
 
-            // ✅ 1MB limit
+            //  1MB limit
             long maxSize = 1 * 1024 * 1024; // 1MB
             if (file.getSize() > maxSize) {
                 return ResponseEntity
@@ -51,7 +51,7 @@ public class ProfilePhotoController {
                         .body("File too large! Max allowed is 1MB");
             }
 
-            // ✅ Only images
+            //  Only images
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity
@@ -86,15 +86,15 @@ public class ProfilePhotoController {
                 return ResponseEntity.badRequest().body("File is required");
             }
 
-            // ✅ 1MB limit
-            long maxSize = 1 * 1024 * 1024; // 1MB
+            //  1MB limit
+            long maxSize = 1 * 1024 * 1024; 
             if (file.getSize() > maxSize) {
                 return ResponseEntity
                         .status(HttpStatus.PAYLOAD_TOO_LARGE)
                         .body("File too large! Max allowed is 1MB");
             }
 
-            // ✅ Only images
+            //  Only images
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity

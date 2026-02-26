@@ -61,6 +61,9 @@ public class PaymentRecord {
     private LocalDateTime premiumEnd;   
     @Column(length = 200)
     private String expiryMessage; 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plan_id")
+    private SubscriptionPlan plan;
 
     public String getPlanName() {
 		return planName;
@@ -218,6 +221,14 @@ public class PaymentRecord {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public SubscriptionPlan getPlan() {
+		return plan;
+	}
+
+	public void setPlan(SubscriptionPlan plan) {
+		this.plan = plan;
 	}
 
     

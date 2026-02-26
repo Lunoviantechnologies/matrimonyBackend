@@ -176,4 +176,23 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
     			      AND fr.status = 'REJECTED'
     			""")
     			List<Long> findRejectedIds(@Param("myId") Long myId);
+    		@Query("""
+    				SELECT fr FROM FriendRequest fr
+    				JOIN FETCH fr.sender s
+    				JOIN FETCH fr.receiver r
+    				WHERE fr.status = 'ACCEPTED'
+    				AND (s.id = :userId OR r.id = :userId)
+    				""")
+    				List<FriendRequest> findAllAccepted(@Param("userId") Long userId);
+    		@Query("""
+    				SELECT COUNT(m) FROM ChatMessage m
+    				WHERE 
+    				(m.sender.id = :user1 AND m.receiver.id = :user2)
+    				OR
+    				(m.sender.id = :user2 AND m.receiver.id = :user1)
+    				""")
+    				long countConversationMessages(
+    				    @Param("user1") Long user1,
+    				    @Param("user2") Long user2
+    				);
 }

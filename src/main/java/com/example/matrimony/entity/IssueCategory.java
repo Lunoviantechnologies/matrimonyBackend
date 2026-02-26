@@ -8,5 +8,6 @@ public enum IssueCategory {
 	Profile_Privacy_Safety,
 	Matchmaking_Assistance,
 	Payment_Issue,
+	TECHNICAL,
     OTHER
 }

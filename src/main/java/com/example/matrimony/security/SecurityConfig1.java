@@ -122,7 +122,8 @@ public class SecurityConfig1 {
                           "/api/dashboard/summary",
                           "/api/profiles/search",
                           "/api/friends/filter/**",
-                          "/api/profiles/view/{myId}/{otherId}"
+                          "/api/profiles/view/{myId}/{otherId}",
+                          "/api/friends/accepted/all/**"
                    
                 ).hasRole("USER")
 

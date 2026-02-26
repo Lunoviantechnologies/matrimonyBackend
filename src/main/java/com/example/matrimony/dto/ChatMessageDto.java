@@ -28,14 +28,14 @@ public class ChatMessageDto {
         this.seenAt = seenAt;
     }
 
-    // ✅ MUST MATCH ChatMessage ENTITY
+    //  MUST MATCH ChatMessage ENTITY
     public static ChatMessageDto fromEntity(ChatMessage cm) {
         return new ChatMessageDto(
                 cm.getId(),
                 cm.getSender().getId(),
                 cm.getReceiver().getId(),
                 cm.getMessage(),
-                cm.getCreatedAt(),   // ✅ FIXED
+                cm.getCreatedAt(),   
                 cm.isSeen(),
                 cm.getSeenAt()
         );

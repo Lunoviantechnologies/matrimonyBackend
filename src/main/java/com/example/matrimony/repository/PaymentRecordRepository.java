@@ -62,6 +62,8 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, Lo
     	    ORDER BY p.premiumEnd DESC
     	""")
     	Optional<PaymentRecord> findActiveSubscription(@Param("userId") Long userId);
+    List<PaymentRecord> findByProfileId(Long profileId);
+    List<PaymentRecord> findByUserIdAndStatus(Long userId, String status);
 
 
 }

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.example.matrimony.entity.ChatMessage;
 import com.example.matrimony.entity.Profile;
 
 public interface ProfileRepository extends JpaRepository<Profile, Long>,JpaSpecificationExecutor<Profile>{
@@ -132,5 +133,37 @@ public interface ProfileRepository extends JpaRepository<Profile, Long>,JpaSpeci
         		        @Param("hiddenIds") List<Long> hiddenIds,
         		        Pageable pageable
         		);
+        
+        @Query("""
+        		SELECT p FROM Profile p
+        		WHERE p.id IN (
+        		    SELECT CASE
+        		        WHEN f.sender.id = :myId THEN f.receiver.id
+        		        ELSE f.sender.id
+        		    END
+        		    FROM FriendRequest f
+        		    WHERE (f.sender.id = :myId OR f.receiver.id = :myId)
+        		    AND f.status = 'ACCEPTED'
+        		)
+        		AND (
+        		    LOWER(p.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+        		    OR LOWER(p.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+        		)
+        		""")
+        		Page<Profile> findAcceptedChatContacts(
+        		        @Param("myId") Long myId,
+        		        @Param("search") String search,
+        		        Pageable pageable
+        		);
+        @Query("""
+        		SELECT m FROM ChatMessage m
+        		WHERE (m.sender.id = :myId AND m.receiver.id = :otherId)
+        		   OR (m.sender.id = :otherId AND m.receiver.id = :myId)
+        		ORDER BY m.timestamp DESC
+        		LIMIT 1
+        		""")
+        		ChatMessage findLastMessage(Long myId, Long otherId);
+        
+        
 }
  

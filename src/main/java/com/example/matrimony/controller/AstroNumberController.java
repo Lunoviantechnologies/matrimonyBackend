@@ -14,47 +14,38 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.matrimony.entity.AstroNumber;
 import com.example.matrimony.service.AstroNumberService;
-
 @RestController
 @RequestMapping("/api/astro-number")
 public class AstroNumberController {
 
-	
-	
+    @Autowired
+    private AstroNumberService service;
 
-	    @Autowired
-	    private AstroNumberService service;
+    //  User access (Platinum only)
+    @GetMapping("/all/{profileId}")
+    public List<AstroNumber> getAll(@PathVariable Long profileId) {
+        return service.getAll(profileId);
+    }
 
-	    // POST – Add astro number
-	    @PostMapping("/add")
-	    public AstroNumber add(@RequestBody AstroNumber astroNumber) {
-	        return service.save(astroNumber);
-	    }
+    //  Admin access
+    @GetMapping("/admin/all")
+    public List<AstroNumber> getAdminAll() {
+        return service.getAllForAdmin();
+    }
 
-	    // GET – Show astro numbers
-	    @GetMapping("/All")
-	    public List<AstroNumber> getAll() {
-	        return service.getAll();
-	    }
+    @PostMapping("/add")
+    public AstroNumber add(@RequestBody AstroNumber astroNumber) {
+        return service.save(astroNumber);
+    }
 
-	    // PUT – Update astro number
-	    @PutMapping("/update/{id}")
-	    public ResponseEntity<?> updateAstroNumber(
-	            @PathVariable Long id,
-	            @RequestBody AstroNumber astroNumber) {
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateAstroNumber(
+            @PathVariable Long id,
+            @RequestBody AstroNumber astroNumber) {
 
-	        AstroNumber updated = service.update(id, astroNumber);
-	        return ResponseEntity.ok(updated);
-	    }
-	 // GET – Show astro numbers
-	    @GetMapping("/admin/All")
-	    public List<AstroNumber> getAdminAll() {
-	        return service.getAll();
-	    }
-
-
-
-
-	}
+        AstroNumber updated = service.update(id, astroNumber);
+        return ResponseEntity.ok(updated);
+    }
+}
 
 

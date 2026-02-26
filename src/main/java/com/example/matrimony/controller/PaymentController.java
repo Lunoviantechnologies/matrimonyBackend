@@ -114,6 +114,7 @@ public class PaymentController {
 					.orElseThrow(() -> new RuntimeException("plan_not_found"));
 			LocalDateTime now = LocalDateTime.now();
 			profile.setPremium(true);
+			profile.setMembershipType(plan.getPlanName());
 			profile.setPremiumStart(now);
 			profile.setPremiumEnd(now.plusMonths(plan.getDurationMonths()));
 			profile.setReferralRewardBalance(rewardBalance.subtract(discount));
@@ -210,6 +211,7 @@ public class PaymentController {
 	        LocalDateTime premiumEnd   = now.plusMonths(months);
 
 	        profile.setPremium(true);
+	        profile.setMembershipType(plan.getPlanName());
 	        profile.setPremiumStart(premiumStart);
 	        profile.setPremiumEnd(premiumEnd);
 

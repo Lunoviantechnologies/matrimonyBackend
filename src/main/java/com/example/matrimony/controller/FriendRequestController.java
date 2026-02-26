@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.matrimony.dto.AcceptedFriendCardDto;
 import com.example.matrimony.dto.FriendDTO;
 import com.example.matrimony.dto.FriendRequestCardDto;
 import com.example.matrimony.dto.FriendRequestDTO;
@@ -105,6 +106,15 @@ public class FriendRequestController {
 
         return ResponseEntity.ok(
                 friendRequestService.filterRequests(userId, type)
+        );
+    }
+    
+    @GetMapping("/accepted/all/{userId}")
+    public ResponseEntity<List<AcceptedFriendCardDto>> getAcceptedFriends(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                friendRequestService.getAcceptedFriends(userId)
         );
     }
 

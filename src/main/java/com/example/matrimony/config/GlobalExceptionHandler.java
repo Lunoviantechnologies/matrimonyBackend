@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.example.matrimony.exception.EmailAlreadyExistsException;
+import com.example.matrimony.exception.PremiumRequiredException;
 
 import jakarta.validation.ConstraintViolationException;
 
@@ -116,5 +117,15 @@ public class GlobalExceptionHandler {
         body.put("error", status.getReasonPhrase());
         body.put("timestamp", Instant.now());
         return body;
+    }
+    
+    @ExceptionHandler(PremiumRequiredException.class)
+    public ResponseEntity<?> handlePremium(PremiumRequiredException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                        "error", "PREMIUM_REQUIRED",
+                        "message", ex.getMessage()
+                ));
     }
 }

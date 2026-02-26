@@ -1,5 +1,6 @@
 package com.example.matrimony.service;
 
+import com.example.matrimony.dto.AcceptedFriendCardDto;
 import com.example.matrimony.dto.FriendDTO;
 import com.example.matrimony.dto.FriendRequestCardDto;
 import com.example.matrimony.dto.FriendRequestDTO;
@@ -7,6 +8,7 @@ import com.example.matrimony.dto.NotificationDto;
 import com.example.matrimony.dto.ProfileCardDto;
 import com.example.matrimony.entity.FriendRequest;
 import com.example.matrimony.entity.Profile;
+import com.example.matrimony.entity.Profilepicture;
 import com.example.matrimony.repository.FriendRequestRepository;
 import com.example.matrimony.repository.ProfileRepository;
 
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -29,14 +32,17 @@ public class FriendRequestService {
     private final NotificationService notificationService;
     private final FriendRequestRepository requestRepository;
     private final ProfileRepository profileRepository;
+    private final FriendRequestRepository friendRequestRepository;
     private static final Logger log =LoggerFactory.getLogger(FriendRequestService.class);
 
     public FriendRequestService(FriendRequestRepository requestRepository,
                                 ProfileRepository profileRepository,
+                                FriendRequestRepository friendRequestRepository,
                                 NotificationService notificationService) {
         this.requestRepository = requestRepository;
         this.profileRepository = profileRepository;
         this.notificationService = notificationService;
+        this.friendRequestRepository=friendRequestRepository;
         
     }
 
@@ -136,6 +142,20 @@ public class FriendRequestService {
 
         log.info("Friend request {} processed. accepted={}", requestId, accept);
         return updated;
+    }
+    
+    private String getPrimaryPhoto(Profile profile) {
+
+        if (profile.getProfilePictures() == null || profile.getProfilePictures().isEmpty()) {
+            return null;
+        }
+
+        return profile.getProfilePictures()
+                .stream()
+                .sorted((a, b) -> b.getUploadedAt().compareTo(a.getUploadedAt()))
+                .findFirst()
+                .map(Profilepicture::getFileName)   // correct field
+                .orElse(null);
     }
     // SENT REQUESTS
     @Transactional(readOnly = true)
@@ -350,6 +370,45 @@ public class FriendRequestService {
             card.setReceiverId(fr.getReceiver().getId());
 
             return card;
+
+        }).toList();
+    }
+    public List<AcceptedFriendCardDto> getAcceptedFriends(Long userId) {
+
+        List<FriendRequest> requests =
+                friendRequestRepository.findAllAccepted(userId);
+
+        return requests.stream().map(fr -> {
+
+            Profile sender = fr.getSender();
+            Profile receiver = fr.getReceiver();
+
+            Profile friend;
+            Profile user;
+
+            if (sender.getId().equals(userId)) {
+                friend = receiver;
+                user = sender;
+            } else {
+                friend = sender;
+                user = receiver;
+            }
+
+            String friendPhoto = getPrimaryPhoto(friend);
+            Boolean hideProfilePhoto = friend.getHideProfilePhoto();
+            String gender = friend.getGender(); 
+
+            if (Boolean.TRUE.equals(hideProfilePhoto)) {
+                friendPhoto = null;
+            }
+            return new AcceptedFriendCardDto(
+                    friend.getId(),
+                    friend.getFirstName() + " " + friend.getLastName(),
+                    friendPhoto,
+                    gender,
+                    hideProfilePhoto
+                   
+            );
 
         }).toList();
     }

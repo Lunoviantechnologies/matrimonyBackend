@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.matrimony.dto.BanRequest;
+import com.example.matrimony.dto.UserReportResponse;
 import com.example.matrimony.entity.UserReport;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -84,7 +85,7 @@ public class AdminReportController {
     }
     
     @GetMapping("/reports/GetAll")
-    public ResponseEntity<List<UserReport>> getAllReports() {
+    public ResponseEntity<List<UserReportResponse>> getAllReports() {
         return ResponseEntity.ok(adminReportService.getAllReports());
     }
 

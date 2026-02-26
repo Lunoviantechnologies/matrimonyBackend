@@ -7,6 +7,8 @@ public class FriendRequestCardDto {
     private ProfileCardDto profile;
     private Long senderId;
     private Long receiverId;
+    private Boolean hideProfilePhoto;
+    
 	public Long getRequestId() {
 		return requestId;
 	}
@@ -36,6 +38,12 @@ public class FriendRequestCardDto {
 	}
 	public void setReceiverId(Long receiverId) {
 		this.receiverId = receiverId;
+	}
+	public Boolean getHideProfilePhoto() {
+		return hideProfilePhoto;
+	}
+	public void setHideProfilePhoto(Boolean hideProfilePhoto) {
+		this.hideProfilePhoto = hideProfilePhoto;
 	}
 
    

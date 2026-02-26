@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.matrimony.dto.ChatContactDto;
 import com.example.matrimony.dto.ChatMessageDto;
 import com.example.matrimony.repository.ChatMessageRepository;
 import com.example.matrimony.repository.ProfileRepository;
@@ -46,7 +47,7 @@ public class ChatController {
 
    
 
-	// ✅ This is REST API — works in Postman
+	//  This is REST API — works in Postman
     @GetMapping("/conversation/{senderId}/{receiverId}")
     public Page<ChatMessageDto> getConversation(
             @PathVariable Long senderId,
@@ -57,7 +58,7 @@ public class ChatController {
         return chatService.getConversation(senderId, receiverId, page, size);
     }
 
-    @GetMapping("/online")  // ✅ already working
+    @GetMapping("/online")  //  already working
     public List<String> onlineUsers() {
         return chatService.onlineUsers();
     }
@@ -67,7 +68,7 @@ public class ChatController {
         chatService.markSeen(senderId, receiverId);
     }
 
-    // ✅ Also add this for REST send testing (optional)
+    //  Also add this for REST send testing (optional)
     @PostMapping("/send/{senderId}/{receiverId}")
     public ChatMessageDto sendMessageHttp(
         @PathVariable Long senderId,
@@ -85,7 +86,7 @@ public class ChatController {
     ) {
 
         if (dto == null) {
-            System.err.println("❌ ChatMessageDto payload is NULL");
+            System.err.println(" ChatMessageDto payload is NULL");
             return; // prevents crash
         }
 
@@ -95,7 +96,7 @@ public class ChatController {
                 chatService.sendMessage(senderId, receiverId, dto.getMessage());
 
         if (saved == null) {
-            System.err.println("❌ Saved message is NULL");
+            System.err.println(" Saved message is NULL");
             return;
         }
 
@@ -106,10 +107,6 @@ public class ChatController {
         );
     }
     
-    
-    
-    
-    
     //clear chat 
     @PostMapping("/clear/{senderId}/{receiverId}")
     public String clearChat(
@@ -119,7 +116,15 @@ public class ChatController {
         chatService.clearChat(senderId, receiverId);
         return "Chat cleared for user " + senderId;
     }
-
-
+    
+    @GetMapping("/contacts")
+    public Page<ChatContactDto> getChatContacts(
+            @RequestParam Long myId,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return chatService.getChatContacts(myId, search, page, size);
+    }
     
 }

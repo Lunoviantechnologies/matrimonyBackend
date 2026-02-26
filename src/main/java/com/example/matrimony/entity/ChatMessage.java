@@ -33,11 +33,14 @@ public class ChatMessage {
 
     private LocalDateTime timestamp = LocalDateTime.now();
 
-    // ✅ Clear chat flags
+    //  Clear chat flags
     private boolean clearedBySender = false;
     private boolean clearedByReceiver = false;
+    
+    @Column(name = "is_system", nullable = false)
+    private Boolean system = false;
 
-    // ✅ Seen flags
+    //  Seen flags
     private boolean seen = false;
     private LocalDateTime seenAt;
     
@@ -96,10 +99,14 @@ public class ChatMessage {
 		this.seenAt = seenAt;
 	}
 	public LocalDateTime getCreatedAt() {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
-      
+	public Boolean getSystem() {
+		return system;
+	}
+	public void setSystem(Boolean system) {
+		this.system = system;
+	}
+	 
 }
 

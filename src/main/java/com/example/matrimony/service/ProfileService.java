@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ import com.example.matrimony.dto.MatchSearchResponse;
 import com.example.matrimony.dto.PrivacySettingsDto;
 import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.dto.RegisterRequest;
+import com.example.matrimony.entity.PaymentRecord;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.exception.EmailAlreadyExistsException;
 import com.example.matrimony.repository.ChatMessageRepository;
@@ -49,6 +51,7 @@ public class ProfileService {
 	private static final Logger logger = LoggerFactory.getLogger(ProfileService.class);
 	@Autowired
 	private ProfilePhotoService profilePhotoService;
+	private final PaymentRecordRepository paymentRepo;
     private final ProfileRepository profileRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -57,6 +60,7 @@ public class ProfileService {
     private final Notificationadminservice notificationService;
     private PaymentRecordRepository paymentRecordRepository;
     private ProfilePhotoRepository profilePhotoRepository;
+    
     
 
     
@@ -73,6 +77,7 @@ public class ProfileService {
             FriendRequestRepository friendRequestRepository,
             ChatMessageRepository chatMessageRepository,
             PaymentRecordRepository paymentRecordRepository,
+            PaymentRecordRepository paymentRepo,
             ProfilePhotoRepository profilePhotoRepository) {
     	    this.profileRepository = profileRepository;
         this.passwordEncoder = passwordEncoder;
@@ -82,6 +87,7 @@ public class ProfileService {
         this.chatMessageRepository = chatMessageRepository;
         this.paymentRecordRepository = paymentRecordRepository;
         this.profilePhotoRepository = profilePhotoRepository;
+        this.paymentRepo=paymentRepo;
    }
 
 
@@ -881,27 +887,120 @@ public class ProfileService {
 
 	    return ResponseEntity.ok(dto);
 	}
-  private ProfileDto mapToDto(Profile profile) {
+  private ProfileDto mapToDto(Profile p) {
+
 	    ProfileDto dto = new ProfileDto();
 
-	    dto.setId(profile.getId());
-	    dto.setFirstName(profile.getFirstName());
-	    dto.setLastName(profile.getLastName());
-	    dto.setAge(profile.getAge());
-	    dto.setCity(profile.getCity());
-	    dto.setGender(profile.getGender());
-	    dto.setReligion(profile.getReligion());
-	    dto.setOccupation(profile.getOccupation());
-	    dto.setCountry(profile.getCountry());
-	    dto.setMotherTongue(profile.getMotherTongue());
-	    dto.setPremium(profile.isPremium());
+	    // ===== BASIC =====
+	    dto.setId(p.getId());
+	    dto.setProfileFor(p.getProfileFor());
+	    dto.setFirstName(p.getFirstName());
+	    dto.setLastName(p.getLastName());
+	    dto.setMobileNumber(p.getMobileNumber());
+	    dto.setEmailId(p.getEmailId());
+	    dto.setGender(p.getGender());
+	    dto.setAge(p.getAge());
+	    dto.setDateOfBirth(p.getDateOfBirth());
+	    dto.setAboutYourself(p.getAboutYourself());
+	    dto.setRole(p.getRole());
+	    dto.setCreatedAt(p.getCreatedAt());
 
-	    // photos
-	    dto.setUpdatePhoto1(profilePhotoService.getPhotoBase64(profile.getId(),1));
-	    dto.setUpdatePhoto2(profilePhotoService.getPhotoBase64(profile.getId(),2));
-	    dto.setUpdatePhoto3(profilePhotoService.getPhotoBase64(profile.getId(),3));
-	    dto.setUpdatePhoto4(profilePhotoService.getPhotoBase64(profile.getId(),4));
+	    // ===== ACCOUNT =====
+	    dto.setMembershipType(p.getMembershipType());
+	    dto.setAccountStatus(p.getAccountStatus());
+	    dto.setActive(p.getActive());
+	    dto.setPremium(p.isPremium());
+	    dto.setLastActive(p.getLastActive());
 
+	    // ===== PERSONAL =====
+	    dto.setHeight(p.getHeight());
+	    dto.setweight(p.getWeight());
+	    dto.setBodyType(p.getBodyType());
+	    dto.setComplexion(p.getComplexion());
+	    dto.setExperience(p.getExperience());
+
+	    // ===== COMMUNITY =====
+	    dto.setReligion(p.getReligion());
+	    dto.setCaste(null); // you removed caste column
+	    dto.setSubCaste(p.getSubCaste());
+	    dto.setDosham(p.getDosham());
+	    dto.setMotherTongue(p.getMotherTongue());
+	    dto.setGothram(p.getGothram());
+	    dto.setManglik(p.getManglik());
+
+	    // ===== FAMILY =====
+	    dto.setMaritalStatus(p.getMaritalStatus());
+	    dto.setNoOfChildren(p.getNoOfChildren());
+	    dto.setIsChildrenLivingWithYou(p.getIsChildrenLivingWithYou());
+	    dto.setFamilyStatus(p.getFamilyStatus());
+	    dto.setFamilyType(p.getFamilyType());
+	    dto.setFatherName(p.getFatherName());
+	    dto.setMotherName(p.getMotherName());
+	    dto.setSiblings(p.getSiblings());
+	    dto.setFatherStatus(p.getFatherStatus());
+	    dto.setMotherStatus(p.getMotherStatus());
+	    dto.setNumberOfBrothers(p.getNumberOfBrothers());
+	    dto.setNumberOfSisters(p.getNumberOfSisters());
+	    dto.setAncestralOrigin(p.getAncestralOrigin());
+	    dto.setLivingWith(p.getLivingWith());
+	    dto.setChildrenDetails(p.getChildrenDetails());
+	    dto.setVegiterian(p.getVegiterian());
+	    dto.setHabbits(p.getHabbits());
+	    dto.setSports(p.getSports());
+	    dto.setSpiritualPath(p.getSpiritualPath());
+
+	    // ===== EDUCATION =====
+	    dto.setHighestEducation(p.getHighestEducation());
+	    dto.setCollegeName(p.getCollegeName());
+	    dto.setEmployedIn(p.getEmployedIn());
+	    dto.setSector(p.getSector());
+	    dto.setOccupation(p.getOccupation());
+	    dto.setCompanyName(p.getCompanyName());
+	    dto.setAnnualIncome(p.getAnnualIncome());
+	    dto.setWorkLocation(p.getWorkLocation());
+	    dto.setSpiritualPath(p.getSpiritualPath());
+
+	    // ===== LOCATION =====
+	    dto.setCountry(p.getCountry());
+	    dto.setState(p.getState());
+	    dto.setCity(p.getCity());
+	    dto.setDistrict(p.getDistrict());
+	    dto.setResidenceStatus(p.getResidenceStatus());
+
+	    // ===== ASTRO =====
+	    dto.setRashi(p.getRashi());
+	    dto.setNakshatra(p.getNakshatra());
+	    dto.setAscendant(p.getAscendant());
+	    dto.setBasicPlanetaryPosition(p.getBasicPlanetaryPosition());
+
+	    // ===== PREFERENCES =====
+	    dto.setHobbies(p.getHobbies());
+	    dto.setPartnerAgeRange(p.getPartnerAgeRange());
+	    dto.setPartnerReligion(p.getPartnerReligion());
+	    dto.setPartnerEducation(p.getPartnerEducation());
+	    dto.setPartnerLocationPref(p.getPartnerLocationPref());
+	    dto.setPartnerWork(p.getPartnerWork());
+	    dto.setPartnerWorkStatus(p.getPartnerWorkStatus());
+	    dto.setPartnerHobbies(p.getPartnerHobbies());
+
+	    // ===== PRIVACY =====
+	    dto.setProfileVisibility(p.getProfileVisibility());
+	    dto.setHideProfilePhoto(p.getHideProfilePhoto());
+
+	    // ===== REFERRAL =====
+	    dto.setReferralCode(p.getReferralCode());
+	    dto.setReferralRewardBalance(p.getReferralRewardBalance());
+
+	    // ===== PHOTOS =====
+	    try {
+	        dto.setUpdatePhoto1(profilePhotoService.getPhotoBase64(p.getId(),1));
+	        dto.setUpdatePhoto2(profilePhotoService.getPhotoBase64(p.getId(),2));
+	        dto.setUpdatePhoto3(profilePhotoService.getPhotoBase64(p.getId(),3));
+	        dto.setUpdatePhoto4(profilePhotoService.getPhotoBase64(p.getId(),4));
+	    } catch (Exception e) {}
+
+	    dto.setUpdatePhoto(p.getUpdatePhoto());
+	    dto.setDocumentFile(p.getDocumentFile());
 	    return dto;
 	}
   
@@ -979,7 +1078,7 @@ public class ProfileService {
                           com.example.util.MatchScoreUtil
                                   .calculate(myProfile, p);
 
-                  // MY MATCH >=70%
+                 
                   if ("MY".equalsIgnoreCase(request.getMatchType())
                           && score < 70) {
                       return null;
@@ -1017,5 +1116,33 @@ public class ProfileService {
 
 	    return hidden.stream().distinct().toList();
 	}
+  @Transactional
+  public void syncMembershipFromPayments(Long profileId){
+
+      List<PaymentRecord> payments =
+          paymentRepo.findByUserIdAndStatus(profileId,"PAID");
+
+      PaymentRecord latest = payments.stream()
+          .filter(p -> p.getPremiumEnd()!=null &&
+                       p.getPremiumEnd().isAfter(LocalDateTime.now()))
+          .max(Comparator.comparing(PaymentRecord::getPremiumEnd))
+          .orElse(null);
+
+      Profile profile = profileRepository  
+              .findById(profileId)
+              .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+      if(latest == null){
+          profile.setPremium(false);
+          profile.setMembershipType("Free");
+          profile.setPremiumEnd(null);
+      }else{
+          profile.setPremium(true);
+          profile.setMembershipType(latest.getPlanName());
+          profile.setPremiumEnd(latest.getPremiumEnd());
+      }
+
+      profileRepository.save(profile);
+  }
 
 }
