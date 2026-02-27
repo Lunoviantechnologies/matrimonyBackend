@@ -33,16 +33,19 @@ public class FriendRequestService {
     private final FriendRequestRepository requestRepository;
     private final ProfileRepository profileRepository;
     private final FriendRequestRepository friendRequestRepository;
+    private final ProfilePhotoService profilePhotoService;
     private static final Logger log =LoggerFactory.getLogger(FriendRequestService.class);
 
     public FriendRequestService(FriendRequestRepository requestRepository,
                                 ProfileRepository profileRepository,
                                 FriendRequestRepository friendRequestRepository,
+                                ProfilePhotoService profilePhotoService,
                                 NotificationService notificationService) {
         this.requestRepository = requestRepository;
         this.profileRepository = profileRepository;
         this.notificationService = notificationService;
         this.friendRequestRepository=friendRequestRepository;
+        this.profilePhotoService=profilePhotoService;
         
     }
 
@@ -276,10 +279,12 @@ public class FriendRequestService {
             dto.setStatus(fr.getStatus());
             dto.setSenderId(fr.getSender().getId());
             dto.setReceiverId(fr.getReceiver().getId());
-            dto.setSenderName(fr.getSender().getFirstName() + " " +
-                    fr.getSender().getLastName());
-            dto.setReceiverName(fr.getReceiver().getFirstName() + " " +
-                    fr.getReceiver().getLastName());
+            dto.setSenderGender(fr.getSender().getGender());
+            dto.setReceiverGender(fr.getReceiver().getGender());
+            dto.setSenderPhoto(profilePhotoService.getMainPhoto(fr.getSender().getId()));
+            dto.setReceiverPhoto(profilePhotoService.getMainPhoto(fr.getReceiver().getId()));
+            dto.setSenderName(fr.getSender().getFirstName() + " " +fr.getSender().getLastName());
+            dto.setReceiverName(fr.getReceiver().getFirstName() + " " + fr.getReceiver().getLastName());
             return dto;
         }).toList();
     }
@@ -295,16 +300,16 @@ public class FriendRequestService {
         dto.setReceiverName(req.getReceiver().getFirstName() + " " + req.getReceiver().getLastName());
         dto.setSenderEmail(req.getSender().getEmailId());
         dto.setStatus(req.getStatus());
-
         dto.setSenderCity(req.getSender().getCity());
         dto.setSenderAge(req.getSender().getAge());
-        dto.setSenderPhoto(req.getSender().getUpdatePhoto());
         dto.setSenderGender(req.getSender().getGender());
-
         dto.setReceiverCity(req.getReceiver().getCity());
         dto.setReceiverAge(req.getReceiver().getAge());
-        dto.setReceiverPhoto(req.getReceiver().getUpdatePhoto());
         dto.setReceiverGender(req.getReceiver().getGender());
+        String senderPhoto =profilePhotoService.getMainPhoto(req.getSender().getId());
+        String receiverPhoto =profilePhotoService.getMainPhoto(req.getReceiver().getId());
+        dto.setSenderPhoto(senderPhoto);
+        dto.setReceiverPhoto(receiverPhoto);
 
         return dto;
     }
@@ -354,7 +359,7 @@ public class FriendRequestService {
             profileDto.setName(other.getFirstName() + " " + other.getLastName());
             profileDto.setAge(other.getAge());
             profileDto.setCity(other.getCity());
-            profileDto.setUpdatePhoto(other.getUpdatePhoto());
+            profileDto.setUpdatePhoto(profilePhotoService.getMainPhoto(other.getId()));
             profileDto.setGender(other.getGender());
             profileDto.setPremium(other.isPremium());
             profileDto.setMotherTongue(other.getMotherTongue());

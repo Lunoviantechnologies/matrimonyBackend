@@ -125,8 +125,7 @@ public class Profile {
 	private String familyType;
 
 	// store filenames/urls (controller writes filename)
-	@Column(name = "update_photo", length = 512)
-	private String updatePhoto;
+	
 	@Transient
 	private String updatePhoto1;
 	@Transient
@@ -997,14 +996,6 @@ public class Profile {
 		this.aboutYourself = aboutYourself;
 	}
 
-	public String getUpdatePhoto() {
-		return updatePhoto;
-	}
-
-	public void setUpdatePhoto(String updatePhoto) {
-		this.updatePhoto = updatePhoto;
-	}
-
 	public String getDocumentFile() {
 		return documentFile;
 	}
@@ -1108,7 +1099,7 @@ public class Profile {
 				+ motherTongue + ", membershipType=" + membershipType + ", accountStatus=" + accountStatus
 				+ ", lastActive=" + lastActive + ", maritalStatus=" + maritalStatus + ", noOfChildren=" + noOfChildren
 				+ ", isChildrenLivingWithYou=" + isChildrenLivingWithYou + ", height=" + height + ", familyStatus="
-				+ familyStatus + ", familyType=" + familyType + ", updatePhoto=" + updatePhoto + ", documentFile="
+				+ familyStatus + ", familyType=" + familyType + ", updatePhoto="  + ", documentFile="
 				+ documentFile + ", fatherName=" + fatherName + ", motherName=" + motherName + ", siblings=" + siblings
 				+ ", fatherStatus=" + fatherStatus + ", motherStatus=" + motherStatus + ", numberOfBrothers="
 				+ numberOfBrothers + ", numberOfSisters=" + numberOfSisters + ", ancestralOrigin=" + ancestralOrigin

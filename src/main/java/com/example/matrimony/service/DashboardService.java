@@ -27,15 +27,18 @@ public class DashboardService {
     private final FriendRequestRepository friendRepo;
     private final ReferralService referralService;
     private final PaymentRecordRepository paymentRepo;
+    private final ProfilePhotoService profilePhotoService;
 
     public DashboardService(ProfileRepository profileRepo,
                             FriendRequestRepository friendRepo,
                             PaymentRecordRepository paymentRepo,
+                            ProfilePhotoService profilePhotoService,
                             ReferralService referralService) {
         this.profileRepo = profileRepo;
         this.friendRepo = friendRepo;
         this.referralService = referralService;
         this.paymentRepo = paymentRepo;
+        this.profilePhotoService=profilePhotoService;
     }
 
     // ================= MAIN DASHBOARD =================
@@ -151,7 +154,8 @@ public class DashboardService {
             d.setGender(p.getGender());
             d.setHideProfilePhoto(p.getHideProfilePhoto());
             d.setProfession(p.getOccupation());
-            d.setUpdatePhoto(p.getUpdatePhoto());
+            String photo = profilePhotoService.getMainPhoto(p.getId());
+            d.setUpdatePhoto(photo);
             d.setMotherTongue(p.getMotherTongue());
             d.setCountry(p.getCountry());
 

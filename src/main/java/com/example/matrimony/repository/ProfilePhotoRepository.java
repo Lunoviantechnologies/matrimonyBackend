@@ -25,5 +25,12 @@ public interface ProfilePhotoRepository extends JpaRepository<Profilepicture, Lo
     @Transactional
     @Query("DELETE FROM Profilepicture p WHERE p.profile.id = :id")
     void deleteByProfileId(@Param("id") Long id);
+    
+    List<Profilepicture> findByProfile_IdInAndPhotoNumber(
+            List<Long> profileIds,
+            Integer photoNumber
+    );
+    List<Profilepicture> findByProfile_IdIn(List<Long> profileIds);
+    
 
 }

@@ -61,7 +61,8 @@ public class SecurityConfig1 {
                    "/api/blog/comments/**",
                    "/api/blog/like/**",
                    "/api/blog/**",
-                   "/api/admin/blogs"
+                   "/api/admin/blogs",
+                   "/profile-photos/**"
                   
                 ).permitAll()
                   

@@ -35,18 +35,6 @@ public class Profilepicture {
 
     private LocalDateTime uploadedAt;
     
-    @Transient
-    private String photoBase64;
-    
-    // ====== getters and setters ======
-
-    public String getPhotoBase64() {
-        return photoBase64;
-    }
-
-    public void setPhotoBase64(String photoBase64) {
-        this.photoBase64 = photoBase64;
-    }
 
    
     public Long getId() {

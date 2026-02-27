@@ -62,7 +62,7 @@ public class AdminManageController {
     private final ChatService chatService;
     private final PaymentRecordRepository paymentRepository;
     private final AdminReportService adminReportService;
-
+    
     @Value("${file.upload-dir}")
     private String uploadDir;
 
@@ -149,26 +149,25 @@ public class AdminManageController {
 
         Page<Profile> profilePage = profileRepository.findAll(spec, pageable);
 
-        // Convert image to Base64
-        profilePage.getContent().forEach(profile -> {
-            if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
-                try {
-                    Path imagePath = Paths.get("uploads/profile-photos")
-                            .resolve(profile.getUpdatePhoto());  
-                    if (Files.exists(imagePath)) {
-                        byte[] imageBytes = Files.readAllBytes(imagePath);
-                        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-                        profile.setUpdatePhoto("data:image/jpeg;base64," + base64Image);
-                    } else {
-                        profile.setUpdatePhoto(null);
-                    }
-                } catch (Exception e) {
-                    profile.setUpdatePhoto(null);
-                }
-            } else {
-                profile.setUpdatePhoto(null);
-            }
-        });
+        
+        List<ProfileDto> dtoList = profilePage.getContent()
+                .stream()
+                .map(profile -> {
+
+                    ProfileDto dto = profileService.mapToDto(profile);
+
+                    Map<Integer, String> photoMap =
+                            profileService.getPhotoMap(profile.getId());
+
+                    dto.setUpdatePhoto(photoMap.get(0));
+                    dto.setUpdatePhoto1(photoMap.get(1));
+                    dto.setUpdatePhoto2(photoMap.get(2));
+                    dto.setUpdatePhoto3(photoMap.get(3));
+                    dto.setUpdatePhoto4(photoMap.get(4));
+
+                    return dto;
+                })
+                .toList();
 
         return ResponseEntity.ok(profilePage);
     }
@@ -316,55 +315,20 @@ public class AdminManageController {
 
         // ================= DOCUMENT FILE (same dir as registration/view-document) =================
         if (profile.getDocumentFile() != null && !profile.getDocumentFile().isBlank()) {
-            try {
-                Path docPath = Paths.get(uploadDir)
-                        .resolve(profile.getDocumentFile());
-
-                if (Files.exists(docPath)) {
-                    byte[] docBytes = Files.readAllBytes(docPath);
-                    String base64Doc = Base64.getEncoder().encodeToString(docBytes);
-
-                    String mimeType = Files.probeContentType(docPath);
-                    if (mimeType == null) {
-                        mimeType = "application/octet-stream";
-                    }
-
-                    dto.setDocumentFile("data:" + mimeType + ";base64," + base64Doc);
-                } else {
-                    dto.setDocumentFile(null);
-                }
-            } catch (Exception e) {
-                dto.setDocumentFile(null);
-            }
+            dto.setDocumentFile("/documents/" + profile.getDocumentFile());
         } else {
             dto.setDocumentFile(null);
         }
+        Map<Integer, String> photoMap =
+                profileService.getPhotoMap(profile.getId());
 
-
-        // ------------------------------
-        //  New: build image URL instead of returning Base64
-        // ------------------------------
-        if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
-            try {
-                Path imagePath = Paths.get("uploads/profile-photos")
-                        .resolve(profile.getUpdatePhoto());
-
-                if (Files.exists(imagePath)) {
-                    byte[] imageBytes = Files.readAllBytes(imagePath);
-                    String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-
-                    dto.setUpdatePhoto("data:image/jpeg;base64," + base64Image);
-                } else {
-                    dto.setUpdatePhoto(null);
-                }
-            } catch (Exception e) {
-                dto.setUpdatePhoto(null);
-            }
-        } else {
-            dto.setUpdatePhoto(null);
-        }
-       
+        dto.setUpdatePhoto(photoMap.getOrDefault(0, null));
+        dto.setUpdatePhoto1(photoMap.getOrDefault(1, null));
+        dto.setUpdatePhoto2(photoMap.getOrDefault(2, null));
+        dto.setUpdatePhoto3(photoMap.getOrDefault(3, null));
+        dto.setUpdatePhoto4(photoMap.getOrDefault(4, null));
         return ResponseEntity.ok(dto);
+        
     }
 
    // @PreAuthorize("hasAnyAuthority('ADMIN','ROLE_ADMIN')")
@@ -658,25 +622,20 @@ public class AdminManageController {
         // --- FILES / PHOTOS ---
        // if (updatedDto.getUpdatePhoto() != null) existing.setUpdatePhoto(updatedDto.getUpdatePhoto());
         if (updatedDto.getDocumentFile() != null) {
-			existing.setDocumentFile(updatedDto.getDocumentFile());
-      // if (updatedDto.getDocumentFilePresent() != null) existing.setDocumentFilePresent(updatedDto.getDocumentFilePresent());
-		}
 
+            String fileName = Paths
+                    .get(updatedDto.getDocumentFile())
+                    .getFileName()
+                    .toString();
 
-        // --- SYSTEM TIMESTAMP ---
+            existing.setDocumentFile(fileName);
+        }
         existing.setLastActive(LocalDateTime.now());
 
         // Save
         Profile saved = profileRepository.save(existing);
         return ResponseEntity.ok(saved);
     }
-
-
-    //Update Account Status (Verify / Suspend / Activate)
-
-
-    //Update Membership Type (Free / Premium / Gold)
-  //======
 
     //Update Account Status (Verify / Suspend / Activate)
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -787,7 +746,7 @@ public class AdminManageController {
                 Files.write(filePath, file.getBytes());
 
                 // Save in DB
-                profile.setUpdatePhoto(fileName);
+               
                 profile.setLastActive(LocalDateTime.now());
                 profileRepository.save(profile);
 

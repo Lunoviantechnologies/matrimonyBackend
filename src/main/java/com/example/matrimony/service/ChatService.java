@@ -34,6 +34,7 @@ public class ChatService {
     private final ProfileRepository profileRepository;
     private final NotificationService notificationService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ProfileService profileService;
     
     //  Track online users by profile ID (or mobile number if you want)
     private final Set<String> onlineUsers = ConcurrentHashMap.newKeySet();
@@ -42,6 +43,7 @@ public class ChatService {
     		ProfileRepository profileRepository,
     		NotificationService notificationService,
     		 BlockService blockService,
+    		 ProfileService profileService,
     		 SimpMessagingTemplate messagingTemplate
     		 ) {
         this.messageRepository = messageRepository;
@@ -49,6 +51,7 @@ public class ChatService {
         this.notificationService = notificationService;
         this.blockService = blockService;
         this.messagingTemplate = messagingTemplate;
+        this.profileService=profileService;
     }
  
 
@@ -273,12 +276,17 @@ public class ChatService {
             boolean blockedByOther =
                     blockService.isBlocked(profile.getId(), myId);
 
+            Map<Integer, String> photoMap =
+                    profileService.getPhotoMap(profile.getId());
+
+            String photoUrl = photoMap.getOrDefault(0, null); // main photo index 0
+
             return new ChatContactDto(
                     profile.getId(),
                     profile.getFirstName() + " " + profile.getLastName(),
-                    profile.getUpdatePhoto(),
-                    last != null ? last.getMessage() : null,
-                    last != null ? last.getTimestamp() : null,
+                    photoUrl,
+                    lastMessage,
+                    lastTime,
                     online,
                     blockedByMe,
                     blockedByOther

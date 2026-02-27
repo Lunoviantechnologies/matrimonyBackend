@@ -6,6 +6,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 //import java.awt.print.Pageable;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -13,7 +16,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 //import org.hibernate.query.Page;
 import org.slf4j.Logger;
@@ -30,6 +35,7 @@ import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.dto.RegisterRequest;
 import com.example.matrimony.entity.PaymentRecord;
 import com.example.matrimony.entity.Profile;
+import com.example.matrimony.entity.Profilepicture;
 import com.example.matrimony.exception.EmailAlreadyExistsException;
 import com.example.matrimony.repository.ChatMessageRepository;
 import com.example.matrimony.repository.FriendRequestRepository;
@@ -42,7 +48,7 @@ import com.example.matrimony.dto.RecentUserResponse;
 import com.example.matrimony.specification.ProfileSpecification;
 
 import io.jsonwebtoken.lang.Objects;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 @Service
@@ -60,10 +66,8 @@ public class ProfileService {
     private final Notificationadminservice notificationService;
     private PaymentRecordRepository paymentRecordRepository;
     private ProfilePhotoRepository profilePhotoRepository;
-    
-    
-
-    
+     
+    private final Path uploadPath = Paths.get("uploads/profile-photos");
  // ===================== GET TOTAL REGISTERED PROFILES =====================
     public long getRegisteredProfilesCount() {
         return profileRepository.count();  // count() from JpaRepository returns long
@@ -177,13 +181,11 @@ public class ProfileService {
     
     private ProfileMatchResponse mapToMatchResponse(Profile p) {
 
-        String photo = null;
-
-        try {
-            photo = profilePhotoService.getPhotoBase64(p.getId(), 1);
-        } catch (Exception e) {
-            photo = null;
-        }
+        String photo0 = buildPhotoUrl(p.getId(), 0);
+        String photo1 = buildPhotoUrl(p.getId(), 1);
+        String photo2 = buildPhotoUrl(p.getId(), 2);
+        String photo3 = buildPhotoUrl(p.getId(), 3);
+        String photo4 = buildPhotoUrl(p.getId(), 4);
 
         return new ProfileMatchResponse(
                 p.getId(),
@@ -197,14 +199,22 @@ public class ProfileService {
                 p.getReligion(),
                 p.getSubCaste(),
                 p.isPremium(),
-                p.getUpdatePhoto(),
-                p.getUpdatePhoto1(),
-                p.getUpdatePhoto2(),
-                p.getUpdatePhoto3(),
-                p.getUpdatePhoto4(),
+                photo0,
+                photo1,
+                photo2,
+                photo3,
+                photo4,
                 p.getHideProfilePhoto(),
                 p.getGender()
         );
+    }
+    
+    private String buildPhotoUrl(Long profileId, int photoNumber) {
+
+        return profilePhotoRepository
+                .findByProfile_IdAndPhotoNumber(profileId, photoNumber)
+                .map(pic -> "/profile-photos/" + pic.getFileName())
+                .orElse(null);
     }
     
     
@@ -239,67 +249,6 @@ public class ProfileService {
         }
     }
     
-    
-    
-    
-//    public Profile register(RegisterRequest req) {
-//
-//        if (req == null) throw new IllegalArgumentException("Request cannot be null");
-//
-//        if (req.getEmail() == null || req.getEmail().isBlank())
-//            throw new IllegalArgumentException("Email cannot be empty");
-//
-//        if (profileRepository.existsByEmailId(req.getEmail()))
-//            throw new IllegalArgumentException("Email already registered");
-//
-//        if (profileRepository.existsByEmailId(req.getEmail())) {
-//            throw new EmailAlreadyExistsException("Email already registered");
-//        }
-//        
-//        if (req.getPassword() == null || req.getPassword().isBlank())
-//            throw new IllegalArgumentException("Password cannot be empty");
-//
-//        Profile profile = new Profile();
-//
-//        profile.setFirstName(req.getFirstName());
-//        profile.setLastName(req.getLastName());
-//        profile.setMobileNumber(req.getMobileNumber());
-//        profile.setEmailId(req.getEmail());
-//        profile.setCreatePassword(passwordEncoder.encode(req.getPassword()));
-//        profile.setAge(req.getAge() != null ? req.getAge() : 0);
-//
-//        if (req.getDateOfBirth() != null) {
-//            try {
-//                profile.setDateOfBirth(LocalDate.parse(req.getDateOfBirth()));
-//            } catch (Exception ex) {
-//                throw new IllegalArgumentException("Invalid date format (YYYY-MM-DD expected)");
-//            }
-//        }
-//
-//        profile.setGender(req.getGender());
-//        profile.setReligion(req.getReligion());
-//        profile.setCaste(req.getCaste());
-//        profile.setSubCaste(req.getSubCaste());
-//        profile.setDosham(req.getDosham());
-//        profile.setMaritalStatus(req.getMaritalStatus());
-//        
-//        String title = "New User Registered";
-//        String message = "New profile registered: " 
-//                + Profile.getFirstName() + " " 
-//                + Profile.getLastName() 
-//                + " (" + Profile.getEmailId() + ")";
-//
-//        notificationService.createAdminNotification(
-//                title,
-//                message,
-//                LocalDateTime.now()
-//        );
-//
-//        logger.info("Notification sent for new registration: {}", savedProfile.getEmailId());
-//
-//
-//        return profileRepository.save(profile);
-//    }
 
 
     // FIND PROFILE BY ID
@@ -422,9 +371,7 @@ public class ProfileService {
         if (data.getVegiterian() != null) existing.setVegiterian(data.getVegiterian());
 
         // Photo (byte[]) - overwrite only when provided (null-safe)
-        if (data.getUpdatePhoto() != null) {
-            existing.setUpdatePhoto(data.getUpdatePhoto());
-        }
+        
 
         // Education & career
         if (data.getHighestEducation() != null) existing.setHighestEducation(data.getHighestEducation());
@@ -765,29 +712,31 @@ public class ProfileService {
   deleteById(profileId);
 }
   
-  public Page<Profile> filterProfiles(ProfileFilterRequest req) {
-	  
-	  
-	  if (req.getSearch() == null || req.getSearch().trim().isEmpty()) {
+  public Page<ProfileDto> filterProfiles(ProfileFilterRequest req) {
+
+	    if (req.getSearch() == null || req.getSearch().trim().isEmpty()) {
 	        return Page.empty();
 	    }
+
 	    Pageable pageable = PageRequest.of(
 	            req.getPage(),
 	            req.getSize(),
 	            Sort.by("createdAt").descending()
 	    );
-	    return profileRepository.findAll(
+
+	    Page<Profile> page = profileRepository.findAll(
 	            ProfileSpecification.filter(req),
 	            pageable
 	    );
+
+	    return page.map(this::mapToDto);   
 	}
   
-  public Page<Profile> filterProfiles(ProfileFilterRequest req, Pageable pageable) {
+  public Page<ProfileDto> filterProfiles(ProfileFilterRequest req, Pageable pageable) {
 
-	    Sort sort = Sort.by("createdAt").descending(); 
+	    Sort sort = Sort.by("createdAt").descending();
 
 	    if (req.getSortBy() != null) {
-
 	        switch (req.getSortBy().toLowerCase()) {
 
 	            case "newest":
@@ -818,16 +767,19 @@ public class ProfileService {
 	    }
 
 	    Pageable sortedPageable = PageRequest.of(
-	            req.getPage(),
-	            req.getSize(),
+	            pageable.getPageNumber(),
+	            pageable.getPageSize(),
 	            sort
 	    );
 
-	    return profileRepository.findAll(
+	    Page<Profile> page = profileRepository.findAll(
 	            ProfileSpecification.filter(req),
 	            sortedPageable
 	    );
+
+	    return page.map(this::mapToDto);
 	}
+  
   
   public RecentUserResponse getRecentUsers(int page, int size) {
 
@@ -887,7 +839,7 @@ public class ProfileService {
 
 	    return ResponseEntity.ok(dto);
 	}
-  private ProfileDto mapToDto(Profile p) {
+  public ProfileDto mapToDto(Profile p) {
 
 	    ProfileDto dto = new ProfileDto();
 
@@ -990,17 +942,14 @@ public class ProfileService {
 	    // ===== REFERRAL =====
 	    dto.setReferralCode(p.getReferralCode());
 	    dto.setReferralRewardBalance(p.getReferralRewardBalance());
-
-	    // ===== PHOTOS =====
-	    try {
-	        dto.setUpdatePhoto1(profilePhotoService.getPhotoBase64(p.getId(),1));
-	        dto.setUpdatePhoto2(profilePhotoService.getPhotoBase64(p.getId(),2));
-	        dto.setUpdatePhoto3(profilePhotoService.getPhotoBase64(p.getId(),3));
-	        dto.setUpdatePhoto4(profilePhotoService.getPhotoBase64(p.getId(),4));
-	    } catch (Exception e) {}
-
-	    dto.setUpdatePhoto(p.getUpdatePhoto());
+	   
 	    dto.setDocumentFile(p.getDocumentFile());
+	 // ===== PHOTOS =====
+	    dto.setUpdatePhoto(buildPhotoUrl(p.getId(), 0));
+	    dto.setUpdatePhoto1(buildPhotoUrl(p.getId(), 1));
+	    dto.setUpdatePhoto2(buildPhotoUrl(p.getId(), 2));
+	    dto.setUpdatePhoto3(buildPhotoUrl(p.getId(), 3));
+	    dto.setUpdatePhoto4(buildPhotoUrl(p.getId(), 4));
 	    return dto;
 	}
   
@@ -1144,5 +1093,17 @@ public class ProfileService {
 
       profileRepository.save(profile);
   }
+  public Map<Integer, String> getPhotoMap(Long profileId) {
+
+	    List<Profilepicture> photos =
+	            profilePhotoRepository.findByProfile_Id(profileId);
+
+	    return photos.stream()
+	            .filter(pic -> pic.getFileName() != null && !pic.getFileName().isBlank())
+	            .collect(Collectors.toMap(
+	                    Profilepicture::getPhotoNumber,
+	                    Profilepicture::getFileName   // return filename only
+	            ));
+	}
 
 }
