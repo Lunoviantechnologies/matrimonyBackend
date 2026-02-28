@@ -151,14 +151,14 @@ public class ProfileService {
         // ✅ SAVE PROFILE FIRST
         Profile savedProfile = profileRepository.save(profile);
 //     // ✅ SEND EMAIL
-//        try {
-//            emailService.sendRegistrationSuccessEmail(
-//                savedProfile.getEmailId(),
-//                savedProfile.getFirstName()
-//            );
-//        } catch (Exception e) {
-//            logger.error("Registration email failed for {}", savedProfile.getEmailId(), e);
-//        }
+        try {
+            emailService.sendRegistrationSuccessEmail(
+                savedProfile.getEmailId(),
+                savedProfile.getFirstName()
+           );
+       } catch (Exception e) {
+           logger.error("Registration email failed for {}", savedProfile.getEmailId(), e);
+       }
 
         
         String title = "New User Registered";

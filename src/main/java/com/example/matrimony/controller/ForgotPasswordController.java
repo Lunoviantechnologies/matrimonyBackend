@@ -60,14 +60,23 @@ public class ForgotPasswordController {
             @PathVariable Long id,
             @RequestBody ChangePasswordRequest req) {
 
-        resetService.changePassword(
-                id,
-                req.getCurrentPassword(),
-                req.getNewPassword(),
-                req.getConfirmPassword()
-        );
+        try {
 
-        return ResponseEntity.ok("Password updated successfully");
+            resetService.changePassword(
+                    id,
+                    req.getCurrentPassword(),
+                    req.getNewPassword(),
+                    req.getConfirmPassword()
+            );
+
+            return ResponseEntity.ok("Password updated successfully");
+
+        } catch (RuntimeException ex) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(ex.getMessage());
+        }
     }
 
 }
