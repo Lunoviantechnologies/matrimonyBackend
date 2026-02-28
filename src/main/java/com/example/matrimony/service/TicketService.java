@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.matrimony.dto.NotificationDto;
 import com.example.matrimony.dto.TicketRequest;
+import com.example.matrimony.entity.Profile;
 import com.example.matrimony.entity.Ticket;
+import com.example.matrimony.repository.ProfileRepository;
 import com.example.matrimony.repository.TicketRepository;
 
 import jakarta.validation.Valid;
@@ -20,6 +22,8 @@ public class TicketService {
 	
 	@Autowired
 	private Notificationadminservice adminNotificationService;
+	@Autowired
+	private ProfileRepository profileRepository;
 	
 	@Autowired
 	private NotificationService notiservice;
@@ -88,11 +92,23 @@ public class TicketService {
         );
 
         // 2️⃣ 🔔 Send Notification (same pattern as friend request)
-        NotificationDto notif = new NotificationDto();     
+        // 2️⃣ Send Notification
+
+        // 🔹 Create DTO first
+        NotificationDto notif = new NotificationDto();
+
         notif.setType("TICKET_RESOLVED");
         notif.setMessage(
                 "Your ticket #" + ticket.getId() + " has been resolved successfully."
         );
+
+        Profile profile = profileRepository
+                .findByEmailId(ticket.getEmail())
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+ 
+        notif.setReceiverId(profile.getId());
+        notif.setSenderId(1L);   
+
         notif.setData(
                 Map.of(
                         "ticketId", ticket.getId(),

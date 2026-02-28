@@ -53,22 +53,6 @@ public class WebConfig implements WebMvcConfigurer {
         source.registerCorsConfiguration("/**", config);
 
         return source;
-    }
-
-    // ===========================
-    // STATIC FILE (IMAGE) SERVING
-    // ===========================
-
-    @Value("${app.upload.profile-photos-path}")
-    private String profilePhotosPath;
-
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-
-        registry.addResourceHandler("/profile-photos/**")
-                .addResourceLocations("file:" + profilePhotosPath);
-        
-    }
-    
+    } 
     
 }

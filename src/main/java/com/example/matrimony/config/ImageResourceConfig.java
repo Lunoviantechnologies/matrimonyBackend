@@ -1,15 +1,25 @@
 package com.example.matrimony.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @Configuration
 public class ImageResourceConfig implements WebMvcConfigurer {
 
+    @Value("${app.upload.profile-photos-path}")
+    private String profilePhotoDir;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+
+        Path uploadPath = Paths.get(profilePhotoDir).toAbsolutePath().normalize();
+
         registry.addResourceHandler("/profile-photos/**")
-                .addResourceLocations("file:uploads/profile-photos/");
+                .addResourceLocations("file:" + uploadPath.toString() + "/");
     }
 }

@@ -1,63 +1,78 @@
 package com.example.matrimony.service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.example.matrimony.dto.AcceptedFriendCardDto;
 import com.example.matrimony.dto.FriendDTO;
+import com.example.matrimony.dto.FriendRequestCardDto;
 import com.example.matrimony.dto.FriendRequestDTO;
 import com.example.matrimony.dto.NotificationDto;
+import com.example.matrimony.dto.ProfileCardDto;
 import com.example.matrimony.entity.FriendRequest;
 import com.example.matrimony.entity.Profile;
+import com.example.matrimony.entity.Profilepicture;
 import com.example.matrimony.repository.FriendRequestRepository;
 import com.example.matrimony.repository.ProfileRepository;
 
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
 @Service
+@Slf4j
 @Transactional
 public class FriendRequestService {
 
     private final NotificationService notificationService;
     private final FriendRequestRepository requestRepository;
     private final ProfileRepository profileRepository;
+    private final FriendRequestRepository friendRequestRepository;
+    private final ProfilePhotoService profilePhotoService;
+    private static final Logger log =LoggerFactory.getLogger(FriendRequestService.class);
 
     public FriendRequestService(FriendRequestRepository requestRepository,
                                 ProfileRepository profileRepository,
+                                FriendRequestRepository friendRequestRepository,
+                                ProfilePhotoService profilePhotoService,
                                 NotificationService notificationService) {
         this.requestRepository = requestRepository;
         this.profileRepository = profileRepository;
         this.notificationService = notificationService;
+        this.friendRequestRepository=friendRequestRepository;
+        this.profilePhotoService=profilePhotoService;
+        
     }
 
-    // ✅ SEND FRIEND REQUEST + NOTIFICATION
+    // SEND FRIEND REQUEST
     public FriendRequest sendRequest(Long senderId, Long receiverId) {
 
         if (senderId.equals(receiverId)) {
-            throw new RuntimeException("You cannot send request to yourself");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "You cannot send request to yourself");
         }
 
-        Profile sender = profileRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("Sender not found"));
+        Profile sender = getProfile(senderId, "Sender not found");
+        Profile receiver = getProfile(receiverId, "Receiver not found");
 
-        Profile receiver = profileRepository.findById(receiverId)
-                .orElseThrow(() -> new RuntimeException("Receiver not found"));
-
-        // ✅ Check already friends
         if (sender.getFriends().contains(receiver)) {
-            throw new RuntimeException("Already friends");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Already friends");
         }
 
-        // ✅ Prevent duplicate pending request
         boolean alreadyPending = requestRepository
-                .existsBySender_IdAndReceiver_IdAndStatus(senderId, receiverId, FriendRequest.Status.PENDING);
+                .existsBySender_IdAndReceiver_IdAndStatus(
+                        senderId, receiverId, FriendRequest.Status.PENDING);
 
         if (alreadyPending) {
-            throw new RuntimeException("Friend request already sent and pending");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Friend request already sent and pending");
         }
 
-        // ✅ Save request
         FriendRequest friendRequest = new FriendRequest();
         friendRequest.setSender(sender);
         friendRequest.setReceiver(receiver);
@@ -65,12 +80,12 @@ public class FriendRequestService {
 
         FriendRequest saved = requestRepository.save(friendRequest);
 
-        // 🔔 SEND NOTIFICATION TO RECEIVER (USER B)
         NotificationDto notif = new NotificationDto();
         notif.setSenderId(sender.getId());
         notif.setReceiverId(receiver.getId());
         notif.setType("FRIEND_REQUEST_RECEIVED");
-        notif.setMessage(sender.getFirstName() + " " + sender.getLastName() + " sent you a friend request");
+        notif.setMessage(sender.getFirstName() + " " + sender.getLastName() +
+                " sent you a friend request");
         notif.setData(Map.of(
                 "requestId", saved.getId(),
                 "status", saved.getStatus().name()
@@ -78,36 +93,30 @@ public class FriendRequestService {
 
         notificationService.sendToUserAndSave(notif);
 
+        log.info("Friend request sent from {} to {}", senderId, receiverId);
         return saved;
     }
-
-    // ✅ RECEIVED REQUESTS
+    // RECEIVED REQUEST
+    @Transactional(readOnly = true)
     public List<FriendRequestDTO> getReceivedRequests(Long receiverId) {
 
-        List<FriendRequest> requests =
-                requestRepository.findByReceiver_IdAndStatus(receiverId, FriendRequest.Status.PENDING);
-
-        return requests.stream()
-                .map(req -> new FriendRequestDTO(
-                        req.getId(),
-                        req.getSender().getId(),
-                        req.getReceiver().getId(),
-                        req.getSender().getFirstName() + " " + req.getSender().getLastName(),
-                        req.getReceiver().getFirstName() + " " + req.getReceiver().getLastName(),
-                        req.getSender().getEmailId(),
-                        req.getStatus()
-                ))
+        return requestRepository
+                .findByReceiver_IdAndStatus(receiverId, FriendRequest.Status.PENDING)
+                .stream()
+                .map(this::mapToDetailedDTO)
                 .toList();
     }
 
-    // ✅ ACCEPT / REJECT REQUEST + NOTIFICATION
+    // ACCEPT / REJECT REQUEST
     public FriendRequest respondToRequest(Long requestId, boolean accept) {
 
         FriendRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Friend request not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Friend request not found"));
 
         if (request.getStatus() != FriendRequest.Status.PENDING) {
-            throw new RuntimeException("This request is already responded!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "This request already responded");
         }
 
         Profile sender = request.getSender();
@@ -116,144 +125,296 @@ public class FriendRequestService {
         if (accept) {
             request.setStatus(FriendRequest.Status.ACCEPTED);
 
-            if (!sender.getFriends().contains(receiver)) {
-                sender.getFriends().add(receiver);
-                profileRepository.save(sender);
-            }
-
-            if (!receiver.getFriends().contains(sender)) {
-                receiver.getFriends().add(sender);
-                profileRepository.save(receiver);
-            }
-
+            addFriendIfNotExists(sender, receiver);
+            addFriendIfNotExists(receiver, sender);
         } else {
             request.setStatus(FriendRequest.Status.REJECTED);
         }
 
         FriendRequest updated = requestRepository.save(request);
 
-        // 🔔 Notify sender about accept/reject
         NotificationDto notif = new NotificationDto();
         notif.setSenderId(receiver.getId());
         notif.setReceiverId(sender.getId());
         notif.setType(accept ? "FRIEND_REQUEST_ACCEPTED" : "FRIEND_REQUEST_REJECTED");
         notif.setMessage(receiver.getFirstName() + " " + receiver.getLastName() +
                 (accept ? " accepted " : " rejected ") + "your friend request");
-        notif.setData(Map.of(
-                "requestId", requestId,
-                "accepted", accept
-        ));
+        notif.setData(Map.of("requestId", requestId, "accepted", accept));
 
         notificationService.sendToUserAndSave(notif);
 
+        log.info("Friend request {} processed. accepted={}", requestId, accept);
         return updated;
     }
+    
+    private String getPrimaryPhoto(Profile profile) {
 
-    // ✅ SENT REQUESTS (NO NOTIFICATION HERE)
+        if (profile.getProfilePictures() == null || profile.getProfilePictures().isEmpty()) {
+            return null;
+        }
+
+        return profile.getProfilePictures()
+                .stream()
+                .sorted((a, b) -> b.getUploadedAt().compareTo(a.getUploadedAt()))
+                .findFirst()
+                .map(Profilepicture::getFileName)   // correct field
+                .orElse(null);
+    }
+    // SENT REQUESTS
+    @Transactional(readOnly = true)
     public List<FriendDTO> getSentBy(Long senderId) {
 
-        List<FriendRequest> requests = requestRepository.findBySender_Id(senderId);
-
-        return requests.stream()
+        return requestRepository.findBySender_Id(senderId)
+                .stream()
                 .map(req -> new FriendDTO(
                         req.getId(),
                         req.getSender().getId(),
                         req.getReceiver().getId(),
-                        req.getReceiver().getFirstName() + " " + req.getReceiver().getLastName(),
+                        req.getReceiver().getFirstName() + " " +
+                                req.getReceiver().getLastName(),
                         req.getStatus().name()
                 ))
                 .toList();
     }
 
+    // DELETE SENT REQUEST
     public String deleteSentRequest(Long requestId) {
-        if (!requestRepository.existsById(requestId)) {
-            return "Friend request not found!";
-        }
-        requestRepository.deleteById(requestId);
-        return "Friend request deleted successfully!";
-    }
 
+        if (!requestRepository.existsById(requestId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Friend request not found");
+        }
+
+        requestRepository.deleteById(requestId);
+        log.info("Friend request {} deleted", requestId);
+
+        return "Friend request deleted successfully!";
+    } 
+
+    // ACCEPTED REQUESTS
+    @Transactional(readOnly = true)
     public List<FriendRequestDTO> getAcceptedRequests() {
+
         return requestRepository.findByStatus(FriendRequest.Status.ACCEPTED)
                 .stream()
-                .map(req -> new FriendRequestDTO(
-                        req.getId(),
-                        req.getSender().getId(),
-                        req.getReceiver().getId(),
-                        req.getSender().getFirstName() + " " + req.getSender().getLastName(),
-                        req.getSender().getEmailId(),
-                        req.getReceiver().getFirstName() + " " + req.getReceiver().getLastName(),
-                        req.getStatus()))
-                .collect(Collectors.toList());
+                .map(this::mapToDetailedDTO)
+                .toList();
     }
 
+    // REJECTED REQUESTS
+    @Transactional(readOnly = true)
     public List<FriendRequestDTO> getRejectedRequests() {
+
         return requestRepository.findByStatus(FriendRequest.Status.REJECTED)
                 .stream()
-                .map(req -> new FriendRequestDTO(
-                        req.getId(),
-                        req.getSender().getId(),
-                        req.getReceiver().getId(),
-                        req.getSender().getFirstName() + " " + req.getSender().getLastName(),
-                        req.getReceiver().getFirstName() + " " + req.getReceiver().getLastName(),
-                        req.getSender().getEmailId(),
-                        req.getStatus()))
-                .collect(Collectors.toList());
+                .map(this::mapToDetailedDTO)
+                .toList();
     }
 
+    // ACCEPTED RECEIVED/SENT
+    @Transactional(readOnly = true)
     public List<FriendRequestDTO> getAcceptedReceived(Long userId) {
-        return mapToDTO(requestRepository.findAcceptedReceived(userId));
+        return mapToSimpleDTO(requestRepository.findAcceptedReceived(userId));
     }
 
+    @Transactional(readOnly = true)
     public List<FriendRequestDTO> getAcceptedSent(Long userId) {
-        return mapToDTO(requestRepository.findAcceptedSent(userId));
+        return mapToSimpleDTO(requestRepository.findAcceptedSent(userId));
     }
 
-    private List<FriendRequestDTO> mapToDTO(List<FriendRequest> list) {
+    @Transactional(readOnly = true)
+    public List<FriendRequestDTO> getRejectedReceived(Long userId) {
+        return mapToSimpleDTO(requestRepository.findRejectedReceived(userId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<FriendRequestDTO> getRejectedSent(Long userId) {
+        return mapToSimpleDTO(requestRepository.findRejectedSent(userId));
+    }
+
+    // ALL FRIENDS
+    @Transactional(readOnly = true)
+    public List<FriendRequestDTO> getAllFriendRequests() {
+
+        return requestRepository.findByStatus(FriendRequest.Status.ACCEPTED)
+                .stream()
+                .map(this::mapToDetailedDTO)
+                .toList();
+    }
+    // ARE FRIENDS
+    @Transactional(readOnly = true)
+    public boolean areFriends(Long userId1, Long userId2) {
+
+        Profile user1 = getProfile(userId1, "User not found");
+
+        return user1.getFriends().stream()
+                .anyMatch(friend -> friend.getId().equals(userId2));
+    }
+
+   
+    // PENDING REQUESTS
+    @Transactional(readOnly = true)
+    public List<FriendRequest> getPendingRequests(Long receiverId) {
+        return requestRepository
+                .findByReceiver_IdAndStatus(receiverId, FriendRequest.Status.PENDING);
+    }
+    
+    // PRIVATE HELPERS
+    private Profile getProfile(Long id, String msg) {
+        return profileRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, msg));
+    }
+
+    private void addFriendIfNotExists(Profile user, Profile friend) {
+        if (!user.getFriends().contains(friend)) {
+            user.getFriends().add(friend);
+            profileRepository.save(user);
+        }
+    }
+
+    private List<FriendRequestDTO> mapToSimpleDTO(List<FriendRequest> list) {
         return list.stream().map(fr -> {
             FriendRequestDTO dto = new FriendRequestDTO();
             dto.setRequestId(fr.getId());
             dto.setStatus(fr.getStatus());
             dto.setSenderId(fr.getSender().getId());
             dto.setReceiverId(fr.getReceiver().getId());
-            dto.setSenderName(fr.getSender().getFirstName() + " " + fr.getSender().getLastName());
+            dto.setSenderGender(fr.getSender().getGender());
+            dto.setReceiverGender(fr.getReceiver().getGender());
+            dto.setSenderPhoto(profilePhotoService.getMainPhoto(fr.getSender().getId()));
+            dto.setReceiverPhoto(profilePhotoService.getMainPhoto(fr.getReceiver().getId()));
+            dto.setSenderName(fr.getSender().getFirstName() + " " +fr.getSender().getLastName());
             dto.setReceiverName(fr.getReceiver().getFirstName() + " " + fr.getReceiver().getLastName());
             return dto;
         }).toList();
     }
 
-    public List<FriendRequestDTO> getRejectedReceived(Long userId) {
-        return mapToDTO(requestRepository.findRejectedReceived(userId));
+    private FriendRequestDTO mapToDetailedDTO(FriendRequest req) {
+
+        FriendRequestDTO dto = new FriendRequestDTO();
+
+        dto.setRequestId(req.getId());
+        dto.setSenderId(req.getSender().getId());
+        dto.setReceiverId(req.getReceiver().getId());
+        dto.setSenderName(req.getSender().getFirstName() + " " + req.getSender().getLastName());
+        dto.setReceiverName(req.getReceiver().getFirstName() + " " + req.getReceiver().getLastName());
+        dto.setSenderEmail(req.getSender().getEmailId());
+        dto.setStatus(req.getStatus());
+        dto.setSenderCity(req.getSender().getCity());
+        dto.setSenderAge(req.getSender().getAge());
+        dto.setSenderGender(req.getSender().getGender());
+        dto.setReceiverCity(req.getReceiver().getCity());
+        dto.setReceiverAge(req.getReceiver().getAge());
+        dto.setReceiverGender(req.getReceiver().getGender());
+        String senderPhoto =profilePhotoService.getMainPhoto(req.getSender().getId());
+        String receiverPhoto =profilePhotoService.getMainPhoto(req.getReceiver().getId());
+        dto.setSenderPhoto(senderPhoto);
+        dto.setReceiverPhoto(receiverPhoto);
+
+        return dto;
     }
+    @Transactional(readOnly = true)
+    public List<FriendRequestCardDto> filterRequests(Long userId, String type) {
 
-    public List<FriendRequestDTO> getRejectedSent(Long userId) {
-        return mapToDTO(requestRepository.findRejectedSent(userId));
+        List<FriendRequest> list;
+
+        switch (type.toLowerCase()) {
+
+            case "received":
+                list = requestRepository
+                        .findByReceiver_IdAndStatus(userId, FriendRequest.Status.PENDING);
+                break;
+
+            case "sent":
+                list = requestRepository
+                        .findBySender_IdAndStatus(userId, FriendRequest.Status.PENDING);
+                break;
+
+            case "accepted":
+                list = requestRepository.findAcceptedBoth(userId);
+                break;
+
+            case "rejected":
+                list = requestRepository.findRejectedBoth(userId);
+                break;
+
+            default:
+                throw new RuntimeException("Invalid type");
+        }
+
+        // ⭐ ALWAYS RETURN OPPOSITE PROFILE
+        return list.stream().map(fr -> {
+
+            Profile other;
+
+            if (fr.getSender().getId().equals(userId)) {
+                other = fr.getReceiver();
+            } else {
+                other = fr.getSender();
+            }
+
+            // ===== PROFILE CARD DTO =====
+            ProfileCardDto profileDto = new ProfileCardDto();
+            profileDto.setId(other.getId());
+            profileDto.setName(other.getFirstName() + " " + other.getLastName());
+            profileDto.setAge(other.getAge());
+            profileDto.setCity(other.getCity());
+            profileDto.setUpdatePhoto(profilePhotoService.getMainPhoto(other.getId()));
+            profileDto.setGender(other.getGender());
+            profileDto.setPremium(other.isPremium());
+            profileDto.setMotherTongue(other.getMotherTongue());
+            profileDto.setCountry(other.getCountry());
+
+            // ===== WRAPPER DTO =====
+            FriendRequestCardDto card = new FriendRequestCardDto();
+            card.setRequestId(fr.getId());
+            card.setStatus(fr.getStatus().name());
+            card.setProfile(profileDto);
+            
+            card.setSenderId(fr.getSender().getId());
+            card.setReceiverId(fr.getReceiver().getId());
+
+            return card;
+
+        }).toList();
     }
+    public List<AcceptedFriendCardDto> getAcceptedFriends(Long userId) {
 
-    public List<FriendRequestDTO> getAllFriendRequests() {
-        return requestRepository.findAllWithSenderAndReceiver()
-                .stream()
-                .map(fr -> new FriendRequestDTO(
-                        fr.getId(),
-                        fr.getSender().getId(),
-                        fr.getReceiver().getId(),
-                        fr.getSender().getFirstName() + " " + fr.getSender().getLastName(),
-                        fr.getReceiver().getFirstName() + " " + fr.getReceiver().getLastName(),
-                        fr.getSender().getEmailId(),
-                        fr.getStatus()
-                ))
-                .toList();
-    }
+        List<FriendRequest> requests =
+                friendRequestRepository.findAllAccepted(userId);
 
-    public boolean areFriends(Long userId1, Long userId2) {
-        Profile user1 = profileRepository.findById(userId1)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        return requests.stream().map(fr -> {
 
-        return user1.getFriends().stream()
-                .anyMatch(friend -> friend.getId().equals(userId2));
-    }
+            Profile sender = fr.getSender();
+            Profile receiver = fr.getReceiver();
 
-    public List<FriendRequest> getPendingRequests(Long receiverId) {
-        return requestRepository.findByReceiver_IdAndStatus(receiverId, FriendRequest.Status.PENDING);
+            Profile friend;
+            Profile user;
+
+            if (sender.getId().equals(userId)) {
+                friend = receiver;
+                user = sender;
+            } else {
+                friend = sender;
+                user = receiver;
+            }
+
+            String friendPhoto = getPrimaryPhoto(friend);
+            Boolean hideProfilePhoto = friend.getHideProfilePhoto();
+            String gender = friend.getGender(); 
+
+            if (Boolean.TRUE.equals(hideProfilePhoto)) {
+                friendPhoto = null;
+            }
+            return new AcceptedFriendCardDto(
+                    friend.getId(),
+                    friend.getFirstName() + " " + friend.getLastName(),
+                    friendPhoto,
+                    gender,
+                    hideProfilePhoto
+                   
+            );
+
+        }).toList();
     }
 }

@@ -15,5 +15,9 @@ public interface ReferralRepository extends JpaRepository<Referral, Long> {
     boolean existsByReferrerAndReferredEmail(Profile referrer, String referredEmail);
 
     long countByReferrerAndStatus(Profile referrer, ReferralStatus status);
+    Optional<Referral> findTopByReferrer_IdOrderByCreatedAtDesc(Long referrerId);
+    long countByReferrer_Id(Long referrerId);
+
+    long countByReferrer_IdAndStatus(Long referrerId, ReferralStatus status);
 }
 

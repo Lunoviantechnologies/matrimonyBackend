@@ -85,8 +85,6 @@ public class FriendRequest {
 	public synchronized void setSentAt(LocalDateTime sentAt) {
 		this.sentAt = sentAt;
 	}
-    
-    
-    
+	
 	
 }

@@ -191,7 +191,7 @@ public class BlogService {
 
 		if (keyword != null && !keyword.isBlank()) {
 		    blog.setKeyword(keyword);
-		}
+		} 
 
 		if (image != null && !image.isEmpty()) {
 

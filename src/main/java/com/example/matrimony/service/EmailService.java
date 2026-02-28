@@ -396,7 +396,7 @@ public class EmailService {
 			return;
 		}
 
-		String subject = " Welcome to VivahJeevan - Registration Successful";
+		String subject = "Welcome to VivahJeevan - Registration Successful";
 
 		String body = """
 				<h2>Dear %s,</h2>

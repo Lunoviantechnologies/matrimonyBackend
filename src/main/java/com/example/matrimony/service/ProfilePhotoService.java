@@ -5,7 +5,9 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import com.example.util.ImageCompressionUtil;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,6 +15,9 @@ import com.example.matrimony.entity.Profile;
 import com.example.matrimony.entity.Profilepicture;
 import com.example.matrimony.repository.ProfilePhotoRepository;
 import com.example.matrimony.repository.ProfileRepository;
+import java.util.Map;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 @Service
 public class ProfilePhotoService {
@@ -20,7 +25,8 @@ public class ProfilePhotoService {
     private final ProfilePhotoRepository photoRepository;
     private final ProfileRepository profileRepository;
 
-    private final Path uploadPath = Paths.get("uploads/profile-photos");
+    @Value("${app.upload.profile-photos-path}")
+    private String profilePhotoDir;
 
     public ProfilePhotoService(ProfilePhotoRepository photoRepository, ProfileRepository profileRepository) {
         this.photoRepository = photoRepository;
@@ -28,46 +34,55 @@ public class ProfilePhotoService {
     }
 
     // ================= Upload Photo =================
+
     public Profilepicture uploadPhoto(Long profileId, int photoIndex, MultipartFile file) throws IOException {
 
         Profile profile = profileRepository.findById(profileId)
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
 
-        // Create folder
-        Path uploadPath = Paths.get("uploads/profile-photos");
+        Path uploadPath = Paths.get(profilePhotoDir);
         Files.createDirectories(uploadPath);
 
-        // ✅ Get extension only (ignore original name)
-        String originalName = file.getOriginalFilename();
-        String extension = ".jpg"; // default
-
-        if (originalName != null && originalName.contains(".")) {
-            extension = originalName.substring(originalName.lastIndexOf("."));
-        }
-
-        // ✅ Custom filename (NO user filename)
+        //  Always store as JPG (best compression)
         String fileName = "profile_" + profileId + "_photo" + photoIndex + "_"
-                + System.currentTimeMillis() + extension;
+                + System.currentTimeMillis() + ".jpg";
 
-        Path filePath = uploadPath.resolve(fileName);
 
-        // Save file
-        Files.copy(file.getInputStream(), filePath);
+        //  COMPRESS IMAGE HERE (MAIN LOGIC)
+        ImageCompressionUtil.compressImage(
+                file,
+                uploadPath.toString(),
+                fileName
+        );
 
-        // Save in DB
-        Profilepicture picture = new Profilepicture();
-        picture.setProfile(profile);
-        picture.setFileName(fileName);
+        Profilepicture picture = photoRepository
+                .findByProfile_IdAndPhotoNumber(profileId, photoIndex)
+                .orElse(null);
+
+        if (picture != null) {
+            // DELETE OLD FILE
+            Path oldPath = uploadPath.resolve(picture.getFileName());
+            Files.deleteIfExists(oldPath);
+
+            picture.setFileName(fileName);
+            picture.setUploadedAt(LocalDateTime.now());
+        } else {
+            picture = new Profilepicture();
+            picture.setProfile(profile);
+            picture.setPhotoNumber(photoIndex);
+            picture.setFileName(fileName);
+            picture.setUploadedAt(LocalDateTime.now());
+        }
 
         return photoRepository.save(picture);
     }
-
     // ================= Delete Photo =================
     public void deletePhoto(Long profileId, Integer photoNumber) throws IOException {
 
         Profilepicture photo = photoRepository.findByProfile_IdAndPhotoNumber(profileId, photoNumber)
                 .orElseThrow(() -> new RuntimeException("Photo not found"));
 
+        Path uploadPath = Paths.get(profilePhotoDir);
         Path filePath = uploadPath.resolve(photo.getFileName());
         Files.deleteIfExists(filePath);
 
@@ -79,30 +94,35 @@ public class ProfilePhotoService {
         return photoRepository.findByProfile_Id(profileId);
     }
 
-    // ================= Get Photo Base64 (NEW METHOD) =================
-    public String getPhotoBase64(Long profileId, Integer photoNumber) {
+ // ================= Get Main Photo =================
+    public String getMainPhoto(Long profileId) {
 
-        try {
-            Profilepicture photo = photoRepository.findByProfile_IdAndPhotoNumber(profileId, photoNumber)
-                    .orElse(null);
-
-            if (photo == null || photo.getFileName() == null || photo.getFileName().isBlank()) {
-                return null;
-            }
-
-            Path filePath = uploadPath.resolve(photo.getFileName());
-
-            if (!Files.exists(filePath)) {
-                return null;
-            }
-
-            byte[] imageBytes = Files.readAllBytes(filePath);
-            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-
-            return "data:image/jpeg;base64," + base64Image;
-
-        } catch (Exception e) {
-            return null;
-        }
+        return photoRepository
+                .findByProfile_IdAndPhotoNumber(profileId, 0)
+                .map(photo -> "/profile-photos/" + photo.getFileName())
+                .orElse(null);
     }
+  
+
+    public Map<Long, Map<Integer, String>> getPhotosForProfiles(List<Long> profileIds) {
+
+        if (profileIds == null || profileIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+
+        List<Profilepicture> photos =
+                photoRepository.findByProfile_IdIn(profileIds);
+
+        return photos.stream().collect(
+                Collectors.groupingBy(
+                        p -> p.getProfile().getId(),
+                        Collectors.toMap(
+                                Profilepicture::getPhotoNumber,
+                                p -> "/profile-photos/" + p.getFileName(),
+                                (existing, replacement) -> existing
+                        )
+                )
+        );
+    }
+   
 }

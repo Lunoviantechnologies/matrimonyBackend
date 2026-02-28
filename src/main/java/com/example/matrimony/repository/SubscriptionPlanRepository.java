@@ -24,6 +24,9 @@ public interface SubscriptionPlanRepository
     //  FETCH SINGLE PLAN WITH FEATURES
     @Query("SELECT sp FROM SubscriptionPlan sp LEFT JOIN FETCH sp.planFeature WHERE sp.id = :id")
     Optional<SubscriptionPlan> findByIdWithFeature(Long id);
+    
+    Optional<SubscriptionPlan> findByPlanCodeIgnoreCase(String planCode);
 
 
+    
 }

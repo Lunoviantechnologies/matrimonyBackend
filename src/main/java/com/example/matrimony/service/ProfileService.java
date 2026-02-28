@@ -6,11 +6,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 //import java.awt.print.Pageable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 //import org.hibernate.query.Page;
 import org.slf4j.Logger;
@@ -20,38 +28,46 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.matrimony.dto.MatchSearchRequest;
+import com.example.matrimony.dto.MatchSearchResponse;
 import com.example.matrimony.dto.PrivacySettingsDto;
+import com.example.matrimony.dto.ProfileDto;
 import com.example.matrimony.dto.RegisterRequest;
+import com.example.matrimony.entity.PaymentRecord;
 import com.example.matrimony.entity.Profile;
+import com.example.matrimony.entity.Profilepicture;
 import com.example.matrimony.exception.EmailAlreadyExistsException;
 import com.example.matrimony.repository.ChatMessageRepository;
 import com.example.matrimony.repository.FriendRequestRepository;
 import com.example.matrimony.repository.PaymentRecordRepository;
 import com.example.matrimony.repository.ProfilePhotoRepository;
 import com.example.matrimony.repository.ProfileRepository;
+import com.example.matrimony.dto.ProfileFilterRequest;
+import com.example.matrimony.dto.ProfileMatchResponse;
+import com.example.matrimony.dto.RecentUserResponse;
+import com.example.matrimony.specification.ProfileSpecification;
 
+import io.jsonwebtoken.lang.Objects;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 @Service
 public class ProfileService {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ProfileService.class);
-
+	@Autowired
+	private ProfilePhotoService profilePhotoService;
+	private final PaymentRecordRepository paymentRepo;
     private final ProfileRepository profileRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-    @Autowired
     private FriendRequestRepository friendRequestRepository;
-    
-    @Autowired
     private ChatMessageRepository chatMessageRepository;
-    @Autowired
     private final Notificationadminservice notificationService;
-    @Autowired
     private PaymentRecordRepository paymentRecordRepository;
-    @Autowired
     private ProfilePhotoRepository profilePhotoRepository;
-    
-
-    
+     
+    private final Path uploadPath = Paths.get("uploads/profile-photos");
  // ===================== GET TOTAL REGISTERED PROFILES =====================
     public long getRegisteredProfilesCount() {
         return profileRepository.count();  // count() from JpaRepository returns long
@@ -61,11 +77,21 @@ public class ProfileService {
     public ProfileService(ProfileRepository profileRepository,
             PasswordEncoder passwordEncoder,
             EmailService emailService,
-            Notificationadminservice notificationService) {
-    	this.profileRepository = profileRepository;
-    	this.passwordEncoder = passwordEncoder;
-    	this.emailService = emailService;
-    	this.notificationService = notificationService;
+            Notificationadminservice notificationService,
+            FriendRequestRepository friendRequestRepository,
+            ChatMessageRepository chatMessageRepository,
+            PaymentRecordRepository paymentRecordRepository,
+            PaymentRecordRepository paymentRepo,
+            ProfilePhotoRepository profilePhotoRepository) {
+    	    this.profileRepository = profileRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+        this.notificationService = notificationService;
+        this.friendRequestRepository = friendRequestRepository;
+        this.chatMessageRepository = chatMessageRepository;
+        this.paymentRecordRepository = paymentRecordRepository;
+        this.profilePhotoRepository = profilePhotoRepository;
+        this.paymentRepo=paymentRepo;
    }
 
 
@@ -125,14 +151,14 @@ public class ProfileService {
         // ✅ SAVE PROFILE FIRST
         Profile savedProfile = profileRepository.save(profile);
 //     // ✅ SEND EMAIL
-//        try {
-//            emailService.sendRegistrationSuccessEmail(
-//                savedProfile.getEmailId(),
-//                savedProfile.getFirstName()
-//            );
-//        } catch (Exception e) {
-//            logger.error("Registration email failed for {}", savedProfile.getEmailId(), e);
-//        }
+        try {
+            emailService.sendRegistrationSuccessEmail(
+                savedProfile.getEmailId(),
+                savedProfile.getFirstName()
+           );
+       } catch (Exception e) {
+           logger.error("Registration email failed for {}", savedProfile.getEmailId(), e);
+       }
 
         
         String title = "New User Registered";
@@ -153,66 +179,76 @@ public class ProfileService {
     }
 
     
+    private ProfileMatchResponse mapToMatchResponse(Profile p) {
+
+        String photo0 = buildPhotoUrl(p.getId(), 0);
+        String photo1 = buildPhotoUrl(p.getId(), 1);
+        String photo2 = buildPhotoUrl(p.getId(), 2);
+        String photo3 = buildPhotoUrl(p.getId(), 3);
+        String photo4 = buildPhotoUrl(p.getId(), 4);
+
+        return new ProfileMatchResponse(
+                p.getId(),
+                p.getFirstName(),
+                p.getLastName(),
+                p.getAge(),
+                p.getHeight(),
+                p.getCity(),
+                p.getOccupation(),
+                p.getHighestEducation(),
+                p.getReligion(),
+                p.getSubCaste(),
+                p.isPremium(),
+                photo0,
+                photo1,
+                photo2,
+                photo3,
+                photo4,
+                p.getHideProfilePhoto(),
+                p.getGender()
+        );
+    }
+    
+    private String buildPhotoUrl(Long profileId, int photoNumber) {
+
+        return profilePhotoRepository
+                .findByProfile_IdAndPhotoNumber(profileId, photoNumber)
+                .map(pic -> "/profile-photos/" + pic.getFileName())
+                .orElse(null);
+    }
     
     
-//    public Profile register(RegisterRequest req) {
-//
-//        if (req == null) throw new IllegalArgumentException("Request cannot be null");
-//
-//        if (req.getEmail() == null || req.getEmail().isBlank())
-//            throw new IllegalArgumentException("Email cannot be empty");
-//
-//        if (profileRepository.existsByEmailId(req.getEmail()))
-//            throw new IllegalArgumentException("Email already registered");
-//
-//        if (profileRepository.existsByEmailId(req.getEmail())) {
-//            throw new EmailAlreadyExistsException("Email already registered");
-//        }
-//        
-//        if (req.getPassword() == null || req.getPassword().isBlank())
-//            throw new IllegalArgumentException("Password cannot be empty");
-//
-//        Profile profile = new Profile();
-//
-//        profile.setFirstName(req.getFirstName());
-//        profile.setLastName(req.getLastName());
-//        profile.setMobileNumber(req.getMobileNumber());
-//        profile.setEmailId(req.getEmail());
-//        profile.setCreatePassword(passwordEncoder.encode(req.getPassword()));
-//        profile.setAge(req.getAge() != null ? req.getAge() : 0);
-//
-//        if (req.getDateOfBirth() != null) {
-//            try {
-//                profile.setDateOfBirth(LocalDate.parse(req.getDateOfBirth()));
-//            } catch (Exception ex) {
-//                throw new IllegalArgumentException("Invalid date format (YYYY-MM-DD expected)");
-//            }
-//        }
-//
-//        profile.setGender(req.getGender());
-//        profile.setReligion(req.getReligion());
-//        profile.setCaste(req.getCaste());
-//        profile.setSubCaste(req.getSubCaste());
-//        profile.setDosham(req.getDosham());
-//        profile.setMaritalStatus(req.getMaritalStatus());
-//        
-//        String title = "New User Registered";
-//        String message = "New profile registered: " 
-//                + Profile.getFirstName() + " " 
-//                + Profile.getLastName() 
-//                + " (" + Profile.getEmailId() + ")";
-//
-//        notificationService.createAdminNotification(
-//                title,
-//                message,
-//                LocalDateTime.now()
-//        );
-//
-//        logger.info("Notification sent for new registration: {}", savedProfile.getEmailId());
-//
-//
-//        return profileRepository.save(profile);
-//    }
+    private Sort buildSort(String sort) {
+
+        if (sort == null || sort.isBlank()) {
+            return Sort.by("premium").descending()
+                       .and(Sort.by("lastActive").descending());
+        }
+
+        switch (sort.toUpperCase()) {
+
+            case "NEW":
+            case "NEWEST":
+                return Sort.by("createdAt").descending();
+
+            case "ACTIVE":
+                return Sort.by("lastActive").descending();
+
+            case "PREMIUM":
+                return Sort.by("premium").descending()
+                        .and(Sort.by("lastActive").descending());
+
+            case "FREE":
+                return Sort.by("premium").ascending()
+                        .and(Sort.by("lastActive").descending());
+
+            case "RELEVANCE":
+            default:
+                return Sort.by("premium").descending()
+                        .and(Sort.by("lastActive").descending());
+        }
+    }
+    
 
 
     // FIND PROFILE BY ID
@@ -237,6 +273,18 @@ public class ProfileService {
     public Page<Profile> listAll(Pageable pageable) {
 
         Page<Profile> profiles = profileRepository.findAll(pageable);
+
+        if (profiles.isEmpty()) {
+            throw new IllegalStateException("No profiles found");
+        }
+
+        return profiles;
+    }
+    public Page<Profile> listAll(ProfileFilterRequest req, Pageable pageable) {
+
+        Specification<Profile> spec = ProfileSpecification.filter(req);
+
+        Page<Profile> profiles = profileRepository.findAll(spec, pageable);
 
         if (profiles.isEmpty()) {
             throw new IllegalStateException("No profiles found");
@@ -323,9 +371,7 @@ public class ProfileService {
         if (data.getVegiterian() != null) existing.setVegiterian(data.getVegiterian());
 
         // Photo (byte[]) - overwrite only when provided (null-safe)
-        if (data.getUpdatePhoto() != null) {
-            existing.setUpdatePhoto(data.getUpdatePhoto());
-        }
+        
 
         // Education & career
         if (data.getHighestEducation() != null) existing.setHighestEducation(data.getHighestEducation());
@@ -545,7 +591,7 @@ public class ProfileService {
         profileRepository.save(profile);
 
         // Send confirmation email
-        emailService.sendAccountDeletionEmail(  // error occur here final keyword of email service
+        emailService.sendAccountDeletionEmail(  
                 profile.getEmailId(),
                 profile.getFirstName()
         );
@@ -666,7 +712,398 @@ public class ProfileService {
   deleteById(profileId);
 }
   
+  public Page<ProfileDto> filterProfiles(ProfileFilterRequest req) {
+
+	    if (req.getSearch() == null || req.getSearch().trim().isEmpty()) {
+	        return Page.empty();
+	    }
+
+	    Pageable pageable = PageRequest.of(
+	            req.getPage(),
+	            req.getSize(),
+	            Sort.by("createdAt").descending()
+	    );
+
+	    Page<Profile> page = profileRepository.findAll(
+	            ProfileSpecification.filter(req),
+	            pageable
+	    );
+
+	    return page.map(this::mapToDto);   
+	}
+  
+  public Page<ProfileDto> filterProfiles(ProfileFilterRequest req, Pageable pageable) {
+
+	    Sort sort = Sort.by("createdAt").descending();
+
+	    if (req.getSortBy() != null) {
+	        switch (req.getSortBy().toLowerCase()) {
+
+	            case "newest":
+	            case "newest_first":
+	                sort = Sort.by("createdAt").descending();
+	                break;
+
+	            case "recently_active":
+	                sort = Sort.by("lastActive").descending();
+	                break;
+
+	            case "premium":
+	                sort = Sort.by("premium").descending()
+	                           .and(Sort.by("lastActive").descending());
+	                break;
+
+	            case "free":
+	                sort = Sort.by("premium").ascending()
+	                           .and(Sort.by("lastActive").descending());
+	                break;
+
+	            case "relevance":
+	            default:
+	                sort = Sort.by("premium").descending()
+	                           .and(Sort.by("lastActive").descending());
+	                break;
+	        }
+	    }
+
+	    Pageable sortedPageable = PageRequest.of(
+	            pageable.getPageNumber(),
+	            pageable.getPageSize(),
+	            sort
+	    );
+
+	    Page<Profile> page = profileRepository.findAll(
+	            ProfileSpecification.filter(req),
+	            sortedPageable
+	    );
+
+	    return page.map(this::mapToDto);
+	}
   
   
+  public RecentUserResponse getRecentUsers(int page, int size) {
+
+	    Pageable pageable = PageRequest.of(
+	            page,
+	            size,
+	            Sort.by("createdAt").descending()
+	    );
+
+	    LocalDateTime now = LocalDateTime.now();
+
+	    long totalUsers = profileRepository.count();
+
+	    long joinedIn24Hours =
+	            profileRepository.countByCreatedAtAfter(
+	                    now.minusHours(24)
+	            );
+
+	    long joinedIn7Days =
+	            profileRepository.countByCreatedAtAfter(
+	                    now.minusDays(7)
+	            );
+
+	    long joinedIn30Days =
+	            profileRepository.countByCreatedAtAfter(
+	                    now.minusDays(30)
+	            );
+
+	    Page<Profile> users =
+	            profileRepository.findAll(pageable);
+
+	    return new RecentUserResponse(
+	            totalUsers,
+	            joinedIn24Hours,
+	            joinedIn7Days,
+	            joinedIn30Days,
+	            users
+	    );
+	}
+  
+  public ResponseEntity<ProfileDto> getOtherProfile(Long loginUserId, Long targetProfileId) {
+
+	    Optional<Profile> optional = profileRepository.findById(targetProfileId);
+
+	    if (optional.isEmpty()) {
+	        return ResponseEntity.notFound().build();
+	    }
+
+	    Profile profile = optional.get();
+
+	    
+	    if (profile.getId().equals(loginUserId)) {
+	        return ResponseEntity.badRequest().build();
+	    }
+
+	    ProfileDto dto = mapToDto(profile);  
+
+	    return ResponseEntity.ok(dto);
+	}
+  public ProfileDto mapToDto(Profile p) {
+
+	    ProfileDto dto = new ProfileDto();
+
+	    // ===== BASIC =====
+	    dto.setId(p.getId());
+	    dto.setProfileFor(p.getProfileFor());
+	    dto.setFirstName(p.getFirstName());
+	    dto.setLastName(p.getLastName());
+	    dto.setMobileNumber(p.getMobileNumber());
+	    dto.setEmailId(p.getEmailId());
+	    dto.setGender(p.getGender());
+	    dto.setAge(p.getAge());
+	    dto.setDateOfBirth(p.getDateOfBirth());
+	    dto.setAboutYourself(p.getAboutYourself());
+	    dto.setRole(p.getRole());
+	    dto.setCreatedAt(p.getCreatedAt());
+
+	    // ===== ACCOUNT =====
+	    dto.setMembershipType(p.getMembershipType());
+	    dto.setAccountStatus(p.getAccountStatus());
+	    dto.setActive(p.getActive());
+	    dto.setPremium(p.isPremium());
+	    dto.setLastActive(p.getLastActive());
+
+	    // ===== PERSONAL =====
+	    dto.setHeight(p.getHeight());
+	    dto.setweight(p.getWeight());
+	    dto.setBodyType(p.getBodyType());
+	    dto.setComplexion(p.getComplexion());
+	    dto.setExperience(p.getExperience());
+
+	    // ===== COMMUNITY =====
+	    dto.setReligion(p.getReligion());
+	    dto.setCaste(null); // you removed caste column
+	    dto.setSubCaste(p.getSubCaste());
+	    dto.setDosham(p.getDosham());
+	    dto.setMotherTongue(p.getMotherTongue());
+	    dto.setGothram(p.getGothram());
+	    dto.setManglik(p.getManglik());
+
+	    // ===== FAMILY =====
+	    dto.setMaritalStatus(p.getMaritalStatus());
+	    dto.setNoOfChildren(p.getNoOfChildren());
+	    dto.setIsChildrenLivingWithYou(p.getIsChildrenLivingWithYou());
+	    dto.setFamilyStatus(p.getFamilyStatus());
+	    dto.setFamilyType(p.getFamilyType());
+	    dto.setFatherName(p.getFatherName());
+	    dto.setMotherName(p.getMotherName());
+	    dto.setSiblings(p.getSiblings());
+	    dto.setFatherStatus(p.getFatherStatus());
+	    dto.setMotherStatus(p.getMotherStatus());
+	    dto.setNumberOfBrothers(p.getNumberOfBrothers());
+	    dto.setNumberOfSisters(p.getNumberOfSisters());
+	    dto.setAncestralOrigin(p.getAncestralOrigin());
+	    dto.setLivingWith(p.getLivingWith());
+	    dto.setChildrenDetails(p.getChildrenDetails());
+	    dto.setVegiterian(p.getVegiterian());
+	    dto.setHabbits(p.getHabbits());
+	    dto.setSports(p.getSports());
+	    dto.setSpiritualPath(p.getSpiritualPath());
+
+	    // ===== EDUCATION =====
+	    dto.setHighestEducation(p.getHighestEducation());
+	    dto.setCollegeName(p.getCollegeName());
+	    dto.setEmployedIn(p.getEmployedIn());
+	    dto.setSector(p.getSector());
+	    dto.setOccupation(p.getOccupation());
+	    dto.setCompanyName(p.getCompanyName());
+	    dto.setAnnualIncome(p.getAnnualIncome());
+	    dto.setWorkLocation(p.getWorkLocation());
+	    dto.setSpiritualPath(p.getSpiritualPath());
+
+	    // ===== LOCATION =====
+	    dto.setCountry(p.getCountry());
+	    dto.setState(p.getState());
+	    dto.setCity(p.getCity());
+	    dto.setDistrict(p.getDistrict());
+	    dto.setResidenceStatus(p.getResidenceStatus());
+
+	    // ===== ASTRO =====
+	    dto.setRashi(p.getRashi());
+	    dto.setNakshatra(p.getNakshatra());
+	    dto.setAscendant(p.getAscendant());
+	    dto.setBasicPlanetaryPosition(p.getBasicPlanetaryPosition());
+
+	    // ===== PREFERENCES =====
+	    dto.setHobbies(p.getHobbies());
+	    dto.setPartnerAgeRange(p.getPartnerAgeRange());
+	    dto.setPartnerReligion(p.getPartnerReligion());
+	    dto.setPartnerEducation(p.getPartnerEducation());
+	    dto.setPartnerLocationPref(p.getPartnerLocationPref());
+	    dto.setPartnerWork(p.getPartnerWork());
+	    dto.setPartnerWorkStatus(p.getPartnerWorkStatus());
+	    dto.setPartnerHobbies(p.getPartnerHobbies());
+
+	    // ===== PRIVACY =====
+	    dto.setProfileVisibility(p.getProfileVisibility());
+	    dto.setHideProfilePhoto(p.getHideProfilePhoto());
+
+	    // ===== REFERRAL =====
+	    dto.setReferralCode(p.getReferralCode());
+	    dto.setReferralRewardBalance(p.getReferralRewardBalance());
+	   
+	    dto.setDocumentFile(p.getDocumentFile());
+	 // ===== PHOTOS =====
+	    dto.setUpdatePhoto(buildPhotoUrl(p.getId(), 0));
+	    dto.setUpdatePhoto1(buildPhotoUrl(p.getId(), 1));
+	    dto.setUpdatePhoto2(buildPhotoUrl(p.getId(), 2));
+	    dto.setUpdatePhoto3(buildPhotoUrl(p.getId(), 3));
+	    dto.setUpdatePhoto4(buildPhotoUrl(p.getId(), 4));
+	    return dto;
+	}
+  
+  @Transactional(readOnly = true)
+  public MatchSearchResponse search(MatchSearchRequest request) {
+
+      ProfileFilterRequest filter = request.getFilters();
+      if (filter == null) {
+          filter = new ProfileFilterRequest();
+      }
+
+      // ===== GET MY PROFILE =====
+      Long myId = filter.getMyId();
+      Profile myProfile = profileRepository.findById(myId)
+              .orElseThrow(() -> new RuntimeException("My profile not found"));
+
+      filter.setMyId(myId);
+      filter.setMyGender(myProfile.getGender());
+      filter.setHiddenIds(getHiddenProfileIds(myId));
+   // ===== GLOBAL hidden filter (apply for ALL match types) =====
+      filter.setHiddenIds(getHiddenProfileIds(myId));
+
+
+      // ===== MATCH TYPE LOGIC =====
+      if (request.getMatchType() != null) {
+
+          switch (request.getMatchType().toUpperCase()) {
+
+              case "NEW":
+                  // profiles created last 3 days
+                  filter.setCreatedAfter(
+                          java.time.LocalDateTime.now().minusDays(3)
+                  );
+                  break;
+
+              case "NEAR":
+                  // same city
+                  filter.setCity(myProfile.getCity());
+                  break;
+
+              case "MY":
+                  // score handled later (>=70%)
+                  break;
+
+              case "MORE":
+                  // show all (no extra filter)
+                  break;
+
+              default:
+                  break;
+          }
+      }
+
+      Pageable pageable = PageRequest.of(
+              request.getPage(),
+              request.getSize(),
+              buildSort(request.getSort())
+      );
+
+      Page<Profile> page = profileRepository.findAll(
+              ProfileSpecification.filter(filter),
+              pageable
+      );
+      
+      
+      
+
+      // ===== MATCH SCORE FILTER =====
+      List<ProfileMatchResponse> content = page.getContent()
+              .stream()
+              .filter(p -> !p.getId().equals(myId))
+              .map(p -> {
+
+                  int score =
+                          com.example.util.MatchScoreUtil
+                                  .calculate(myProfile, p);
+
+                 
+                  if ("MY".equalsIgnoreCase(request.getMatchType())
+                          && score < 70) {
+                      return null;
+                  }
+
+                  return mapToMatchResponse(p);
+
+              })
+              .filter(java.util.Objects::nonNull)
+              .toList();
+
+      return new MatchSearchResponse(
+              content,
+              page.getTotalPages(),
+              page.getTotalElements(),
+              page.getNumber()
+      );
+  }
+  
+  private List<Long> getHiddenProfileIds(Long myId) {
+
+	    List<Long> hidden = new ArrayList<>();
+
+	    // accepted friends
+	    hidden.addAll(friendRequestRepository.findAcceptedFriendIds(myId));
+
+	    // sent requests
+	    hidden.addAll(friendRequestRepository.findSentRequestIds(myId));
+
+	    // received requests
+	    hidden.addAll(friendRequestRepository.findReceivedRequestIds(myId));
+
+	    // rejected
+	    hidden.addAll(friendRequestRepository.findRejectedIds(myId));
+
+	    return hidden.stream().distinct().toList();
+	}
+  @Transactional
+  public void syncMembershipFromPayments(Long profileId){
+
+      List<PaymentRecord> payments =
+          paymentRepo.findByUserIdAndStatus(profileId,"PAID");
+
+      PaymentRecord latest = payments.stream()
+          .filter(p -> p.getPremiumEnd()!=null &&
+                       p.getPremiumEnd().isAfter(LocalDateTime.now()))
+          .max(Comparator.comparing(PaymentRecord::getPremiumEnd))
+          .orElse(null);
+
+      Profile profile = profileRepository  
+              .findById(profileId)
+              .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+      if(latest == null){
+          profile.setPremium(false);
+          profile.setMembershipType("Free");
+          profile.setPremiumEnd(null);
+      }else{
+          profile.setPremium(true);
+          profile.setMembershipType(latest.getPlanName());
+          profile.setPremiumEnd(latest.getPremiumEnd());
+      }
+
+      profileRepository.save(profile);
+  }
+  public Map<Integer, String> getPhotoMap(Long profileId) {
+
+	    List<Profilepicture> photos =
+	            profilePhotoRepository.findByProfile_Id(profileId);
+
+	    return photos.stream()
+	            .filter(pic -> pic.getFileName() != null && !pic.getFileName().isBlank())
+	            .collect(Collectors.toMap(
+	                    Profilepicture::getPhotoNumber,
+	                    Profilepicture::getFileName   // return filename only
+	            ));
+	}
 
 }

@@ -10,9 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.matrimony.dto.ChatMessageDto;
 import com.example.matrimony.dto.DeletedProfileBackupDTO;
+import com.example.matrimony.dto.DynamicYearlyReportResponse;
+import com.example.matrimony.dto.PlanYearlyStats;
+import com.example.matrimony.dto.UserReportResponse;
 import com.example.matrimony.entity.*;
 import com.example.matrimony.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 @Service
 public class AdminReportService {
@@ -26,6 +30,8 @@ public class AdminReportService {
     @Autowired private DeletedProfileSnapshotRepository snapshotRepo;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private PaymentRecordRepository paymentRecordRepository;
     @Autowired
     private UserBlockRepository chatBlockRepo;
     
@@ -182,8 +188,31 @@ public class AdminReportService {
     
     
  // ================= GET ALL REPORTS =================
-    public List<UserReport> getAllReports() {
-        return reportRepo.findAll();
+    public List<UserReportResponse> getAllReports() {
+
+        List<UserReport> reports = reportRepo.findAll();
+
+        return reports.stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+    private UserReportResponse mapToDto(UserReport report) {
+
+        UserReportResponse dto = new UserReportResponse();
+
+        dto.setId(report.getId());
+        dto.setReporterId(report.getReporter().getId());
+        dto.setReporterName(report.getReporter().getFirstName());
+        dto.setReportedUserId(report.getReportedUser().getId());
+        dto.setReportedUserName(report.getReportedUser().getFirstName());
+        dto.setReason(report.getReason());
+        dto.setDescription(report.getDescription());
+        dto.setStatus(report.getStatus());
+        dto.setReportedAt(report.getReportedAt());
+        dto.setReviewedAt(report.getReviewedAt());
+        dto.setAdminComment(report.getAdminComment());
+
+        return dto;
     }
 
     //
@@ -222,7 +251,21 @@ public class AdminReportService {
         );
     }
 
-    
+    public DynamicYearlyReportResponse getYearlyDashboard(int year) {
+
+        List<PlanYearlyStats> plans =
+                paymentRecordRepository.getYearlyPlanStats(year);
+
+        double totalRevenue = plans.stream()
+                .mapToDouble(p -> p.getTotalRevenue())
+                .sum();
+
+        return new DynamicYearlyReportResponse(
+                year,
+                plans,
+                totalRevenue
+        );
+    }
 //    @Transactional
 //    public void permanentDeleteUser(Long userId) {
 //

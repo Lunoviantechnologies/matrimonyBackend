@@ -29,6 +29,46 @@ public class ProfilePhotoController {
     public ProfilePhotoController(ProfilePhotoService profilePhotoService) {
         this.profilePhotoService = profilePhotoService;
     }
+    
+ // ================= Upload Main Photo (index 0) =================
+    @PutMapping("/updatePhoto/{profileId}")
+    public ResponseEntity<?> uploadMainPhoto(
+            @PathVariable Long profileId,
+            @RequestParam("file") MultipartFile file) {
+
+        try {
+
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File is required");
+            }
+
+            long maxSize = 1 * 1024 * 1024;
+            if (file.getSize() > maxSize) {
+                return ResponseEntity
+                        .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body("File too large! Max allowed is 1MB");
+            }
+
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Only image files are allowed");
+            }
+
+            Profilepicture saved = profilePhotoService.uploadPhoto(profileId, 0, file);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Main photo uploaded successfully",
+                    "fileName", saved.getFileName(),
+                    "photoUrl", "/profile-photos/" + saved.getFileName()
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Failed to upload photo");
+        }
+    }
 
     // ================= Upload Photo 1 =================
     @PutMapping("/updatePhoto1/{profileId}")
@@ -43,7 +83,7 @@ public class ProfilePhotoController {
                 return ResponseEntity.badRequest().body("File is required");
             }
 
-            // ✅ 1MB limit
+            //  1MB limit
             long maxSize = 1 * 1024 * 1024; // 1MB
             if (file.getSize() > maxSize) {
                 return ResponseEntity
@@ -51,7 +91,7 @@ public class ProfilePhotoController {
                         .body("File too large! Max allowed is 1MB");
             }
 
-            // ✅ Only images
+            //  Only images
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity
@@ -86,15 +126,15 @@ public class ProfilePhotoController {
                 return ResponseEntity.badRequest().body("File is required");
             }
 
-            // ✅ 1MB limit
-            long maxSize = 1 * 1024 * 1024; // 1MB
+            //  1MB limit
+            long maxSize = 1 * 1024 * 1024; 
             if (file.getSize() > maxSize) {
                 return ResponseEntity
                         .status(HttpStatus.PAYLOAD_TOO_LARGE)
                         .body("File too large! Max allowed is 1MB");
             }
 
-            // ✅ Only images
+            //  Only images
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity
@@ -239,6 +279,11 @@ public class ProfilePhotoController {
         List<Profilepicture> photos = profilePhotoService.getPhotos(profileId);
 
         return ResponseEntity.ok(photos);
+    }
+    @DeleteMapping("/updatePhoto/{profileId}")
+    public ResponseEntity<?> deleteMainPhoto(@PathVariable Long profileId) throws IOException {
+        profilePhotoService.deletePhoto(profileId, 0);
+        return ResponseEntity.ok(Map.of("message", "Main photo deleted successfully"));
     }
     
 }

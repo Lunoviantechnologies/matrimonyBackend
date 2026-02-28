@@ -17,10 +17,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,12 +37,19 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.matrimony.dto.ChatMessageDto;
+import com.example.matrimony.dto.DynamicYearlyReportResponse;
 import com.example.matrimony.dto.PaymentDto;
 import com.example.matrimony.dto.ProfileDto;
+import com.example.matrimony.dto.RecentUserResponse;
 import com.example.matrimony.entity.Profile;
 import com.example.matrimony.repository.ProfileRepository;
+import com.example.matrimony.service.AdminReportService;
 import com.example.matrimony.service.ChatService;
 import com.example.matrimony.service.ProfileService;
+
+import jakarta.persistence.criteria.Predicate;
+
+import com.example.matrimony.repository.PaymentRecordRepository;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -52,14 +60,18 @@ public class AdminManageController {
     private final ProfileRepository profileRepository;
     private final ProfileService profileService;
     private final ChatService chatService;
-
+    private final PaymentRecordRepository paymentRepository;
+    private final AdminReportService adminReportService;
+    
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    public AdminManageController(ProfileRepository profileRepository, ProfileService profileService, ChatService chatService) {
+    public AdminManageController(ProfileRepository profileRepository,AdminReportService adminReportService, ProfileService profileService, ChatService chatService,PaymentRecordRepository paymentRepository) {
         this.profileRepository = profileRepository;
         this.profileService = profileService;
         this.chatService = chatService;
+        this.paymentRepository=paymentRepository;
+        this.adminReportService = adminReportService;
     }
 
 
@@ -68,37 +80,120 @@ public class AdminManageController {
     @GetMapping("/profiles")
     public ResponseEntity<Page<Profile>> listProfiles(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String accountStatus,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Boolean banned,
+            @RequestParam(required = false) String search
     ) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("id").ascending()
+        );
 
-        // Directly calling repository (no service)
-        Page<Profile> profilePage = profileRepository.findAll(pageable);
+        Specification<Profile> spec = Specification.where(null);
 
-        profilePage.getContent().forEach(profile -> {
+        // Account Status filter
+        if (accountStatus != null && !accountStatus.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("accountStatus"), accountStatus)
+            );
+        }
 
-            if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
-                try {
-                    Path imagePath = Paths.get("uploads/profile-photos")
-                            .resolve(profile.getUpdatePhoto());
+        // Active filter
+        if (active != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("active"), active)
+            );
+        }
 
-                    if (Files.exists(imagePath)) {
-                        byte[] imageBytes = Files.readAllBytes(imagePath);
-                        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-                        profile.setUpdatePhoto("data:image/jpeg;base64," + base64Image);
-                    } else {
-                        profile.setUpdatePhoto(null);
-                    }
-                } catch (Exception e) {
-                    profile.setUpdatePhoto(null);
+        // Banned filter
+        if (banned != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("banned"), banned)
+            );
+        }
+
+        // Search filter (ID, firstName, lastName)
+        if (search != null && !search.isBlank()) {
+            spec = spec.and((root, query, cb) -> {
+
+                String likePattern = "%" + search.toLowerCase() + "%";
+
+                Predicate idMatch = null;
+
+                // If search is number → match by id
+                if (search.matches("\\d+")) {
+                    idMatch = cb.equal(root.get("id"), Long.parseLong(search));
                 }
-            } else {
-                profile.setUpdatePhoto(null);
-            }
-        });
+
+                Predicate firstNameMatch = cb.like(
+                        cb.lower(root.get("firstName")),
+                        likePattern
+                );
+
+                Predicate lastNameMatch = cb.like(
+                        cb.lower(root.get("lastName")),
+                        likePattern
+                );
+
+                if (idMatch != null) {
+                    return cb.or(idMatch, firstNameMatch, lastNameMatch);
+                } else {
+                    return cb.or(firstNameMatch, lastNameMatch);
+                }
+            });
+        }
+
+        Page<Profile> profilePage = profileRepository.findAll(spec, pageable);
+
+        
+        List<ProfileDto> dtoList = profilePage.getContent()
+                .stream()
+                .map(profile -> {
+
+                    ProfileDto dto = profileService.mapToDto(profile);
+
+                    Map<Integer, String> photoMap =
+                            profileService.getPhotoMap(profile.getId());
+
+                    dto.setUpdatePhoto(photoMap.get(0));
+                    dto.setUpdatePhoto1(photoMap.get(1));
+                    dto.setUpdatePhoto2(photoMap.get(2));
+                    dto.setUpdatePhoto3(photoMap.get(3));
+                    dto.setUpdatePhoto4(photoMap.get(4));
+
+                    return dto;
+                })
+                .toList();
 
         return ResponseEntity.ok(profilePage);
+    }
+    
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+
+        long totalUsers = profileRepository.count();
+        long activeUsers = profileRepository.countByActiveTrue();
+        long inactiveUsers = profileRepository.countByActiveFalse();
+        long premiumUsers = profileRepository.countByPremiumTrue();
+        long nonPremiumUsers = profileRepository.countByPremiumFalse();
+
+        Double totalRevenue = paymentRepository.getTotalRevenue();
+        Double todayRevenue = paymentRepository.getTodayRevenue();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalUsers", totalUsers);
+        stats.put("activeUsers", activeUsers);
+        stats.put("inactiveUsers", inactiveUsers);
+        stats.put("premiumUsers", premiumUsers);
+        stats.put("nonPremiumUsers", nonPremiumUsers);
+        stats.put("totalRevenue", totalRevenue);
+        stats.put("todayRevenue", todayRevenue);
+
+        return ResponseEntity.ok(stats);
     }
 
 
@@ -220,55 +315,20 @@ public class AdminManageController {
 
         // ================= DOCUMENT FILE (same dir as registration/view-document) =================
         if (profile.getDocumentFile() != null && !profile.getDocumentFile().isBlank()) {
-            try {
-                Path docPath = Paths.get(uploadDir)
-                        .resolve(profile.getDocumentFile());
-
-                if (Files.exists(docPath)) {
-                    byte[] docBytes = Files.readAllBytes(docPath);
-                    String base64Doc = Base64.getEncoder().encodeToString(docBytes);
-
-                    String mimeType = Files.probeContentType(docPath);
-                    if (mimeType == null) {
-                        mimeType = "application/octet-stream";
-                    }
-
-                    dto.setDocumentFile("data:" + mimeType + ";base64," + base64Doc);
-                } else {
-                    dto.setDocumentFile(null);
-                }
-            } catch (Exception e) {
-                dto.setDocumentFile(null);
-            }
+            dto.setDocumentFile("/documents/" + profile.getDocumentFile());
         } else {
             dto.setDocumentFile(null);
         }
+        Map<Integer, String> photoMap =
+                profileService.getPhotoMap(profile.getId());
 
-
-        // ------------------------------
-        //  New: build image URL instead of returning Base64
-        // ------------------------------
-        if (profile.getUpdatePhoto() != null && !profile.getUpdatePhoto().isBlank()) {
-            try {
-                Path imagePath = Paths.get("uploads/profile-photos")
-                        .resolve(profile.getUpdatePhoto());
-
-                if (Files.exists(imagePath)) {
-                    byte[] imageBytes = Files.readAllBytes(imagePath);
-                    String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-
-                    dto.setUpdatePhoto("data:image/jpeg;base64," + base64Image);
-                } else {
-                    dto.setUpdatePhoto(null);
-                }
-            } catch (Exception e) {
-                dto.setUpdatePhoto(null);
-            }
-        } else {
-            dto.setUpdatePhoto(null);
-        }
-       
+        dto.setUpdatePhoto(photoMap.getOrDefault(0, null));
+        dto.setUpdatePhoto1(photoMap.getOrDefault(1, null));
+        dto.setUpdatePhoto2(photoMap.getOrDefault(2, null));
+        dto.setUpdatePhoto3(photoMap.getOrDefault(3, null));
+        dto.setUpdatePhoto4(photoMap.getOrDefault(4, null));
         return ResponseEntity.ok(dto);
+        
     }
 
    // @PreAuthorize("hasAnyAuthority('ADMIN','ROLE_ADMIN')")
@@ -562,25 +622,20 @@ public class AdminManageController {
         // --- FILES / PHOTOS ---
        // if (updatedDto.getUpdatePhoto() != null) existing.setUpdatePhoto(updatedDto.getUpdatePhoto());
         if (updatedDto.getDocumentFile() != null) {
-			existing.setDocumentFile(updatedDto.getDocumentFile());
-      // if (updatedDto.getDocumentFilePresent() != null) existing.setDocumentFilePresent(updatedDto.getDocumentFilePresent());
-		}
 
+            String fileName = Paths
+                    .get(updatedDto.getDocumentFile())
+                    .getFileName()
+                    .toString();
 
-        // --- SYSTEM TIMESTAMP ---
+            existing.setDocumentFile(fileName);
+        }
         existing.setLastActive(LocalDateTime.now());
 
         // Save
         Profile saved = profileRepository.save(existing);
         return ResponseEntity.ok(saved);
     }
-
-
-    //Update Account Status (Verify / Suspend / Activate)
-
-
-    //Update Membership Type (Free / Premium / Gold)
-  //======
 
     //Update Account Status (Verify / Suspend / Activate)
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -654,11 +709,11 @@ public class AdminManageController {
                 }
 
                 //  1MB limit
-                long maxSize = 1 * 1024 * 1024; // 1MB
+                long maxSize = 10 * 1024 * 1024; // 10MB 
                 if (file.getSize() > maxSize) {
                     return ResponseEntity
                             .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                            .body("File too large! Max allowed is 1MB");
+                            .body("File too large! Max allowed is 10MB");
                 }
 
                 //  Allow only images
@@ -691,7 +746,7 @@ public class AdminManageController {
                 Files.write(filePath, file.getBytes());
 
                 // Save in DB
-                profile.setUpdatePhoto(fileName);
+               
                 profile.setLastActive(LocalDateTime.now());
                 profileRepository.save(profile);
 
@@ -751,5 +806,23 @@ public class AdminManageController {
         return chatService.getConversation(senderId, receiverId, page, size);
     }
    
+    @GetMapping("/recent-users")
+    public ResponseEntity<RecentUserResponse> getRecentUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(
+                profileService.getRecentUsers(page, size)
+        );
+    }
+    
+    @GetMapping("/yearly-dashboard")
+    public ResponseEntity<DynamicYearlyReportResponse> getYearlyDashboard(
+            @RequestParam int year
+    ) {
+        return ResponseEntity.ok(
+                adminReportService.getYearlyDashboard(year)
+        );
+    }
 
 }

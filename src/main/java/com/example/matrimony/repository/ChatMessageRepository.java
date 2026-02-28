@@ -128,6 +128,55 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
         List<ChatMessage> findAllBySender_IdOrReceiver_Id(Long senderId, Long receiverId);
 
         void deleteAllBySender_IdOrReceiver_Id(Long senderId, Long receiverId);
-       
+        @Query("""
+        		SELECT COUNT(m) FROM ChatMessage m
+        		WHERE m.sender.id = :senderId
+        		AND m.receiver.id = :receiverId
+        		""")
+        		long countMessagesBetween(
+        		        @Param("senderId") Long senderId,
+        		        @Param("receiverId") Long receiverId
+        		);
+        
+        @Query("""
+        		SELECT m FROM ChatMessage m
+        		WHERE 
+        		(m.sender.id = :user1 AND m.receiver.id = :user2)
+        		OR
+        		(m.sender.id = :user2 AND m.receiver.id = :user1)
+        		ORDER BY m.timestamp DESC
+        		""")
+        		List<ChatMessage> findLastMessageBetweenUsers(
+        		        @Param("user1") Long user1,
+        		        @Param("user2") Long user2,
+        		        Pageable pageable
+        		);
+        
+        @Query("""
+        		SELECT COUNT(m) FROM ChatMessage m
+        		WHERE m.sender.id = :senderId
+        		AND m.receiver.id = :receiverId
+        		AND m.system = false
+        		""")
+        		long countUserMessages(
+        		        @Param("senderId") Long senderId,
+        		        @Param("receiverId") Long receiverId
+        		);
+        @Query("""
+        		SELECT COUNT(m) FROM ChatMessage m
+        		WHERE (m.sender.id = :senderId AND m.receiver.id = :receiverId)
+        		   OR (m.sender.id = :receiverId AND m.receiver.id = :senderId)
+        		""")
+        		long countAllBetweenUsers(Long senderId, Long receiverId);
 
+     @Query("""
+     SELECT COUNT(m) FROM ChatMessage m
+     WHERE m.sender.id = :senderId
+     AND m.receiver.id = :receiverId
+     AND m.system = true
+     """)
+     long countSystemMessages(
+             @Param("senderId") Long senderId,
+             @Param("receiverId") Long receiverId
+     );
 }
